@@ -1,0 +1,275 @@
+{
+  "action": "send_money",
+  "version": "3.0.0",
+  "description": "Send money to a person via UPI (contact name, phone number, or UPI handle).",
+  "max_turns": 10,
+
+  "params": {
+    "recipient_name": {
+      "type": "string",
+      "required": false,
+      "description": "Name/alias the user said. Resolved to a `contact` via contacts.search.",
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "llm_hint": "Just the name. Strip 'my', 'to', 'send', possessives. Not the verb."
+      }
+    },
+    "recipient_handle": {
+      "type": "string",
+      "required": false,
+      "description": "Direct UPI VPA or 10-digit phone — used when the user pays a non-contact.",
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "llm_hint": "Look for name@bank or a 10-digit phone number."
+      }
+    },
+    "contact": { "type": "object", "description": "Resolved contact (set by lookup step)." },
+    "to_vpa": { "type": "object", "description": "Picked UPI account for the contact." },
+    "amount": {
+      "type": "number",
+      "required": true,
+      "description": "Amount in INR.",
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "coerce": "number",
+        "llm_hint": "Word numbers, multi-script: 'do hazaar'->2000, '1.5 lakh'->150000, ५००->500."
+      },
+      "constraints": { "min": 1, "max": 100000 }
+    },
+    "from_account_type": {
+      "type": "enum",
+      "required": false,
+      "enum": ["savings", "current", "wallet"],
+      "description": "Account to debit. Default = first savings."
+    },
+    "from_account": { "type": "object", "description": "Resolved account object (default-filled)." }
+  },
+
+  "strings": {
+    "en": {
+      "ask_recipient": "Who do you want to pay?",
+      "ask_amount": "How much do you want to send?",
+      "no_contact": "I couldn't find anyone matching \"{0}\" in your contacts. Try a different name or speak the UPI ID/phone.",
+      "disambig_contacts": "I found {0} contacts. Which one?",
+      "multiple_vpa": "{0} has multiple UPI accounts. Which one?",
+      "confirm_pay": "Paying ₹{currency:0} to {1}. Say yes to confirm.",
+      "success_pay": "Done. ₹{currency:0} sent to {1}.",
+      "invalid_amount_zero": "Amount must be greater than zero. How much?",
+      "invalid_amount_neg": "Amount cannot be negative. Try again.",
+      "invalid_amount_high": "That amount exceeds your per-transaction limit of ₹{currency:0}.",
+      "insufficient_balance_offer_switch": "{0} only has ₹{currency:1} but you need ₹{currency:2}. Pick a different account to pay from:",
+      "pick_alt_account": "Which account should I use instead?",
+      "no_funds_anywhere": "No account has enough balance to send ₹{currency:0}. Try a smaller amount."
+    },
+    "hi": {
+      "ask_recipient": "किसको भेजना है?",
+      "ask_amount": "कितने रुपये भेजने हैं?",
+      "no_contact": "\"{0}\" नाम का कोई कॉन्टैक्ट नहीं मिला। दूसरा नाम या UPI/फोन बोलें।",
+      "disambig_contacts": "{0} कॉन्टैक्ट मिले। कौन सा?",
+      "multiple_vpa": "{0} के पास कई UPI खाते हैं। कौन सा?",
+      "confirm_pay": "{1} को ₹{currency:0} भेजे जा रहे हैं। \"हाँ\" बोलें।",
+      "success_pay": "हो गया। ₹{currency:0} {1} को भेज दिए।",
+      "invalid_amount_zero": "राशि शून्य से अधिक होनी चाहिए।",
+      "invalid_amount_neg": "राशि ऋणात्मक नहीं हो सकती।",
+      "invalid_amount_high": "यह राशि सीमा ₹{currency:0} से अधिक है।",
+      "insufficient_balance_offer_switch": "{0} में सिर्फ़ ₹{currency:1} है, ₹{currency:2} चाहिए। दूसरा खाता चुनें:",
+      "pick_alt_account": "किस खाते से भेजें?",
+      "no_funds_anywhere": "किसी भी खाते में ₹{currency:0} नहीं है। कम राशि बोलें।"
+    },
+    "te": {
+      "ask_recipient": "ఎవరికి చెల్లించాలి?",
+      "ask_amount": "ఎంత డబ్బు పంపాలి?",
+      "no_contact": "\"{0}\" దొరకలేదు.",
+      "disambig_contacts": "{0} కాంటాక్ట్‌లు. ఏది?",
+      "multiple_vpa": "{0} కి బహుళ UPI ఖాతాలు. ఏది?",
+      "confirm_pay": "{1} కి ₹{currency:0} పంపుతున్నాను. \"అవును\" చెప్పండి.",
+      "success_pay": "అయిపోయింది. ₹{currency:0} {1} కి పంపబడింది.",
+      "invalid_amount_zero": "మొత్తం సున్నా కంటే ఎక్కువ ఉండాలి.",
+      "invalid_amount_neg": "మొత్తం ప్రతికూలంగా ఉండకూడదు.",
+      "invalid_amount_high": "పరిమితి ₹{currency:0} మించింది.",
+      "insufficient_balance_offer_switch": "{0} లో కేవలం ₹{currency:1} ఉంది, ₹{currency:2} కావాలి. వేరే ఖాతా ఎంచుకోండి:",
+      "pick_alt_account": "ఏ ఖాతా ఉపయోగించాలి?",
+      "no_funds_anywhere": "ఏ ఖాతాలోనూ ₹{currency:0} లేదు. తక్కువ మొత్తం చెప్పండి."
+    },
+    "ta": {
+      "ask_recipient": "யாருக்கு அனுப்ப வேண்டும்?",
+      "ask_amount": "எவ்வளவு பணம் அனுப்ப வேண்டும்?",
+      "no_contact": "\"{0}\" கிடைக்கவில்லை.",
+      "disambig_contacts": "{0} தொடர்புகள். எது?",
+      "multiple_vpa": "{0} இடம் பல UPI கணக்குகள். எது?",
+      "confirm_pay": "{1} க்கு ₹{currency:0} அனுப்புகிறேன். \"ஆம்\" சொல்லுங்கள்.",
+      "success_pay": "முடிந்தது. ₹{currency:0} {1} க்கு அனுப்பப்பட்டது.",
+      "invalid_amount_zero": "தொகை பூஜ்ஜியத்தை விட அதிகமாக இருக்க வேண்டும்.",
+      "invalid_amount_neg": "தொகை எதிர்மறையாக இருக்கக் கூடாது.",
+      "invalid_amount_high": "வரம்பு ₹{currency:0} மீறுகிறது.",
+      "insufficient_balance_offer_switch": "{0} இல் ₹{currency:1} மட்டுமே, ₹{currency:2} தேவை. வேறு கணக்கை தேர்ந்தெடுக்கவும்:",
+      "pick_alt_account": "எந்த கணக்கை பயன்படுத்த வேண்டும்?",
+      "no_funds_anywhere": "எந்த கணக்கிலும் ₹{currency:0} இல்லை. சிறிய தொகை சொல்லுங்கள்."
+    }
+  },
+
+  "steps": [
+    {
+      "id": "default_account",
+      "type": "default_fill",
+      "slot": "from_account",
+      "tool": "accounts.by_type_or_default",
+      "input_map": { "type": "$slots.from_account_type", "default_type": "savings" }
+    },
+
+    {
+      "id": "ask_recipient",
+      "type": "ask",
+      "slot": "recipient_name",
+      "prompt_key": "ask_recipient",
+      "skip_if": "slots.recipient_handle || slots.contact"
+    },
+
+    {
+      "id": "resolve_contact",
+      "type": "lookup",
+      "tool": "contacts.search",
+      "input_map": { "q": "$slots.recipient_name" },
+      "output_slot": "contact",
+      "auto_select_if_single": true,
+      "label_template": "{item.name}",
+      "sublabel_template": "{item.lastPaid}",
+      "kind": "contact_pick",
+      "prompt_key": "disambig_contacts",
+      "empty_prompt_key": "no_contact",
+      "empty_prompt_args": ["{slots.recipient_name}"],
+      "on_empty_goto": "ask_recipient",
+      "skip_if": "slots.recipient_handle || slots.contact"
+    },
+
+    {
+      "id": "pick_vpa",
+      "type": "choose",
+      "from": "$slots.contact.vpas",
+      "store_to_slot": "to_vpa",
+      "auto_select_if_single": true,
+      "label_template": "{item.label}",
+      "sublabel_template": "{item.sublabel}",
+      "kind": "vpa_pick",
+      "prompt_key": "multiple_vpa",
+      "prompt_args": ["{slots.contact.name}"],
+      "skip_if": "!slots.contact || slots.to_vpa"
+    },
+
+    {
+      "id": "ask_amount",
+      "type": "ask",
+      "slot": "amount",
+      "kind": "amount",
+      "prompt_key": "ask_amount"
+    },
+
+    {
+      "id": "validate_amount_basic",
+      "type": "validate",
+      "slot": "amount",
+      "rules": [
+        { "type": "positive", "msg_key": "invalid_amount_zero" },
+        { "type": "max", "value": 100000, "msg_key": "invalid_amount_high", "msg_args": [100000] }
+      ],
+      "on_fail_goto": "ask_amount"
+    },
+
+    {
+      "id": "validate_funds",
+      "type": "validate",
+      "slot": "amount",
+      "rules": [
+        {
+          "type": "max_path",
+          "path": "slots.from_account.balance",
+          "msg_key": "insufficient_balance_offer_switch",
+          "msg_args": [
+            "{slots.from_account.label}",
+            "$slots.from_account.balance",
+            "$slots.amount"
+          ]
+        }
+      ],
+      "on_fail_goto": "switch_source_account",
+      "clear_on_fail": false,
+      "clear_slots_on_fail": ["from_account"]
+    },
+
+    {
+      "id": "switch_source_account",
+      "type": "choose",
+      "tool": "accounts.list",
+      "input_map": { "min_balance": "$slots.amount" },
+      "store_to_slot": "from_account",
+      "label_template": "{item.label} ••{item.last4}",
+      "sublabel_template": "Balance ₹{currency:item.balance}",
+      "kind": "account_pick",
+      "prompt_key": "pick_alt_account",
+      "empty_prompt_key": "no_funds_anywhere",
+      "empty_prompt_args": ["$slots.amount"],
+      "on_empty_goto": "default_account",
+      "clear_slots_on_empty": ["amount"],
+      "auto_select_if_single": true
+    },
+
+    {
+      "id": "validate_funds_again",
+      "type": "validate",
+      "slot": "amount",
+      "rules": [
+        {
+          "type": "max_path",
+          "path": "slots.from_account.balance",
+          "msg_key": "no_funds_anywhere",
+          "msg_args": ["$slots.amount"]
+        }
+      ],
+      "on_fail_goto": "ask_amount"
+    },
+
+    {
+      "id": "confirm",
+      "type": "confirm",
+      "summary_template": "₹{currency:slots.amount} → {slots.contact.name}",
+      "details": [
+        { "label": "To", "value": "{slots.contact.name}" },
+        { "label": "UPI", "value": "{slots.to_vpa.sublabel}" },
+        { "label": "Amount", "value": "₹{currency:slots.amount}" },
+        { "label": "From", "value": "{slots.from_account.label} ••{slots.from_account.last4}" }
+      ],
+      "prompt_key": "confirm_pay",
+      "prompt_args": ["$slots.amount", "{slots.contact.name}{slots.recipient_handle}"]
+    },
+
+    {
+      "id": "execute",
+      "type": "tool_call",
+      "tool": "payments.send_upi",
+      "input_map": {
+        "to_contact_id": "$slots.contact.id",
+        "to_vpa_id": "$slots.to_vpa.id",
+        "recipient_handle": "$slots.recipient_handle",
+        "amount": "$slots.amount",
+        "from_account_type": "$slots.from_account.type",
+        "idempotency_key": "$session.id"
+      }
+    },
+
+    {
+      "id": "done",
+      "type": "result",
+      "success_key": "success_pay",
+      "args": ["$slots.amount", "{slots.contact.name}{slots.recipient_handle}"]
+    }
+  ],
+
+  "_step_doc": [
+    "Flow: ask_amount → validate_amount_basic (limits) → validate_funds (current account) → if insufficient: switch_source_account (choose alt with min_balance) → validate_funds_again → confirm → execute → done.",
+    "Amount stays put through account switching — only from_account is cleared on funds failure.",
+    "switch_source_account hides accounts that can't cover the amount; if none qualify, user is sent back to ask_amount with no_funds_anywhere."
+  ]
+}

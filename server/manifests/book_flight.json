@@ -1,0 +1,186 @@
+{
+  "action": "book_flight",
+  "version": "3.1.0",
+  "description": "Book a domestic flight: search by origin/destination/date, pick a flight, give passenger info, confirm, charge + issue ticket.",
+  "max_turns": 14,
+
+  "params": {
+    "origin": {
+      "type": "string",
+      "required": true,
+      "description": "Departure city or IATA code.",
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "llm_hint": "Just the city/airport. 'from' clauses."
+      }
+    },
+    "destination": {
+      "type": "string",
+      "required": true,
+      "description": "Arrival city/airport.",
+      "extraction": { "from_voice": true, "llm": true, "llm_hint": "Just the city. 'to' clauses." }
+    },
+    "date": {
+      "type": "string",
+      "required": true,
+      "description": "Travel date — 'today', 'tomorrow', 'next monday', '26-04', etc.",
+      "extraction": { "from_voice": true, "llm": true }
+    },
+    "selected_flight": { "type": "object", "description": "Flight picked from search results." },
+    "passenger_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name on the ticket.",
+      "extraction": { "from_voice": true, "llm": true, "accept_freetext": true }
+    },
+    "passenger_phone": {
+      "type": "string",
+      "required": true,
+      "description": "10-digit mobile for the booking.",
+      "extraction": { "from_voice": true, "llm": true, "regex": "^\\d{10}$", "accept_freetext": true }
+    }
+  },
+
+  "strings": {
+    "en": {
+      "ask_origin": "Which city are you flying from?",
+      "ask_destination": "Where are you flying to?",
+      "ask_date": "Which date? (today, tomorrow, or DD-MM)",
+      "ask_passenger_name": "Whose name should the ticket be in?",
+      "ask_passenger_phone": "Passenger's mobile number?",
+      "pick_flight": "Found {0} flights. Which one?",
+      "no_flights": "No flights found for that route. Try different cities.",
+      "confirm_flight": "{1} for {currency:0}. Say yes to book.",
+      "success_flight": "Booked! PNR: {0}. Confirmation sent to {1}."
+    },
+    "hi": {
+      "ask_origin": "किस शहर से जाना है?",
+      "ask_destination": "कहाँ जाना है?",
+      "ask_date": "किस तारीख? (आज / कल / DD-MM)",
+      "ask_passenger_name": "किसके नाम से टिकट?",
+      "ask_passenger_phone": "यात्री का मोबाइल नंबर?",
+      "pick_flight": "{0} फ्लाइट मिलीं। कौन सी?",
+      "no_flights": "कोई फ्लाइट नहीं मिली।",
+      "confirm_flight": "{1}, ₹{0}। बुक करने के लिए \"हाँ\" बोलें।",
+      "success_flight": "बुक हो गया! PNR: {0}.{1}"
+    },
+    "te": {
+      "ask_origin": "ఏ నగరం నుండి?",
+      "ask_destination": "ఎక్కడకు?",
+      "ask_date": "ఏ తేదీ? (today / tomorrow / DD-MM)",
+      "ask_passenger_name": "ఎవరి పేరుతో టికెట్?",
+      "ask_passenger_phone": "ప్రయాణికుని మొబైల్ నంబర్?",
+      "pick_flight": "{0} ఫ్లైట్‌లు దొరికాయి. ఏది?",
+      "no_flights": "ఫ్లైట్‌లు లేవు.",
+      "confirm_flight": "{1}, ₹{0}. \"అవును\" చెప్పండి.",
+      "success_flight": "బుక్ అయింది! PNR: {0}.{1}"
+    },
+    "ta": {
+      "ask_origin": "எந்த நகரிலிருந்து?",
+      "ask_destination": "எங்கு?",
+      "ask_date": "எந்த தேதி? (today / tomorrow / DD-MM)",
+      "ask_passenger_name": "யாருடைய பெயரில்?",
+      "ask_passenger_phone": "பயணியின் மொபைல் எண்?",
+      "pick_flight": "{0} விமானங்கள் கிடைத்துள்ளன. எது?",
+      "no_flights": "விமானங்கள் இல்லை.",
+      "confirm_flight": "{1}, ₹{0}. \"ஆம்\" சொல்லுங்கள்.",
+      "success_flight": "பதிவு முடிந்தது! PNR: {0}.{1}"
+    }
+  },
+
+  "steps": [
+    { "id": "ask_origin", "type": "ask", "slot": "origin", "prompt_key": "ask_origin" },
+    {
+      "id": "ask_destination",
+      "type": "ask",
+      "slot": "destination",
+      "prompt_key": "ask_destination"
+    },
+    { "id": "ask_date", "type": "ask", "slot": "date", "prompt_key": "ask_date" },
+
+    {
+      "id": "search_flights",
+      "type": "tool_call",
+      "tool": "flights.search",
+      "input_map": {
+        "origin": "$slots.origin",
+        "destination": "$slots.destination",
+        "date": "$slots.date"
+      },
+      "output_key": "available_flights"
+    },
+
+    {
+      "id": "pick_flight",
+      "type": "choose",
+      "from_state": "available_flights",
+      "store_to_slot": "selected_flight",
+      "kind": "flight_pick",
+      "label_template": "{item.carrier} {item.number}  {item.depart}→{item.arrive}  ₹{item.price}",
+      "sublabel_template": "{item.from} → {item.to} · {item.duration_min} min",
+      "prompt_key": "pick_flight",
+      "empty_prompt_key": "no_flights"
+    },
+
+    {
+      "id": "ask_passenger_name",
+      "type": "ask",
+      "slot": "passenger_name",
+      "prompt_key": "ask_passenger_name"
+    },
+    {
+      "id": "ask_passenger_phone",
+      "type": "ask",
+      "slot": "passenger_phone",
+      "prompt_key": "ask_passenger_phone"
+    },
+
+    {
+      "id": "confirm",
+      "type": "confirm",
+      "summary_template": "{slots.selected_flight.carrier} {slots.selected_flight.number} · {slots.selected_flight.from} → {slots.selected_flight.to}  ₹{slots.selected_flight.price}",
+      "details": [
+        {
+          "label": "Flight",
+          "value": "{slots.selected_flight.carrier} {slots.selected_flight.number}"
+        },
+        { "label": "Route", "value": "{slots.selected_flight.from} → {slots.selected_flight.to}" },
+        {
+          "label": "Time",
+          "value": "{slots.selected_flight.depart} → {slots.selected_flight.arrive}"
+        },
+        { "label": "Date", "value": "{slots.date}" },
+        { "label": "Passenger", "value": "{slots.passenger_name}" },
+        { "label": "Mobile", "value": "{slots.passenger_phone}" },
+        { "label": "Fare", "value": "₹{slots.selected_flight.price}" }
+      ],
+      "prompt_key": "confirm_flight",
+      "prompt_args": [
+        "$slots.selected_flight.price",
+        "{slots.selected_flight.carrier} {slots.selected_flight.number} {slots.selected_flight.from}→{slots.selected_flight.to}"
+      ]
+    },
+
+    {
+      "id": "book_and_pay",
+      "type": "tool_call",
+      "tool": "flights.book",
+      "input_map": {
+        "flight": "$slots.selected_flight",
+        "passenger_name": "$slots.passenger_name",
+        "passenger_phone": "$slots.passenger_phone",
+        "from_account_type": "savings",
+        "idempotency_key": "$session.id"
+      },
+      "output_key": "booking"
+    },
+
+    {
+      "id": "done",
+      "type": "result",
+      "success_key": "success_flight",
+      "args": ["{state.booking.pnr}", "{slots.passenger_name}"]
+    }
+  ]
+}

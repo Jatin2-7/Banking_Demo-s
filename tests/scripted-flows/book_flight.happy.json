@@ -1,0 +1,48 @@
+{
+  "name": "book_flight — search → select → name → phone → confirm",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "book a flight from bangalore to delhi tomorrow",
+        "intent": {
+          "intent": "book_flight",
+          "slots": {
+            "origin": "bangalore",
+            "destination": "delhi",
+            "date": "tomorrow",
+            "passengers": 1,
+            "cabin": "economy"
+          }
+        }
+      },
+      "expect": { "state": "CHOOSE", "asking_for": "selected_flight" }
+    },
+    {
+      "input": { "type": "SELECTION", "optionIndex": 0 },
+      "expect": { "state": "FILL", "asking_for": "passenger_name" }
+    },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "Pavan Naik",
+        "intent": { "intent": "book_flight", "slots": { "passenger_name": "Pavan Naik" } }
+      },
+      "expect": { "state": "FILL", "asking_for": "passenger_phone" }
+    },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "9876543210",
+        "intent": { "intent": "book_flight", "slots": { "passenger_phone": "9876543210" } }
+      },
+      "expect": { "state": "CONFIRM" }
+    },
+    {
+      "input": { "type": "CONFIRMATION", "confirmed": true },
+      "expect": { "state": "DONE", "result_success": true, "bot_last_includes": "Booked" }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "action": "check_balance",
+  "version": "3.0.0",
+  "description": "Show the user's account and wallet balances.",
+  "max_turns": 1,
+
+  "params": {
+    "account_hint": {
+      "type": "string",
+      "required": false,
+      "description": "Optional hint: 'wallet', 'savings', 'current', 'Indian Bank' — null = show all."
+    },
+    "balances": { "type": "object", "description": "Resolved balances list (set by tool)." }
+  },
+
+  "strings": {
+    "en": {
+      "balance_line": "• {item.label} {item.last4} — ₹{item.balance}"
+    },
+    "hi": {
+      "balance_line": "• {item.label} {item.last4} — ₹{item.balance}"
+    },
+    "te": {
+      "balance_line": "• {item.label} {item.last4} — ₹{item.balance}"
+    },
+    "ta": {
+      "balance_line": "• {item.label} {item.last4} — ₹{item.balance}"
+    }
+  },
+
+  "steps": [
+    {
+      "id": "fetch",
+      "type": "tool_call",
+      "tool": "balance.check",
+      "input_map": { "hint": "$slots.account_hint" },
+      "output_key": "balances"
+    },
+    {
+      "id": "done",
+      "type": "result",
+      "from_state": "balances",
+      "item_template": "• {item.label} {item.last4} — ₹{item.balance}",
+      "join": "\n"
+    }
+  ]
+}

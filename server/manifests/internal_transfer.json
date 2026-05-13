@@ -1,0 +1,200 @@
+{
+  "action": "internal_transfer",
+  "version": "3.0.0",
+  "description": "Move money between the user's own bank accounts and wallet.",
+  "max_turns": 8,
+
+  "params": {
+    "from_account_type": {
+      "type": "enum",
+      "required": false,
+      "enum": ["savings", "current", "wallet"],
+      "description": "Source account hint."
+    },
+    "to_account_type": {
+      "type": "enum",
+      "required": false,
+      "enum": ["savings", "current", "wallet"],
+      "description": "Destination account hint."
+    },
+    "from_account": { "type": "object", "description": "Resolved source account." },
+    "to_account": { "type": "object", "description": "Resolved destination account." },
+    "amount": {
+      "type": "number",
+      "required": true,
+      "description": "Amount in INR.",
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "coerce": "number",
+        "llm_hint": "Word numbers + multi-script."
+      },
+      "constraints": { "min": 1, "max": 100000 }
+    }
+  },
+
+  "strings": {
+    "en": {
+      "ask_from_account": "Which account should I debit?",
+      "ask_to_account": "Which account should the money go to?",
+      "ask_amount": "How much do you want to transfer?",
+      "confirm_transfer": "Transferring {currency:0} from {1} to {2}. Say yes to confirm.",
+      "success_transfer": "Done. ₹{0} moved from {1} to {2}.",
+      "invalid_amount_zero": "Amount must be greater than zero. How much?",
+      "invalid_amount_high": "That amount exceeds your per-transaction limit of {currency:0}.",
+      "insufficient_balance": "Insufficient balance. You have {currency:0} but need {currency:1}.",
+      "same_account": "Source and destination accounts cannot be the same. Pick a different destination."
+    },
+    "hi": {
+      "ask_from_account": "किस खाते से भेजना है?",
+      "ask_to_account": "किस खाते में भेजना है?",
+      "ask_amount": "कितने रुपये ट्रांसफर करने हैं?",
+      "confirm_transfer": "{1} से {2} में ₹{0} ट्रांसफर। \"हाँ\" बोलें।",
+      "success_transfer": "हो गया। ₹{0} {1} से {2} में।",
+      "invalid_amount_zero": "राशि शून्य से अधिक होनी चाहिए।",
+      "invalid_amount_high": "यह राशि सीमा ₹{0} से अधिक है।",
+      "insufficient_balance": "बैलेंस कम है। ₹{0} है, ₹{1} चाहिए।",
+      "same_account": "दोनों खाते एक ही नहीं हो सकते।"
+    },
+    "te": {
+      "ask_from_account": "ఏ ఖాతా నుండి?",
+      "ask_to_account": "ఏ ఖాతాకు?",
+      "ask_amount": "ఎంత ట్రాన్స్‌ఫర్ చేయాలి?",
+      "confirm_transfer": "{1} నుండి {2} కి ₹{0}. \"అవును\" చెప్పండి.",
+      "success_transfer": "అయిపోయింది. ₹{0} {1} నుండి {2} కి.",
+      "invalid_amount_zero": "మొత్తం సున్నా కంటే ఎక్కువ ఉండాలి.",
+      "invalid_amount_high": "పరిమితి ₹{0} మించింది.",
+      "insufficient_balance": "నిల్వ సరిపోదు. ₹{0} ఉంది, ₹{1} కావాలి.",
+      "same_account": "రెండు ఖాతాలు ఒకటి కాకూడదు."
+    },
+    "ta": {
+      "ask_from_account": "எந்த கணக்கிலிருந்து?",
+      "ask_to_account": "எந்த கணக்கிற்கு?",
+      "ask_amount": "எவ்வளவு பணம் மாற்ற வேண்டும்?",
+      "confirm_transfer": "{1} இலிருந்து {2} க்கு ₹{0}. \"ஆம்\" சொல்லுங்கள்.",
+      "success_transfer": "முடிந்தது. ₹{0} {1} இலிருந்து {2} க்கு.",
+      "invalid_amount_zero": "தொகை பூஜ்ஜியத்தை விட அதிகமாக இருக்க வேண்டும்.",
+      "invalid_amount_high": "வரம்பு ₹{0} மீறுகிறது.",
+      "insufficient_balance": "போதுமான தொகை இல்லை. ₹{0}, தேவை ₹{1}.",
+      "same_account": "இரு கணக்குகளும் ஒன்றாக இருக்கக் கூடாது."
+    }
+  },
+
+  "steps": [
+    {
+      "id": "default_from",
+      "type": "default_fill",
+      "slot": "from_account",
+      "tool": "accounts.by_type_or_default",
+      "input_map": { "type": "$slots.from_account_type", "default_type": "" },
+      "skip_if": "slots.from_account || !slots.from_account_type"
+    },
+
+    {
+      "id": "choose_from_account",
+      "type": "choose",
+      "tool": "accounts.list",
+      "input_map": {},
+      "store_to_slot": "from_account",
+      "label_template": "{item.label}",
+      "sublabel_template": "••{item.last4} · ₹{item.balance}",
+      "kind": "account_pick_from",
+      "prompt_key": "ask_from_account",
+      "skip_if": "slots.from_account"
+    },
+
+    {
+      "id": "default_to",
+      "type": "default_fill",
+      "slot": "to_account",
+      "tool": "accounts.by_type_or_default",
+      "input_map": { "type": "$slots.to_account_type", "default_type": "" },
+      "skip_if": "slots.to_account || !slots.to_account_type"
+    },
+
+    {
+      "id": "choose_to_account",
+      "type": "choose",
+      "tool": "accounts.list",
+      "input_map": {},
+      "exclude_path": "$slots.from_account",
+      "store_to_slot": "to_account",
+      "label_template": "{item.label}",
+      "sublabel_template": "••{item.last4} · ₹{item.balance}",
+      "kind": "account_pick_to",
+      "prompt_key": "ask_to_account",
+      "skip_if": "slots.to_account"
+    },
+
+    {
+      "id": "validate_distinct",
+      "type": "validate",
+      "slot": "to_account",
+      "rules": [
+        {
+          "type": "not_eq_path",
+          "path": "slots.from_account",
+          "msg_key": "same_account"
+        }
+      ],
+      "on_fail_goto": "choose_to_account"
+    },
+
+    {
+      "id": "ask_amount",
+      "type": "ask",
+      "slot": "amount",
+      "kind": "amount",
+      "prompt_key": "ask_amount"
+    },
+
+    {
+      "id": "validate_amount",
+      "type": "validate",
+      "slot": "amount",
+      "rules": [
+        { "type": "positive", "msg_key": "invalid_amount_zero" },
+        { "type": "max", "value": 100000, "msg_key": "invalid_amount_high", "msg_args": [100000] },
+        {
+          "type": "max_path",
+          "path": "slots.from_account.balance",
+          "msg_key": "insufficient_balance",
+          "msg_args": ["$slots.from_account.balance", "$slots.amount"]
+        }
+      ],
+      "on_fail_goto": "ask_amount"
+    },
+
+    {
+      "id": "confirm",
+      "type": "confirm",
+      "summary_template": "₹{slots.amount} → {slots.to_account.label}",
+      "details": [
+        { "label": "From", "value": "{slots.from_account.label} ••{slots.from_account.last4}" },
+        { "label": "To", "value": "{slots.to_account.label} ••{slots.to_account.last4}" },
+        { "label": "Amount", "value": "₹{slots.amount}" }
+      ],
+      "prompt_key": "confirm_transfer",
+      "prompt_args": ["$slots.amount", "{slots.from_account.label}", "{slots.to_account.label}"]
+    },
+
+    {
+      "id": "execute",
+      "type": "tool_call",
+      "tool": "transfers.internal",
+      "input_map": {
+        "from_account_type": "$slots.from_account.type",
+        "to_account_type": "$slots.to_account.type",
+        "amount": "$slots.amount",
+        "idempotency_key": "$session.id"
+      }
+    },
+
+    {
+      "id": "done",
+      "type": "result",
+      "success_key": "success_transfer",
+      "args": ["$slots.amount", "{slots.from_account.label}", "{slots.to_account.label}"]
+    }
+  ]
+}

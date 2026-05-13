@@ -1,0 +1,15 @@
+{
+  "name": "check_balance — happy path",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" }, "expect": { "state": "IDLE" } },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "what's my balance",
+        "intent": { "intent": "check_balance", "slots": {} }
+      },
+      "expect": { "state": "DONE", "result_success": true, "bot_last_includes": "•" }
+    }
+  ]
+}

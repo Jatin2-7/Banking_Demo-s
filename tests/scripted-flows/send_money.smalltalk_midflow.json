@@ -1,0 +1,108 @@
+{
+  "name": "send_money — off-topic chitchat mid-flow stays in FILL, then completes",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+
+    {
+      "_comment": "Start a flow but only give the recipient — engine should ask for amount.",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "send mom",
+        "intent": { "intent": "send_money", "slots": { "recipient_name": "mom" } }
+      },
+      "expect": {
+        "state": "FILL",
+        "action": "send_money",
+        "asking_for": "amount"
+      }
+    },
+
+    {
+      "_comment": "Hesitation. LLM returns smalltalk + reply. Engine speaks reply, stays in FILL.",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "uhh hold on let me think",
+        "intent": {
+          "intent": "smalltalk",
+          "slots": {},
+          "reply": "Sure, take your time — when ready, just tell me the amount."
+        }
+      },
+      "expect": {
+        "state": "FILL",
+        "action": "send_money",
+        "asking_for": "amount",
+        "bot_last_includes": "take your time"
+      }
+    },
+
+    {
+      "_comment": "Meta-question. LLM answers using filled context, then re-asks.",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "wait who am I paying again",
+        "intent": {
+          "intent": "smalltalk",
+          "slots": {},
+          "reply": "You're paying Mom. How much would you like to send?"
+        }
+      },
+      "expect": {
+        "state": "FILL",
+        "action": "send_money",
+        "asking_for": "amount",
+        "bot_last_includes": "Mom"
+      }
+    },
+
+    {
+      "_comment": "Pure chitchat. LLM deflects + re-asks.",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "tell me a joke",
+        "intent": {
+          "intent": "smalltalk",
+          "slots": {},
+          "reply": "Maybe later — first, how much should I send to Mom?"
+        }
+      },
+      "expect": {
+        "state": "FILL",
+        "asking_for": "amount",
+        "bot_last_includes": "Maybe later"
+      }
+    },
+
+    {
+      "_comment": "Smalltalk with NO reply from LLM (simulates LLM hiccup). Engine speaks didn't-catch + re-asks the previous bot prompt.",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "blah blah blah",
+        "intent": { "intent": "smalltalk", "slots": {} }
+      },
+      "expect": {
+        "state": "FILL",
+        "asking_for": "amount"
+      }
+    },
+
+    {
+      "_comment": "User finally provides the value. Flow advances to CONFIRM.",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "okay 500",
+        "intent": { "intent": "send_money", "slots": { "amount": 500 } }
+      },
+      "expect": {
+        "state": "CONFIRM",
+        "params": { "amount": 500, "contact.name": "Mom" }
+      }
+    },
+
+    {
+      "input": { "type": "CONFIRMATION", "confirmed": true },
+      "expect": { "state": "DONE", "result_success": true }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "send_money — multiple Rahul contacts → DISAMBIGUATE → SELECTION → CONFIRM → DONE",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "send rahul 250",
+        "intent": { "intent": "send_money", "slots": { "recipient_name": "Rahul", "amount": 250 } }
+      },
+      "expect": { "state": "DISAMBIGUATE", "asking_for": "contact" }
+    },
+    {
+      "input": { "type": "SELECTION", "optionId": "c1" },
+      "expect": {
+        "state": "CHOOSE",
+        "asking_for": "to_vpa",
+        "params": { "contact.id": "c1" }
+      }
+    },
+    {
+      "input": { "type": "SELECTION", "optionId": "v1a" },
+      "expect": { "state": "CONFIRM" }
+    },
+    {
+      "input": { "type": "CONFIRMATION", "confirmed": true },
+      "expect": { "state": "DONE", "result_success": true }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "indianbank-voice-demo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Voice-powered UPI payment demo (Indian Bank) — React + Express + Claude Haiku",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && node index.js",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "lint": "eslint \"server/**/*.js\" \"client/src/**/*.{js,jsx}\" \"tests/**/*.js\"",
+    "lint:fix": "eslint --fix \"server/**/*.js\" \"client/src/**/*.{js,jsx}\" \"tests/**/*.js\"",
+    "format": "prettier --write \"server/**/*.{js,json}\" \"client/src/**/*.{js,jsx,json}\" \"tests/**/*.{js,json}\"",
+    "format:check": "prettier --check \"server/**/*.{js,json}\" \"client/src/**/*.{js,jsx,json}\" \"tests/**/*.{js,json}\"",
+    "test": "node --test --test-reporter=spec tests/runScriptedFlows.test.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^15.15.0",
+    "prettier": "^3.8.3"
+  }
+}

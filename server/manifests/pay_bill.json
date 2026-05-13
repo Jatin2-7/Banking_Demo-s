@@ -1,0 +1,204 @@
+{
+  "action": "pay_bill",
+  "version": "3.0.0",
+  "description": "Pay a utility bill or recharge a number. Works for known billers AND new account/phone numbers.",
+  "max_turns": 10,
+
+  "params": {
+    "biller_keyword": {
+      "type": "string",
+      "required": false,
+      "description": "Hint: 'airtel', 'jio', 'electricity', 'water', 'gas', 'broadband', 'dth' OR a specific provider.",
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "llm_hint": "If user just says 'recharge' or 'mobile bill' set biller_keyword='mobile' and we'll narrow."
+      }
+    },
+    "biller": { "type": "object", "description": "Resolved biller (set by lookup step)." },
+    "target_account": {
+      "type": "string",
+      "required": true,
+      "description": "Mobile / consumer / RR / subscriber id — the THING being paid for.",
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "accept_freetext": true,
+        "llm_hint": "Phone/account/consumer-no string. 'a different/new number' → '__needs_new__'. 'same as before' → '__use_default__'."
+      }
+    },
+    "amount": {
+      "type": "number",
+      "required": true,
+      "description": "Amount in INR.",
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "coerce": "number",
+        "llm_hint": "If user says 'pay the bill amount' set amount='__default__' and engine uses biller default."
+      },
+      "constraints": { "min": 1, "max": 100000 }
+    },
+    "from_account_type": {
+      "type": "enum",
+      "required": false,
+      "enum": ["savings", "current", "wallet"],
+      "description": "Which account to debit."
+    },
+    "from_account": { "type": "object", "description": "Resolved account (default-filled)." }
+  },
+
+  "strings": {
+    "en": {
+      "ask_biller": "Which bill do you want to pay?",
+      "no_biller": "I couldn't find a biller for \"{0}\". Try another keyword.",
+      "disambig_biller": "I found {0} matching billers. Which one?",
+      "ask_target_account": "What number / account should I pay?",
+      "ask_amount": "How much?",
+      "confirm_bill": "Paying {currency:0} to {1}. Say yes to confirm.",
+      "success_bill": "Done. ₹{0} paid to {1}.",
+      "invalid_amount_zero": "Amount must be greater than zero. How much?",
+      "invalid_amount_high": "That amount exceeds your per-transaction limit of {currency:0}.",
+      "insufficient_balance": "Insufficient balance. You have {currency:0} but need {currency:1}."
+    },
+    "hi": {
+      "ask_biller": "कौन सा बिल भरना है?",
+      "no_biller": "\"{0}\" नाम का कोई बिलर नहीं मिला।",
+      "disambig_biller": "{0} बिलर मिले। कौन सा?",
+      "ask_target_account": "कौन सा नंबर / खाता भरना है?",
+      "ask_amount": "कितने रुपये?",
+      "confirm_bill": "{1} को ₹{0} का भुगतान। \"हाँ\" बोलें।",
+      "success_bill": "हो गया। ₹{0} {1} को भुगतान।",
+      "invalid_amount_zero": "राशि शून्य से अधिक होनी चाहिए।",
+      "invalid_amount_high": "यह राशि सीमा ₹{0} से अधिक है।",
+      "insufficient_balance": "बैलेंस कम है। ₹{0} है, ₹{1} चाहिए।"
+    },
+    "te": {
+      "ask_biller": "ఏ బిల్లు చెల్లించాలి?",
+      "no_biller": "\"{0}\" బిల్లర్ దొరకలేదు.",
+      "disambig_biller": "{0} బిల్లర్‌లు. ఏది?",
+      "ask_target_account": "ఏ నంబర్ / ఖాతా?",
+      "ask_amount": "ఎంత?",
+      "confirm_bill": "{1} కి ₹{0}. \"అవును\" చెప్పండి.",
+      "success_bill": "అయిపోయింది. ₹{0} {1} కి.",
+      "invalid_amount_zero": "మొత్తం సున్నా కంటే ఎక్కువ ఉండాలి.",
+      "invalid_amount_high": "పరిమితి ₹{0} మించింది.",
+      "insufficient_balance": "నిల్వ సరిపోదు. ₹{0} ఉంది, ₹{1} కావాలి."
+    },
+    "ta": {
+      "ask_biller": "எந்த பில் கட்ட வேண்டும்?",
+      "no_biller": "\"{0}\" பில்லர் கிடைக்கவில்லை.",
+      "disambig_biller": "{0} பில்லர்கள். எது?",
+      "ask_target_account": "எந்த எண் / கணக்கு?",
+      "ask_amount": "எவ்வளவு?",
+      "confirm_bill": "{1} க்கு ₹{0}. \"ஆம்\" சொல்லுங்கள்.",
+      "success_bill": "முடிந்தது. ₹{0} {1} க்கு.",
+      "invalid_amount_zero": "தொகை பூஜ்ஜியத்தை விட அதிகமாக இருக்க வேண்டும்.",
+      "invalid_amount_high": "வரம்பு ₹{0} மீறுகிறது.",
+      "insufficient_balance": "போதுமான தொகை இல்லை. ₹{0}, தேவை ₹{1}."
+    }
+  },
+
+  "steps": [
+    {
+      "id": "default_account",
+      "type": "default_fill",
+      "slot": "from_account",
+      "tool": "accounts.by_type_or_default",
+      "input_map": { "type": "$slots.from_account_type", "default_type": "savings" }
+    },
+
+    {
+      "id": "ask_biller",
+      "type": "ask",
+      "slot": "biller_keyword",
+      "kind": "biller_query",
+      "prompt_key": "ask_biller",
+      "skip_if": "slots.biller"
+    },
+
+    {
+      "id": "resolve_biller",
+      "type": "lookup",
+      "tool": "billers.search",
+      "input_map": { "q": "$slots.biller_keyword" },
+      "output_slot": "biller",
+      "auto_select_if_single": true,
+      "label_template": "{item.icon} {item.name}",
+      "sublabel_template": "{item.category} · {item.accountLabel} {item.sample}",
+      "kind": "biller_pick",
+      "prompt_key": "disambig_biller",
+      "empty_prompt_key": "no_biller",
+      "empty_prompt_args": ["{slots.biller_keyword}"],
+      "on_empty_goto": "ask_biller",
+      "skip_if": "slots.biller"
+    },
+
+    {
+      "id": "ask_target_account",
+      "type": "ask",
+      "slot": "target_account",
+      "kind": "free_text",
+      "prompt_key": "ask_target_account"
+    },
+
+    {
+      "id": "ask_amount",
+      "type": "ask",
+      "slot": "amount",
+      "kind": "amount",
+      "prompt_key": "ask_amount"
+    },
+
+    {
+      "id": "validate_amount",
+      "type": "validate",
+      "slot": "amount",
+      "rules": [
+        { "type": "positive", "msg_key": "invalid_amount_zero" },
+        { "type": "max", "value": 100000, "msg_key": "invalid_amount_high", "msg_args": [100000] },
+        {
+          "type": "max_path",
+          "path": "slots.from_account.balance",
+          "msg_key": "insufficient_balance",
+          "msg_args": ["$slots.from_account.balance", "$slots.amount"]
+        }
+      ],
+      "on_fail_goto": "ask_amount"
+    },
+
+    {
+      "id": "confirm",
+      "type": "confirm",
+      "summary_template": "₹{slots.amount} → {slots.biller.name}",
+      "details": [
+        { "label": "Biller", "value": "{slots.biller.icon} {slots.biller.name}" },
+        { "label": "Account", "value": "{slots.target_account}" },
+        { "label": "Amount", "value": "₹{slots.amount}" },
+        { "label": "From", "value": "{slots.from_account.label} ••{slots.from_account.last4}" }
+      ],
+      "prompt_key": "confirm_bill",
+      "prompt_args": ["$slots.amount", "{slots.biller.name}"]
+    },
+
+    {
+      "id": "execute",
+      "type": "tool_call",
+      "tool": "bills.pay",
+      "input_map": {
+        "biller_id": "$slots.biller.id",
+        "target_account": "$slots.target_account",
+        "amount": "$slots.amount",
+        "from_account_type": "$slots.from_account.type",
+        "idempotency_key": "$session.id"
+      }
+    },
+
+    {
+      "id": "done",
+      "type": "result",
+      "success_key": "success_bill",
+      "args": ["$slots.amount", "{slots.biller.name}"]
+    }
+  ]
+}

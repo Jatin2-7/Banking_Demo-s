@@ -1,0 +1,39 @@
+{
+  "name": "pay_bill — generic 'airtel' matches multiple → DISAMBIGUATE → SELECT → CONFIRM",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "pay airtel bill",
+        "intent": { "intent": "pay_bill", "slots": { "biller_keyword": "airtel" } }
+      },
+      "expect": { "state": "DISAMBIGUATE", "asking_for": "biller" }
+    },
+    {
+      "input": { "type": "SELECTION", "optionId": "b6" },
+      "expect": { "state": "FILL", "asking_for": "target_account" }
+    },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "9876543210",
+        "intent": { "intent": "pay_bill", "slots": { "target_account": "9876543210" } }
+      },
+      "expect": { "state": "FILL", "asking_for": "amount" }
+    },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "199",
+        "intent": { "intent": "pay_bill", "slots": { "amount": 199 } }
+      },
+      "expect": { "state": "CONFIRM" }
+    },
+    {
+      "input": { "type": "CONFIRMATION", "confirmed": true },
+      "expect": { "state": "DONE", "result_success": true }
+    }
+  ]
+}

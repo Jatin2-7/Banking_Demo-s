@@ -1,0 +1,31 @@
+{
+  "name": "internal_transfer — pick from/to accounts, transfer 1000",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "input": { "type": "START_ACTION", "action": "internal_transfer" },
+      "expect": { "state": "CHOOSE", "asking_for": "from_account" }
+    },
+    {
+      "input": { "type": "SELECTION", "optionId": "a1" },
+      "expect": { "state": "CHOOSE", "asking_for": "to_account" }
+    },
+    {
+      "input": { "type": "SELECTION", "optionId": "a2" },
+      "expect": { "state": "FILL", "asking_for": "amount" }
+    },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "1000",
+        "intent": { "intent": "internal_transfer", "slots": { "amount": 1000 } }
+      },
+      "expect": { "state": "CONFIRM" }
+    },
+    {
+      "input": { "type": "CONFIRMATION", "confirmed": true },
+      "expect": { "state": "DONE", "result_success": true }
+    }
+  ]
+}

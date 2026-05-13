@@ -1,0 +1,25 @@
+{
+  "name": "send_money — amount > savings balance, switch to current account, succeed",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "_comment": "Asks for 50,000 — savings has only 18,500. Should NOT bounce back to ask_amount; should offer the alternative-account picker. Current (60,000) is the only account that qualifies, so auto_select_if_single picks it and we land on CONFIRM with the amount intact.",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "send mom 50000",
+        "intent": { "intent": "send_money", "slots": { "recipient_name": "mom", "amount": 50000 } }
+      },
+      "expect": {
+        "state": "CONFIRM",
+        "action": "send_money",
+        "params": { "amount": 50000, "from_account.type": "current" },
+        "history_includes": "Pick a different account"
+      }
+    },
+    {
+      "input": { "type": "CONFIRMATION", "confirmed": true },
+      "expect": { "state": "DONE", "result_success": true, "bot_last_includes": "50,000" }
+    }
+  ]
+}

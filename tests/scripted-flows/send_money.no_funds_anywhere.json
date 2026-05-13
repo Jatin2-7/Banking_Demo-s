@@ -1,0 +1,29 @@
+{
+  "name": "send_money — amount > every account, fall back to ask_amount with no_funds_anywhere",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "_comment": "₹95,000 exceeds every account (savings 18.5k, current 60k, wallet 2.3k). switch_source_account returns empty, on_empty_goto sends user back to ask_amount with the no_funds_anywhere message.",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "send mom 95000",
+        "intent": { "intent": "send_money", "slots": { "recipient_name": "mom", "amount": 95000 } }
+      },
+      "expect": {
+        "state": "FILL",
+        "asking_for": "amount",
+        "history_includes": "No account has enough"
+      }
+    },
+    {
+      "_comment": "User retries with a feasible amount — flows directly to CONFIRM (savings has 18,500, 200 fits).",
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "200",
+        "intent": { "intent": "send_money", "slots": { "amount": 200 } }
+      },
+      "expect": { "state": "CONFIRM", "params": { "amount": 200 } }
+    }
+  ]
+}

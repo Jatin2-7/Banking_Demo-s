@@ -1,0 +1,19 @@
+{
+  "name": "send_money — cancel mid-flow before confirm",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "send mom 500",
+        "intent": { "intent": "send_money", "slots": { "recipient_name": "mom", "amount": 500 } }
+      },
+      "expect": { "state": "CONFIRM" }
+    },
+    {
+      "input": { "type": "CANCEL" },
+      "expect": { "state": "CANCELLED" }
+    }
+  ]
+}

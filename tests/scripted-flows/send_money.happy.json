@@ -1,0 +1,23 @@
+{
+  "name": "send_money — single contact match, confirm by tap",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "send mom 500",
+        "intent": { "intent": "send_money", "slots": { "recipient_name": "mom", "amount": 500 } }
+      },
+      "expect": {
+        "state": "CONFIRM",
+        "action": "send_money",
+        "params": { "amount": 500, "contact.name": "Mom" }
+      }
+    },
+    {
+      "input": { "type": "CONFIRMATION", "confirmed": true },
+      "expect": { "state": "DONE", "result_success": true, "bot_last_includes": "Mom" }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "pay_bill — recharge airtel prepaid, fully extracted in one shot",
+  "lang": "en",
+  "steps": [
+    { "input": { "type": "INIT" } },
+    {
+      "input": {
+        "type": "TRANSCRIPT",
+        "text": "recharge airtel prepaid 200 to 9999988888",
+        "intent": {
+          "intent": "pay_bill",
+          "slots": {
+            "biller_keyword": "airtel prepaid",
+            "target_account": "9999988888",
+            "amount": 200
+          }
+        }
+      },
+      "expect": { "state": "CONFIRM" }
+    },
+    {
+      "input": { "type": "CONFIRMATION", "confirmed": true },
+      "expect": { "state": "DONE", "result_success": true }
+    }
+  ]
+}
