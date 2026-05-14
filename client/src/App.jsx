@@ -143,21 +143,18 @@ export default function App() {
     runUtteranceRef.current = runUtterance;
   }, [runUtterance]);
 
-  // Hands-free conversation: after each bot turn, if the modal is open and the
-  // session is waiting for the user to speak/respond, automatically arm the
-  // mic. The user only has to tap once to start the conversation.
+  // Hands-free: arm the mic once when the bot is done thinking and the session
+  // is waiting for input. Do NOT depend on `speech.listening` — every time
+  // recognition ends, listening flips false and would re-run this effect and
+  // schedule another start() ~600ms later, causing a start/stop blink loop.
   useEffect(() => {
     if (!open) return;
     if (mpinOpen) return;
     if (!speech.supported) return;
-    if (speech.listening) return;
     if (session?.thinking || session?.executing) return;
     if (!VOICE_INPUT_STATES.has(session?.state)) return;
 
     const t = setTimeout(() => {
-      // Re-check listening state — user may have started/stopped manually
-      // during the delay.
-      if (speech.listening) return;
       try {
         speech.start((finalText) => {
           if (!finalText) return;
@@ -175,7 +172,8 @@ export default function App() {
     session?.history?.length,
     session?.thinking,
     session?.executing,
-    speech,
+    speech.supported,
+    speech.start,
   ]);
 
   const handleMicTap = useCallback(() => {

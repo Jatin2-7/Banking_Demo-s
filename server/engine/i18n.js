@@ -14,6 +14,8 @@ const GLOBAL = {
   en: {
     greet: 'Hi! What would you like to do?',
     didnt_catch: "Sorry, I didn't catch that.",
+    llm_unavailable:
+      'The language model is not available (missing or invalid OPENAI_API_KEY). Add your key to the project root .env file, restart the server, then try again.',
     cancelled: 'No problem — cancelled. Nothing was deducted.',
     sayYesPrompt: 'Say "yes" to confirm or "no" to cancel.',
     network_error: 'Network glitch. Try again — nothing was deducted.',
@@ -23,6 +25,8 @@ const GLOBAL = {
   hi: {
     greet: 'नमस्ते! क्या करना है?',
     didnt_catch: 'समझ नहीं आया।',
+    llm_unavailable:
+      'भाषा मॉडल उपलब्ध नहीं है (OPENAI_API_KEY)। प्रोजेक्ट रूट की .env में कुंजी डालकर सर्वर रीस्टार्ट करें।',
     cancelled: 'कोई बात नहीं — रद्द कर दिया।',
     sayYesPrompt: '"हाँ" बोलें या "नहीं"।',
     network_error: 'नेटवर्क समस्या। फिर से कोशिश करें।',
@@ -32,6 +36,8 @@ const GLOBAL = {
   te: {
     greet: 'నమస్కారం! మీరు ఏమి చేయాలనుకుంటున్నారు?',
     didnt_catch: 'అర్థం కాలేదు.',
+    llm_unavailable:
+      'భాషా మోడల్ అందుబాటులో లేదు (OPENAI_API_KEY). ప్రాజెక్ట్ రూట్ .env లో కీ వేసి సర్వర్ రీస్టార్ట్ చేయండి.',
     cancelled: 'ఫర్వాలేదు — రద్దు చేశాను.',
     sayYesPrompt: '"అవును" లేదా "కాదు" చెప్పండి.',
     network_error: 'నెట్‌వర్క్ సమస్య.',
@@ -41,6 +47,8 @@ const GLOBAL = {
   ta: {
     greet: 'வணக்கம்! என்ன செய்ய வேண்டும்?',
     didnt_catch: 'புரியவில்லை.',
+    llm_unavailable:
+      'மொழி மாதிரி இல்லை (OPENAI_API_KEY). திட்ட மூல .env இல் விசையைச் சேர்த்து சேவையை மறுதொடக்கம் செய்யவும்.',
     cancelled: 'பரவாயில்லை — ரத்து செய்யப்பட்டது.',
     sayYesPrompt: '"ஆம்" அல்லது "இல்லை" சொல்லுங்கள்.',
     network_error: 'நெட்வொர்க் சிக்கல்.',

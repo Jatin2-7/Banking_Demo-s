@@ -20,10 +20,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const API_BASE = (import.meta.env?.VITE_API_BASE || 'http://localhost:3001').replace(/\/$/, '');
 
-const SILENCE_MS = 1500; // pause length that ends an utterance
-const MIN_SPEECH_MS = 250; // ignore very short blips before arming silence
+const SILENCE_MS = 2200; // pause length that ends an utterance
+const MIN_SPEECH_MS = 400; // ignore very short blips before arming silence
 const MAX_DURATION_MS = 15000; // hard cap so a stuck recorder can't run forever
 const SILENCE_THRESHOLD = 0.012; // RMS — calibrated empirically against laptop mics
+const LOUD_FRAMES_NEEDED = 4; // require sustained audio before treating as "speech started"
 
 function pickMime() {
   if (typeof MediaRecorder === 'undefined') return null;
@@ -58,6 +59,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
   const silenceTimerRef = useRef(null);
   const hardTimerRef = useRef(null);
   const speechStartedAtRef = useRef(0);
+  const loudStreakRef = useRef(0);
   const onFinalRef = useRef(null);
   const abortedRef = useRef(false);
   const langRef = useRef(lang);
@@ -100,6 +102,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
       streamRef.current = null;
     }
     speechStartedAtRef.current = 0;
+    loudStreakRef.current = 0;
   }, []);
 
   // Tear everything down on unmount so a route change can't leak the mic.
@@ -200,7 +203,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
         }
       };
 
-      // ── VAD: stop on ~1.5s of silence after speech detected ──
+      // ── VAD: stop after silence once real speech has started ──
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         const ctx = new Ctx();
@@ -227,14 +230,20 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
 
           const now = performance.now();
           if (rms > SILENCE_THRESHOLD) {
-            if (!speechStartedAtRef.current) speechStartedAtRef.current = now;
-            armSilence();
-          } else if (
-            speechStartedAtRef.current &&
-            now - speechStartedAtRef.current > MIN_SPEECH_MS &&
-            !silenceTimerRef.current
-          ) {
-            armSilence();
+            loudStreakRef.current += 1;
+            if (loudStreakRef.current >= LOUD_FRAMES_NEEDED) {
+              if (!speechStartedAtRef.current) speechStartedAtRef.current = now;
+              armSilence();
+            }
+          } else {
+            loudStreakRef.current = 0;
+            if (
+              speechStartedAtRef.current &&
+              now - speechStartedAtRef.current > MIN_SPEECH_MS &&
+              !silenceTimerRef.current
+            ) {
+              armSilence();
+            }
           }
           rafRef.current = requestAnimationFrame(tick);
         };

@@ -24,8 +24,8 @@ Two STT backends are wired up. Pick one with a single env flag.
 
 | Backend                         | Pros                                                                | Trigger                                                                        |
 | ------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **ElevenLabs Scribe** (default) | Same model in every browser, 4-language support, server-side keys.  | `client/.env` → `VITE_USE_ELEVENLABS_STT=true` + root `.env` → `ELEVENLABS_API_KEY=…`, `ELEVENLABS_STT_MODEL=scribe_v2` |
-| **Web Speech API**              | Zero network, works offline, no API key needed.                     | `client/.env` → `VITE_USE_ELEVENLABS_STT=false` (Chrome / Edge only)           |
+| **Web Speech API** (default when unset) | Zero extra setup, no API key; browser does STT. | Omit flag or set `client/.env` → `VITE_USE_ELEVENLABS_STT=false`. Best in **Chrome / Edge** (limited elsewhere). |
+| **ElevenLabs Scribe** (opt-in)   | Same model across browsers; server holds the key.                    | `client/.env` → `VITE_USE_ELEVENLABS_STT=true` + root `.env` → `ELEVENLABS_API_KEY=…`, `ELEVENLABS_STT_MODEL=scribe_v2` |
 
 The ElevenLabs path is a small proxy: the browser captures audio with
 `MediaRecorder` + a 1.5 s VAD silence-stop, POSTs the blob to
@@ -33,6 +33,10 @@ The ElevenLabs path is a small proxy: the browser captures audio with
 `multipart/form-data` to `https://api.elevenlabs.io/v1/speech-to-text`
 with `model_id=$ELEVENLABS_STT_MODEL`. The API key never reaches the
 client bundle. Hit `GET /api/health` to verify the model is wired up.
+
+### OpenAI (intent extraction)
+
+Spoken or typed lines like “send 500 to Rahul” are parsed on the **server** with **`OPENAI_API_KEY`** (repo **root** `.env`, loaded by `server/index.js`). Run the full stack from the repo root: **`npm run dev`** (starts API + Vite). If the key is missing or invalid, turns will not extract slots; the assistant will say the model is unavailable instead of looping on “didn’t catch that.”
 
 ## What the demo proves
 
