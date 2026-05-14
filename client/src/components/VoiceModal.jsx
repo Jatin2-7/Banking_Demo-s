@@ -27,7 +27,7 @@ function Wave({ active }) {
 function BotAvatar({ size = 26 }) {
   return (
     <div
-      className="rounded-full bg-gradient-to-br from-brand to-brand-light flex items-center justify-center text-white font-bold shrink-0 shadow-md select-none ring-1 ring-white/60"
+      className="rounded-full bg-gradient-to-br from-bank-gold to-amber-500 flex items-center justify-center text-bank-purpleDeep font-bold shrink-0 shadow-md select-none ring-2 ring-bank-gold/50"
       style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
     >
       B
@@ -49,8 +49,8 @@ function ChatBubble({ role, text }) {
       <div
         className={`max-w-[78%] px-3.5 py-2 text-[13px] leading-snug whitespace-pre-line shadow-md ${
           isUser
-            ? 'bg-brand/90 text-white rounded-2xl rounded-br-md backdrop-blur-md ring-1 ring-white/15'
-            : 'bg-white/75 text-ink rounded-2xl rounded-bl-md backdrop-blur-md ring-1 ring-white/60'
+            ? 'bg-gradient-to-br from-brand to-brand-dark text-white rounded-2xl rounded-br-md backdrop-blur-md ring-1 ring-bank-gold/35'
+            : 'bg-white/90 text-ink rounded-2xl rounded-bl-md backdrop-blur-md ring-1 ring-bank-gold/25'
         }`}
       >
         {text}
@@ -64,7 +64,7 @@ function OptionCard({ option, kind, onPick }) {
   return (
     <button
       onClick={() => onPick(option.id)}
-      className="press w-full text-left flex items-center gap-3 bg-white/85 backdrop-blur-md ring-1 ring-white/60 hover:ring-brand/40 rounded-xl px-3 py-2.5 shadow-md"
+      className="press w-full text-left flex items-center gap-3 bg-white/92 backdrop-blur-md ring-1 ring-bank-gold/20 hover:ring-bank-gold/50 rounded-xl px-3 py-2.5 shadow-md"
     >
       {isContact ? (
         <div
@@ -74,7 +74,7 @@ function OptionCard({ option, kind, onPick }) {
           {initialsOf(option.label)}
         </div>
       ) : (
-        <div className="w-9 h-9 rounded-full bg-brand/10 flex items-center justify-center text-brand text-sm shrink-0">
+        <div className="w-9 h-9 rounded-full bg-bank-gold/20 flex items-center justify-center text-bank-purpleMid text-sm shrink-0">
           {option.label.match(/^\p{Emoji}/u)?.[0] || '•'}
         </div>
       )}
@@ -175,7 +175,7 @@ export default function VoiceModal({
           className="absolute inset-0 backdrop-blur-[3px]"
           style={{
             background:
-              'linear-gradient(180deg, rgba(245,246,250,0.35) 0%, rgba(245,246,250,0.05) 30%, rgba(245,246,250,0.35) 100%)',
+              'linear-gradient(180deg, rgba(45,27,78,0.55) 0%, rgba(26,15,48,0.35) 40%, rgba(45,27,78,0.5) 100%)',
           }}
           onClick={onClose}
         />
@@ -194,7 +194,7 @@ export default function VoiceModal({
               <div className="text-[11.5px] font-semibold text-ink leading-tight truncate flex items-center gap-1.5">
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    isListening ? 'bg-orange-500 animate-pulse' : 'bg-emerald-500'
+                    isListening ? 'bg-bank-gold animate-pulse' : 'bg-emerald-500'
                   }`}
                 />
                 {isListening
@@ -210,7 +210,7 @@ export default function VoiceModal({
               </div>
             </div>
             {session?.pending?.progress && (
-              <span className="text-[9.5px] px-1.5 py-0.5 rounded-full bg-brand/10 text-brand font-bold shrink-0">
+              <span className="text-[9.5px] px-1.5 py-0.5 rounded-full bg-bank-gold/20 text-bank-purpleMid font-bold shrink-0">
                 {session.pending.progress.index}/{session.pending.progress.total}
               </span>
             )}
@@ -221,7 +221,7 @@ export default function VoiceModal({
                   onClick={() => onChangeLang(l.code)}
                   className={`text-[9.5px] w-6 h-6 rounded-full font-semibold flex items-center justify-center transition-colors ${
                     lang === l.code
-                      ? 'bg-brand text-white'
+                      ? 'bg-gradient-to-br from-bank-gold to-amber-500 text-bank-purpleDeep shadow-sm'
                       : 'bg-white/80 text-muted hover:text-ink ring-1 ring-divider/60'
                   }`}
                   title={l.label}
@@ -267,7 +267,7 @@ export default function VoiceModal({
               animate={{ opacity: 1 }}
               className="flex justify-end"
             >
-              <div className="text-[12px] text-brand italic px-3 py-1 rounded-full bg-white/70 backdrop-blur-md ring-1 ring-brand/20 shadow-sm">
+              <div className="text-[12px] text-bank-purpleMid italic px-3 py-1 rounded-full bg-white/85 backdrop-blur-md ring-1 ring-bank-gold/30 shadow-sm">
                 "{liveTranscript}"
               </div>
             </motion.div>
@@ -297,7 +297,7 @@ export default function VoiceModal({
             <div className="flex items-end gap-2 justify-start">
               <BotAvatar />
               <div className="bg-white/75 backdrop-blur-md ring-1 ring-white/60 rounded-2xl rounded-bl-md px-3.5 py-2 flex items-center gap-2 shadow-md">
-                <svg className="w-4 h-4 animate-spin text-brand" viewBox="0 0 24 24" fill="none">
+                <svg className="w-4 h-4 animate-spin text-bank-purpleMid" viewBox="0 0 24 24" fill="none">
                   <circle
                     cx="12"
                     cy="12"
@@ -362,8 +362,8 @@ export default function VoiceModal({
                 !speechSupported
                   ? 'bg-muted/40'
                   : isListening
-                    ? 'bg-orange-500 ring-4 ring-orange-500/25'
-                    : 'bg-gradient-to-br from-brand to-brand-light'
+                    ? 'bg-bank-gold ring-4 ring-bank-gold/30 text-bank-purpleDeep'
+                    : 'bg-gradient-to-br from-brand to-brand-light ring-1 ring-bank-gold/40'
               }`}
               title={speechSupported ? 'Tap to record' : 'Voice not supported in this browser'}
               aria-label={isListening ? 'Stop recording' : 'Start recording'}
@@ -396,7 +396,7 @@ export default function VoiceModal({
               disabled={!text.trim()}
               className={`press w-9 h-9 rounded-full flex items-center justify-center text-white shrink-0 transition-all ${
                 text.trim()
-                  ? 'bg-gradient-to-br from-brand to-brand-dark shadow-sm'
+                  ? 'bg-gradient-to-br from-bank-gold to-amber-500 text-bank-purpleDeep shadow-sm ring-1 ring-white/40'
                   : 'bg-brand/30 cursor-not-allowed'
               }`}
               aria-label="Send"

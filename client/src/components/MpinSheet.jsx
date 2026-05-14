@@ -61,7 +61,7 @@ export default function MpinSheet({ open, lang, onCancel, onSuccess }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="absolute inset-0 z-[60] flex items-end"
-        style={{ background: 'rgba(15,22,96,0.55)' }}
+        style={{ background: 'rgba(26,15,48,0.72)' }}
         onClick={onCancel}
       >
         <motion.div
@@ -77,7 +77,7 @@ export default function MpinSheet({ open, lang, onCancel, onSuccess }) {
 
           <div className="mt-4 flex flex-col items-center">
             <div
-              className="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand text-xl"
+              className="w-12 h-12 rounded-2xl bg-gradient-to-br from-bank-gold/25 to-amber-500/20 flex items-center justify-center text-bank-purpleMid text-xl ring-1 ring-bank-gold/40"
               aria-hidden
             >
               🔒

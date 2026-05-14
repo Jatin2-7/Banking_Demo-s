@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { STRINGS } from '../i18n/strings.js';
 
 function Confetti() {
-  const colors = ['#FF6B00', '#1A237E', '#00875A', '#C2185B', '#5E35B1'];
+  const colors = ['#F5C518', '#3D2666', '#00875A', '#C9A227', '#5B3D8A'];
   const dots = Array.from({ length: 26 });
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -33,7 +33,7 @@ export default function ResultCard({ session, onDone, onRetry, lang }) {
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative rounded-2xl bg-white/85 backdrop-blur-xl ring-1 ring-white/60 shadow-xl overflow-hidden"
+        className="relative rounded-2xl bg-white/90 backdrop-blur-xl ring-2 ring-bank-gold/20 shadow-xl overflow-hidden"
       >
         <Confetti />
         <div className="px-5 pt-5 pb-4 flex flex-col items-center text-center relative z-10">
@@ -66,7 +66,7 @@ export default function ResultCard({ session, onDone, onRetry, lang }) {
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="rounded-2xl bg-white/85 backdrop-blur-xl ring-1 ring-white/60 shadow-xl overflow-hidden"
+        className="rounded-2xl bg-white/90 backdrop-blur-xl ring-2 ring-bank-gold/20 shadow-xl overflow-hidden"
       >
         <div className="px-5 pt-5 pb-4 flex flex-col items-center text-center">
           <div className="w-14 h-14 rounded-full bg-rose-500 flex items-center justify-center text-white text-2xl mb-2">
@@ -103,7 +103,7 @@ export default function ResultCard({ session, onDone, onRetry, lang }) {
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="rounded-2xl bg-white/85 backdrop-blur-xl ring-1 ring-white/60 shadow-xl"
+        className="rounded-2xl bg-white/90 backdrop-blur-xl ring-2 ring-bank-gold/20 shadow-xl"
       >
         <div className="px-5 py-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center text-muted text-lg">

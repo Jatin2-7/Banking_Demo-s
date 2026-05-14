@@ -21,11 +21,11 @@ export default function ConfirmCard({ session, onConfirm, onCancel, lang }) {
 
   const action = session.action;
   const accent = {
-    send_money: '#1A237E',
-    internal_transfer: '#5E35B1',
-    pay_bill: '#FF6B00',
+    send_money: '#3D2666',
+    internal_transfer: '#5B3D8A',
+    pay_bill: '#C9A227',
     book_flight: '#0288D1',
-  }[action] || '#1A237E';
+  }[action] || '#3D2666';
 
   // Pull out the primary fields so we can render them as hero rows. Anything
   // left over is shown as a subtle "more details" list at the bottom.
@@ -57,7 +57,7 @@ export default function ConfirmCard({ session, onConfirm, onCancel, lang }) {
       initial={{ opacity: 0, y: 12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 360, damping: 30 }}
-      className="rounded-2xl bg-white/85 backdrop-blur-xl ring-1 ring-white/60 shadow-xl overflow-hidden"
+      className="rounded-2xl bg-white/90 backdrop-blur-xl ring-2 ring-bank-gold/25 shadow-xl overflow-hidden"
     >
       {/* Header: tinted banner + tiny label */}
       <div
