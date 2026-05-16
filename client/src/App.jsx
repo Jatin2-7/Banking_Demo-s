@@ -1,21 +1,23 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import PhoneFrame from './components/PhoneFrame';
 import HomeScreen from './components/HomeScreen';
+import ImpsFundTransferScreen from './components/ImpsFundTransferScreen';
+import LoanApplicationScreen from './components/LoanApplicationScreen';
 import VoiceModal from './components/VoiceModal';
 import ConfirmCard from './components/ConfirmCard';
 import ResultCard from './components/ResultCard';
 import DemoPanel from './components/DemoPanel';
 import MpinSheet from './components/MpinSheet';
+import RMHelpPrompt from './components/RMHelpPrompt.jsx';
+import { useRageDetect } from './hooks/useRageDetect.js';
 import { useSpeech } from './hooks/useSpeech';
 import { useElevenSpeech } from './hooks/useElevenSpeech';
+import { ELEVENLABS_STT_ENABLED } from './config/voiceBackend.js';
 
 // Pick the STT backend at module load (env vars are baked in at build time
 // so this is stable across renders — safe to use as the hook reference).
-const USE_ELEVEN_STT =
-  String(import.meta.env?.VITE_USE_ELEVENLABS_STT || '')
-    .trim()
-    .toLowerCase() === 'true';
-const useVoiceHook = USE_ELEVEN_STT ? useElevenSpeech : useSpeech;
+const useVoiceHook = ELEVENLABS_STT_ENABLED ? useElevenSpeech : useSpeech;
 import {
   cancelSession,
   createSession,
@@ -57,9 +59,22 @@ export default function App() {
   const [forceFail, setFF] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [mpinOpen, setMpinOpen] = useState(false);
+  const [impsOpen, setImpsOpen] = useState(false);
+  const [loanLosOpen, setLoanLosOpen] = useState(false);
+  const [rmUpiPromptOpen, setRmUpiPromptOpen] = useState(false);
+  const [impsPrimer, setImpsPrimer] = useState('');
+  const [loanPrimer, setLoanPrimer] = useState('');
 
   const bcp47 = LANGUAGES.find((l) => l.code === lang)?.bcp47 || 'en-IN';
   const speech = useVoiceHook({ lang: bcp47 });
+
+  // Rage detection for UPI voice flow — fires only when the voice modal is already open
+  // (HomeScreen has its own rage detection for the home AI assistant)
+  const { containerProps: upiRageProps, dismiss: dismissUpiRage } = useRageDetect({
+    onFrustrated: () => {
+      if (open && !impsOpen && !loanLosOpen) setRmUpiPromptOpen(true);
+    },
+  });
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
@@ -309,6 +324,23 @@ export default function App() {
     refresh();
   }, [session, refresh, refreshAccounts]);
 
+  // Called by HomeScreen's AI assistant when navigate_to tool fires
+  const handleNavigate = useCallback((destination, context) => {
+    if (destination === 'upi_payment') {
+      setOpen(true);
+      // Pre-fill the UPI utterance if context was provided
+      if (context) {
+        setTimeout(() => runUtterance(context), 400);
+      }
+    } else if (destination === 'fund_transfer') {
+      setImpsPrimer(context || '');
+      setImpsOpen(true);
+    } else if (destination === 'loan_application') {
+      setLoanPrimer(context || '');
+      setLoanLosOpen(true);
+    }
+  }, [runUtterance]);
+
   const inlineExtra = (
     <>
       {session.state === 'CONFIRM' && (
@@ -328,10 +360,43 @@ export default function App() {
   );
 
   return (
-    <>
+    <div {...upiRageProps} className="contents">
       <PhoneFrame
         overlay={
           <>
+            <RMHelpPrompt
+              open={rmUpiPromptOpen}
+              onHelp={() => {
+                setRmUpiPromptOpen(false);
+                dismissUpiRage();
+                setOpen(true);
+              }}
+              onDismiss={() => {
+                setRmUpiPromptOpen(false);
+                dismissUpiRage();
+              }}
+            />
+            <AnimatePresence>
+              {impsOpen && (
+                <ImpsFundTransferScreen
+                  key="imps-fund"
+                  onClose={() => { setImpsOpen(false); setImpsPrimer(''); }}
+                  lang={lang}
+                  accounts={accounts}
+                  aiPrimer={impsPrimer}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {loanLosOpen && (
+                <LoanApplicationScreen
+                  key="loan-los"
+                  onClose={() => { setLoanLosOpen(false); setLoanPrimer(''); }}
+                  lang={lang}
+                  aiPrimer={loanPrimer}
+                />
+              )}
+            </AnimatePresence>
             <VoiceModal
               open={open}
               session={session}
@@ -359,6 +424,9 @@ export default function App() {
           lang={lang}
           onMicTap={handleMicTap}
           onQuickAction={handleOpenWithAction}
+          onFundTransferImps={() => setImpsOpen(true)}
+          onApplyNewLoan={() => setLoanLosOpen(true)}
+          onNavigate={handleNavigate}
           accounts={accounts}
         />
       </PhoneFrame>
@@ -370,6 +438,6 @@ export default function App() {
         onResetBalances={handleResetBalances}
         onChangeLang={handleChangeLang}
       />
-    </>
+    </div>
   );
 }

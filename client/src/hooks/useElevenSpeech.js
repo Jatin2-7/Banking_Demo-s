@@ -17,8 +17,7 @@
 // Manual stop() / abort() also work for tap-to-stop or cancel-on-close.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-const API_BASE = (import.meta.env?.VITE_API_BASE || 'http://localhost:3001').replace(/\/$/, '');
+import { resolveApiBase } from '../lib/aguiClient.js';
 
 const SILENCE_MS = 2200; // pause length that ends an utterance
 const MIN_SPEECH_MS = 400; // ignore very short blips before arming silence
@@ -181,7 +180,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
           .toLowerCase();
 
         try {
-          const r = await fetch(`${API_BASE}/api/stt?lang=${encodeURIComponent(langCode)}`, {
+          const r = await fetch(`${resolveApiBase()}/api/stt?lang=${encodeURIComponent(langCode)}`, {
             method: 'POST',
             headers: { 'Content-Type': effectiveMime },
             body: blob,

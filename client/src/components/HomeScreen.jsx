@@ -1,6 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { ACCOUNTS as FALLBACK_ACCOUNTS } from '../data/mock.js';
 import { STRINGS } from '../i18n/strings.js';
+import LoanAguiPanel from './LoanAguiPanel.jsx';
+import RMHelpPrompt from './RMHelpPrompt.jsx';
+import { useRageDetect } from '../hooks/useRageDetect.js';
+import { HOME_AGUI_AGENT_ID } from '../lib/aguiClient.js';
 
 function formatInr(n) {
   return `₹${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -99,9 +103,15 @@ function BottomNavItem({ icon, label, onClick }) {
   );
 }
 
-export default function HomeScreen({ lang, onMicTap, onQuickAction, accounts }) {
+export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransferImps, onApplyNewLoan, onNavigate, accounts }) {
   const L = STRINGS[lang] || STRINGS.en;
   const [balancesVisible, setBalancesVisible] = useState(false);
+  const [homeAiOpen, setHomeAiOpen] = useState(false);
+  const [rmHomePromptOpen, setRmHomePromptOpen] = useState(false);
+
+  const { containerProps: homeRageProps, dismiss: dismissHomeRage } = useRageDetect({
+    onFrustrated: () => { if (!homeAiOpen) setRmHomePromptOpen(true); },
+  });
 
   const liveAccounts = accounts && accounts.length ? accounts : FALLBACK_ACCOUNTS;
 
@@ -155,7 +165,7 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, accounts }) 
   );
 
   return (
-    <div className="relative flex min-h-full flex-col pb-2">
+    <div className="relative flex min-h-full flex-col pb-2" {...homeRageProps}>
       {/* Header — symmetric 3-column: menu | logo | tools */}
       <header className="shrink-0 px-3 pt-1.5 pb-2">
         <div
@@ -354,7 +364,7 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, accounts }) 
               </svg>
             }
             label={L.tileFundTransfers}
-            onClick={() => onQuickAction('internal_transfer')}
+            onClick={() => (onFundTransferImps ? onFundTransferImps() : onQuickAction('internal_transfer'))}
           />
           <GoldQuickTile
             icon={<span className="text-[10px] font-black tracking-tighter">VBX</span>}
@@ -454,7 +464,7 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, accounts }) 
               </div>
             }
             label={L.svcNewLoan}
-            onClick={() => onQuickAction('check_balance')}
+            onClick={() => (onApplyNewLoan ? onApplyNewLoan() : onQuickAction('check_balance'))}
           />
           <ServiceTile
             icon={
@@ -532,15 +542,50 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, accounts }) 
         </div>
       </nav>
 
-      {/* Help FAB — aligned to safe inset above home indicator */}
+      {/* RM Help Prompt — rage click trigger */}
+      <RMHelpPrompt
+        open={rmHomePromptOpen}
+        onHelp={() => {
+          setRmHomePromptOpen(false);
+          dismissHomeRage();
+          setHomeAiOpen(true);
+        }}
+        onDismiss={() => {
+          setRmHomePromptOpen(false);
+          dismissHomeRage();
+        }}
+      />
+
+      {/* Universal AI Assistant FAB */}
       <button
         type="button"
-        onClick={onMicTap}
+        onClick={() => setHomeAiOpen(true)}
+        data-ai-fab
         className="press-bright absolute bottom-[5.75rem] right-3 z-30 flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-200/80 bg-white text-xl shadow-lg"
-        aria-label={L.mascotHelpAria}
+        aria-label="Open AI Assistant"
+        title="AI Assistant"
       >
         <span className="translate-y-px">🧑‍💼</span>
       </button>
+
+      {/* Universal AI Assistant Panel */}
+      <LoanAguiPanel
+        agentId={HOME_AGUI_AGENT_ID}
+        open={homeAiOpen}
+        onClose={() => setHomeAiOpen(false)}
+        formValues={{}}
+        onFormChange={() => {}}
+        onToolCall={(name, args) => {
+          if (name === 'navigate_to' && args?.destination) {
+            setHomeAiOpen(false);
+            onNavigate?.(args.destination, args.context || '');
+          }
+        }}
+        greeting="Namaste! 🙏 I'm Aarav, your Indian Bank assistant. Tell me what you'd like to do — pay someone, transfer funds, apply for a loan, or anything else!"
+        assistTitle="AI Banking Assistant"
+        showReasoning
+        lang={lang}
+      />
     </div>
   );
 }

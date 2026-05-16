@@ -3,9 +3,7 @@
 // The dialogue state machine lives in server/engine/*. This file is just the
 // HTTP edge: route a turn, call processInput, return the SessionView.
 
-import { config as loadEnv } from 'dotenv';
-import { fileURLToPath } from 'url';
-import path from 'path';
+import './envSetup.js';
 import express from 'express';
 import cors from 'cors';
 
@@ -14,10 +12,7 @@ import { registry } from './manifestRegistry.js';
 import { processInput } from './engine/engine.js';
 import { sessions, createSession } from './engine/session.js';
 import { log, sessionLog } from './lib/log.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-loadEnv({ path: path.resolve(__dirname, '../.env') });
-loadEnv();
+import { handleLoanAguiPost } from './agui/loanAguiRoute.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,7 +24,7 @@ app.use(cors());
 app.use(express.json({ limit: '256kb' }));
 
 app.get('/api/health', (_req, res) => {
-  const k = process.env.OPENAI_API_KEY;
+  const k = process.env.OPENAI_API_KEY?.trim();
   const sk = process.env.ELEVENLABS_API_KEY;
   res.json({
     ok: true,
@@ -41,6 +36,7 @@ app.get('/api/health', (_req, res) => {
       hasKey: Boolean(sk && sk.length > 20),
     },
     actions: registry.list().map((m) => m.action),
+    agui: { loanAgent: 'indian_bank_loan_los' },
   });
 });
 
@@ -58,14 +54,17 @@ app.post(
   '/api/stt',
   express.raw({ type: ['audio/*', 'application/octet-stream'], limit: '25mb' }),
   async (req, res) => {
-    const apiKey = process.env.ELEVENLABS_API_KEY;
+    const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
     if (!apiKey) return res.status(503).json({ error: 'elevenlabs_not_configured' });
     if (!req.body || !req.body.length) return res.status(400).json({ error: 'audio_required' });
 
     const contentType = req.get('content-type') || 'audio/webm';
-    const lang = String(req.query.lang || '')
-      .slice(0, 8)
-      .toLowerCase();
+    // ElevenLabs expects ISO 639-1 (e.g. "en"); "en-IN" from BCP-47 can cause API errors → 502.
+    const langPrimary = String(req.query.lang || '')
+      .toLowerCase()
+      .split(/[-_]/)[0]
+      .replace(/[^a-z]/g, '')
+      .slice(0, 2);
     const ext = contentType.includes('mp4')
       ? 'm4a'
       : contentType.includes('wav')
@@ -74,19 +73,25 @@ app.post(
           ? 'ogg'
           : 'webm';
 
-    try {
+    // Helper: call ElevenLabs STT with a specific language_code (or none).
+    const callElevenLabs = async (forceLang) => {
       const fd = new FormData();
       fd.append('file', new Blob([req.body], { type: contentType }), `audio.${ext}`);
       fd.append('model_id', STT_MODEL);
-      if (lang) fd.append('language_code', lang);
-
-      const t0 = Date.now();
+      const lang = forceLang || langPrimary;
+      if (lang && lang.length === 2) fd.append('language_code', lang);
       const r = await fetch(STT_ENDPOINT, {
         method: 'POST',
         headers: { 'xi-api-key': apiKey },
         body: fd,
       });
-      const ms = Date.now() - t0;
+      return r;
+    };
+
+    try {
+      const t0 = Date.now();
+      let r = await callElevenLabs(null);
+      let ms = Date.now() - t0;
 
       if (!r.ok) {
         const detail = (await r.text().catch(() => '')).slice(0, 600);
@@ -94,13 +99,35 @@ app.post(
         return res.status(502).json({ error: 'stt_failed', status: r.status, detail });
       }
 
-      const data = await r.json().catch(() => ({}));
+      let data = await r.json().catch(() => ({}));
+
+      // ElevenLabs auto-detects Hindi audio as Urdu (same spoken language, different script).
+      // If we get Urdu back and the caller didn't explicitly request Urdu, re-request forcing
+      // Hindi (Devanagari) so the transcript is in a script the user expects.
+      if (data?.language_code === 'ur' && langPrimary !== 'ur') {
+        log.info({ detected: 'ur', retrying: 'hi' }, 'stt ur→hi retry');
+        const t1 = Date.now();
+        const r2 = await callElevenLabs('hi');
+        if (r2.ok) {
+          const data2 = await r2.json().catch(() => ({}));
+          if (data2?.text) {
+            data = data2;
+            ms += Date.now() - t1;
+          }
+        }
+      }
+
       const text = String(data?.text || '').trim();
       log.info(
-        { ms, model: STT_MODEL, lang: lang || null, bytes: req.body.length, chars: text.length },
+        { ms, model: STT_MODEL, lang: data?.language_code || langPrimary || null, bytes: req.body.length, chars: text.length },
         'stt ok',
       );
-      res.json({ ok: true, text, model: STT_MODEL, language: data?.language_code || lang || null });
+      res.json({
+        ok: true,
+        text,
+        model: STT_MODEL,
+        language: data?.language_code || langPrimary || null,
+      });
     } catch (err) {
       log.error({ err: err?.message || String(err) }, 'stt handler error');
       res.status(500).json({ error: 'stt_error', message: String(err?.message || err) });
@@ -108,7 +135,88 @@ app.post(
   },
 );
 
+// ── Cartesia Text-to-Speech proxy ──────────────────────────────────
+//
+//   POST /api/tts   { text: string, lang?: "en" | "hi" }
+//   →  audio/mpeg bytes
+//
+// Uses Cartesia sonic-3. Add CARTESIA_API_KEY to .env to activate.
+// Set CARTESIA_VOICE_ID to any voice from https://play.cartesia.ai/voices
+// (recommended Indian voices: Ishan for Hinglish, Ayush / Amit for Hindi).
+// Returns 503 (client falls back to browser TTS) if key not configured.
+const CARTESIA_TTS_ENDPOINT = 'https://api.cartesia.ai/tts/bytes';
+const CARTESIA_VERSION = '2026-03-01';
+
+// Detect language: any Devanagari fraction → "hi", else "en"
+function detectTtsLang(text, hint) {
+  const devanagari = (text.match(/[\u0900-\u097F]/g) || []).length;
+  if (devanagari / (text.replace(/\s/g, '').length || 1) > 0.05) return 'hi';
+  if (hint === 'hi' || hint === 'en') return hint;
+  return 'en';
+}
+
+app.post('/api/tts', express.json({ limit: '32kb' }), async (req, res) => {
+  const cartesiaKey = process.env.CARTESIA_API_KEY?.trim();
+  if (!cartesiaKey || cartesiaKey === 'your_cartesia_api_key_here') {
+    // No key configured — tell the client so it falls back to browser TTS
+    return res.status(503).json({ error: 'cartesia_not_configured', hint: 'Set CARTESIA_API_KEY in .env' });
+  }
+
+  const text = String(req.body?.text || '').trim();
+  if (!text) return res.status(400).json({ error: 'text_required' });
+
+  const lang = detectTtsLang(text, String(req.body?.lang || ''));
+  const modelId = process.env.CARTESIA_MODEL || 'sonic-3';
+
+  // Use per-language voice IDs for best quality:
+  //   Hindi/Hinglish → Ishan "Ally"  (designed for Hinglish customer support)
+  //   English        → Katie "Friendly Fixer" (Cartesia's recommended voice-agent voice)
+  const voiceId = lang === 'hi'
+    ? (process.env.CARTESIA_VOICE_ID_HI || 'fd2ada67-c2d9-4afe-b474-6386b87d8fc3')
+    : (process.env.CARTESIA_VOICE_ID_EN || 'f786b574-daa5-4673-aa0c-cbe3e8534c02');
+
+  const body = {
+    model_id: modelId,
+    transcript: text,
+    voice: { mode: 'id', id: voiceId },
+    language: lang,
+    output_format: { container: 'mp3', sample_rate: 44100, bit_rate: 128000 },
+    // sonic-3 generation_config: calm, natural banking pace
+    generation_config: { speed: 0.9, emotion: 'calm' },
+  };
+
+  try {
+    const t0 = Date.now();
+    const cRes = await fetch(CARTESIA_TTS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': cartesiaKey,
+        'Cartesia-Version': CARTESIA_VERSION,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!cRes.ok) {
+      const detail = await cRes.text().catch(() => '');
+      log.error({ status: cRes.status, detail: detail.slice(0, 300) }, 'cartesia tts failed');
+      return res.status(502).json({ error: 'tts_failed', status: cRes.status, detail: detail.slice(0, 300) });
+    }
+
+    const buf = await cRes.arrayBuffer();
+    log.info({ ms: Date.now() - t0, lang, model: modelId, chars: text.length, bytes: buf.byteLength }, 'tts ok');
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(Buffer.from(buf));
+  } catch (err) {
+    log.error({ err: err?.message || String(err) }, 'tts handler error');
+    res.status(500).json({ error: 'tts_error', message: String(err?.message || err) });
+  }
+});
+
 app.get('/api/manifests', (_req, res) => res.json({ manifests: registry.list() }));
+
+app.post('/api/agui/:agentId', handleLoanAguiPost);
 
 app.use('/api/mock', mockApi);
 

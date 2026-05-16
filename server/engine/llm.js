@@ -10,7 +10,7 @@ const log = module_('llm');
 
 let _openai = null;
 function client() {
-  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY?.trim() });
   return _openai;
 }
 
