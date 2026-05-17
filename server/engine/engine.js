@@ -158,6 +158,10 @@ async function doTranscript(session, text) {
   session.thinking = false;
   session.lastIntent = intent;
 
+  if (intent?.language && ['en', 'hi', 'te', 'ta'].includes(intent.language)) {
+    session.lang = intent.language;
+  }
+
   if (intent?.error === 'llm_unavailable') {
     speak(session, tm(currentManifest(session), session.lang, 'llm_unavailable'));
     return session;

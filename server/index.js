@@ -155,25 +155,41 @@ function detectTtsLang(text, hint) {
   return 'en';
 }
 
+// Strip punctuation/emojis that TTS engines read aloud literally
+function cleanForTts(text) {
+  return text
+    .replace(/\p{Emoji_Presentation}/gu, '')
+    .replace(/\p{Extended_Pictographic}/gu, '')
+    .replace(/[✦•·★☆©®™°]/g, '')
+    .replace(/[*_`#~|]/g, '')                   // markdown
+    .replace(/[!？！]/g, '.')                   // exclamations → pause
+    .replace(/[?]/g, '')                         // question marks → remove (voice handles tone)
+    .replace(/:{1,}/g, ',')                      // colons → brief pause
+    .replace(/\.{2,}/g, '.')                     // ellipsis → single period
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 app.post('/api/tts', express.json({ limit: '32kb' }), async (req, res) => {
   const cartesiaKey = process.env.CARTESIA_API_KEY?.trim();
   if (!cartesiaKey || cartesiaKey === 'your_cartesia_api_key_here') {
-    // No key configured — tell the client so it falls back to browser TTS
     return res.status(503).json({ error: 'cartesia_not_configured', hint: 'Set CARTESIA_API_KEY in .env' });
   }
 
-  const text = String(req.body?.text || '').trim();
-  if (!text) return res.status(400).json({ error: 'text_required' });
+  const raw = String(req.body?.text || '').trim();
+  if (!raw) return res.status(400).json({ error: 'text_required' });
+
+  // Clean server-side as a safety net (client also cleans, but belt-and-suspenders)
+  const text = cleanForTts(raw);
+  if (!text) return res.status(400).json({ error: 'text_empty_after_clean' });
 
   const lang = detectTtsLang(text, String(req.body?.lang || ''));
   const modelId = process.env.CARTESIA_MODEL || 'sonic-3';
 
-  // Use per-language voice IDs for best quality:
-  //   Hindi/Hinglish → Ishan "Ally"  (designed for Hinglish customer support)
-  //   English        → Katie "Friendly Fixer" (Cartesia's recommended voice-agent voice)
-  const voiceId = lang === 'hi'
-    ? (process.env.CARTESIA_VOICE_ID_HI || 'fd2ada67-c2d9-4afe-b474-6386b87d8fc3')
-    : (process.env.CARTESIA_VOICE_ID_EN || 'f786b574-daa5-4673-aa0c-cbe3e8534c02');
+  // Single consistent voice for all languages: Ishan "Ally"
+  // Designed for Hinglish customer support — handles both English and Hindi naturally
+  const voiceId = process.env.CARTESIA_VOICE_ID || 'fd2ada67-c2d9-4afe-b474-6386b87d8fc3';
 
   const body = {
     model_id: modelId,

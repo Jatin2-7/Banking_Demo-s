@@ -110,6 +110,84 @@ export default function VoiceModal({
   const bottomRef = useRef(null);
   const L = STRINGS[lang] || STRINGS.en;
 
+  const currentAudioRef = useRef(null);
+  const stopAudio = useCallback(() => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.src = '';
+      currentAudioRef.current = null;
+    }
+  }, []);
+
+  const speakText = useCallback(async (text) => {
+    const clean = text
+      .replace(/\p{Emoji_Presentation}/gu, '')
+      .replace(/\p{Extended_Pictographic}/gu, '')
+      .replace(/[✦•·★☆©®™°]/g, '')
+      .replace(/[*_`#~|]/g, '')
+      .replace(/[!？！]/g, '.')
+      .replace(/[?]/g, '')
+      .replace(/:{1,}/g, ',')
+      .replace(/\.{2,}/g, '.')
+      .replace(/\n+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return;
+
+    stopAudio();
+    const devanagari = (clean.match(/[\u0900-\u097F]/g) || []).length;
+    const langHint = devanagari / (clean.replace(/\s/g, '').length || 1) > 0.05 ? 'hi' : 'en';
+
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: clean, lang: langHint }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        currentAudioRef.current = audio;
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          if (currentAudioRef.current === audio) currentAudioRef.current = null;
+        };
+        audio.onerror = () => URL.revokeObjectURL(url);
+        audio.play().catch(() => {});
+        return;
+      }
+    } catch {}
+
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(clean);
+      utt.lang = langHint === 'hi' ? 'hi-IN' : 'en-IN';
+      utt.rate = 0.95;
+      window.speechSynthesis.speak(utt);
+    }
+  }, [stopAudio]);
+
+  const lastBotMessageRef = useRef(null);
+  React.useEffect(() => {
+    if (!open || !session || !session.history) return;
+    const history = session.history;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].role === 'bot') {
+        const msg = history[i];
+        if (msg !== lastBotMessageRef.current) {
+          lastBotMessageRef.current = msg;
+          speakText(msg.text);
+        }
+        break;
+      }
+    }
+  }, [open, session?.history, speakText]);
+
+  React.useEffect(() => {
+    if (isListening || !open) stopAudio();
+  }, [isListening, open, stopAudio]);
+
   const scrollToBottom = useCallback(() => {
     const el = scrollRef.current;
     const sentinel = bottomRef.current;

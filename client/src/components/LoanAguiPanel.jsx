@@ -119,7 +119,18 @@ export default function LoanAguiPanel({
   // TTS via Cartesia (server proxy at /api/tts), falls back to browser speechSynthesis
   const speakText = useCallback(async (text) => {
     const clean = text
-      .replace(/[*_`#~]/g, '')
+      // Remove emojis and special symbols (Cartesia reads them aloud)
+      .replace(/\p{Emoji_Presentation}/gu, '')
+      .replace(/\p{Extended_Pictographic}/gu, '')
+      .replace(/[✦•·★☆©®™°]/g, '')
+      // Strip markdown and formatting chars
+      .replace(/[*_`#~|]/g, '')
+      // Punctuation that Cartesia spells out — convert to natural pauses
+      .replace(/[!？！]/g, '.')
+      .replace(/[?]/g, '')
+      .replace(/:{1,}/g, ',')
+      .replace(/\.{2,}/g, '.')
+      // Collapse whitespace
       .replace(/\n+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
