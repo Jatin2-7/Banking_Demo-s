@@ -35,6 +35,14 @@ app.get('/api/health', (_req, res) => {
       model: STT_MODEL,
       hasKey: Boolean(sk && sk.length > 20),
     },
+    tts: {
+      provider: 'cartesia',
+      model: process.env.CARTESIA_MODEL || 'sonic-3',
+      hasKey: Boolean(
+        process.env.CARTESIA_API_KEY?.trim()
+        && process.env.CARTESIA_API_KEY !== 'your_cartesia_api_key_here',
+      ),
+    },
     actions: registry.list().map((m) => m.action),
     agui: { loanAgent: 'indian_bank_loan_los' },
   });
@@ -140,10 +148,7 @@ app.post(
 //   POST /api/tts   { text: string, lang?: "en" | "hi" }
 //   →  audio/mpeg bytes
 //
-// Uses Cartesia sonic-3. Add CARTESIA_API_KEY to .env to activate.
-// Set CARTESIA_VOICE_ID to any voice from https://play.cartesia.ai/voices
-// (recommended Indian voices: Ishan for Hinglish, Ayush / Amit for Hindi).
-// Returns 503 (client falls back to browser TTS) if key not configured.
+// Cartesia sonic-3 via CARTESIA_API_KEY in .env. Returns 503 if key not set.
 const CARTESIA_TTS_ENDPOINT = 'https://api.cartesia.ai/tts/bytes';
 const CARTESIA_VERSION = '2026-03-01';
 
@@ -160,12 +165,13 @@ function cleanForTts(text) {
   return text
     .replace(/\p{Emoji_Presentation}/gu, '')
     .replace(/\p{Extended_Pictographic}/gu, '')
-    .replace(/[✦•·★☆©®™°]/g, '')
-    .replace(/[*_`#~|]/g, '')                   // markdown
-    .replace(/[!？！]/g, '.')                   // exclamations → pause
-    .replace(/[?]/g, '')                         // question marks → remove (voice handles tone)
-    .replace(/:{1,}/g, ',')                      // colons → brief pause
-    .replace(/\.{2,}/g, '.')                     // ellipsis → single period
+    .replace(/[✦•·★☆©®™°🙏]/g, '')
+    .replace(/[*_`#~|]/g, '')
+    .replace(/[—–]/g, ',')                       // em/en dash → pause
+    .replace(/[!？！]/g, '.')
+    .replace(/[?]/g, '')
+    .replace(/:{1,}/g, ',')
+    .replace(/\.{2,}/g, '.')
     .replace(/\n+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -186,9 +192,6 @@ app.post('/api/tts', express.json({ limit: '32kb' }), async (req, res) => {
 
   const lang = detectTtsLang(text, String(req.body?.lang || ''));
   const modelId = process.env.CARTESIA_MODEL || 'sonic-3';
-
-  // Single consistent voice for all languages: Ishan "Ally"
-  // Designed for Hinglish customer support — handles both English and Hindi naturally
   const voiceId = process.env.CARTESIA_VOICE_ID || 'fd2ada67-c2d9-4afe-b474-6386b87d8fc3';
 
   const body = {
@@ -197,8 +200,10 @@ app.post('/api/tts', express.json({ limit: '32kb' }), async (req, res) => {
     voice: { mode: 'id', id: voiceId },
     language: lang,
     output_format: { container: 'mp3', sample_rate: 44100, bit_rate: 128000 },
-    // sonic-3 generation_config: calm, natural banking pace
-    generation_config: { speed: 0.9, emotion: 'calm' },
+    // sonic-3 speed: 1.0 = default; 1.1–1.25 = slightly faster (override via CARTESIA_TTS_SPEED)
+    generation_config: {
+      speed: Math.min(1.5, Math.max(0.6, Number(process.env.CARTESIA_TTS_SPEED) || 1.1)),
+    },
   };
 
   try {

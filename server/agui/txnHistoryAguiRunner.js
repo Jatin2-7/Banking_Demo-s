@@ -1,9 +1,9 @@
 import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
-import { HOME_AGENT_ID, HOME_AGENT_SYSTEM } from './homeAguiConfig.js';
+import { TXN_HISTORY_AGENT_ID, TXN_HISTORY_AGENT_SYSTEM } from './txnHistoryAguiConfig.js';
 import { module_ } from '../lib/log.js';
 
-const log = module_('home-agui');
+const log = module_('agui-txn-history');
 
 function sseEncode(obj) {
   return `data: ${JSON.stringify(obj)}\n\n`;
@@ -22,10 +22,7 @@ function agUiMessagesToOpenAI(messages) {
         entry.tool_calls = m.tool_calls.map((tc) => ({
           id: tc.id,
           type: 'function',
-          function: {
-            name: tc.function?.name,
-            arguments: tc.function?.arguments || '{}',
-          },
+          function: { name: tc.function?.name, arguments: tc.function?.arguments || '{}' },
         }));
       }
       out.push(entry);
@@ -39,32 +36,28 @@ function agUiMessagesToOpenAI(messages) {
 function buildRoutingStatus(destination, assistantText) {
   const reason = assistantText.match(/💭\s*([^\n]+)/);
   if (reason?.[1]) return reason[1].trim();
-  if (destination === 'upi_payment') return 'Within UPI limit. Redirecting to UPI payment.';
-  if (destination === 'fund_transfer') return 'Above UPI limit. Redirecting to fund transfer.';
-  if (destination === 'loan_application') return 'Redirecting to loan application.';
-  if (destination === 'create_deposit') return 'Redirecting to Create a Deposit.';
-  if (destination === 'transaction_history') return 'Opening your account statement.';
-  return 'Redirecting you now.';
+  if (destination === 'create_deposit') return 'Redirecting you to Create a Deposit.';
+  if (destination === 'home') return 'Going back to home.';
+  return 'Redirecting now.';
 }
 
-const HOME_TOOLS = [
+const TXN_HISTORY_TOOLS = [
   {
     type: 'function',
     function: {
       name: 'navigate_to',
-      description: 'Navigate the customer to a specific banking journey.',
+      description: 'Navigate the customer to another banking journey.',
       parameters: {
         type: 'object',
         properties: {
           destination: {
             type: 'string',
-            enum: ['upi_payment', 'fund_transfer', 'loan_application', 'create_deposit', 'transaction_history'],
-            description: 'Which journey to open.',
+            enum: ['create_deposit', 'home'],
+            description: 'Where to navigate.',
           },
           context: {
             type: 'string',
-            description:
-              'Short natural-language summary of what the customer said, to be passed to the destination AI as a primer (max 2 sentences).',
+            description: 'Short context for the destination agent.',
           },
         },
         required: ['destination'],
@@ -73,16 +66,15 @@ const HOME_TOOLS = [
   },
 ];
 
-export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}) {
-  if (agentId !== HOME_AGENT_ID) {
+export async function streamTxnHistoryAguiRun(res, agentId, inputData, { signal } = {}) {
+  if (agentId !== TXN_HISTORY_AGENT_ID) {
     res.status(404).type('text/plain').send(`unknown agent: ${agentId}`);
     return;
   }
 
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey || apiKey.startsWith('your_')) {
-    res.status(503);
-    res.setHeader('Content-Type', 'text/event-stream');
+    res.status(503).setHeader('Content-Type', 'text/event-stream');
     res.write(sseEncode({ type: 'RUN_ERROR', message: 'OpenAI API key not configured.' }));
     res.end();
     return;
@@ -105,7 +97,7 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
     if (!res.writableEnded) res.write(sseEncode(obj));
   };
 
-  const onAbort = () => { try { res.end(); } catch { /* ignore */ } };
+  const onAbort = () => { try { res.end(); } catch { /* noop */ } };
   signal?.addEventListener('abort', onAbort);
 
   write({ type: 'RUN_STARTED', thread_id: threadId, run_id: runId });
@@ -113,7 +105,7 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
   try {
     const raw = agUiMessagesToOpenAI(inputData.messages);
     const history = raw.filter((m) => m.role !== 'system');
-    const messages = [{ role: 'system', content: HOME_AGENT_SYSTEM }, ...history];
+    const messages = [{ role: 'system', content: TXN_HISTORY_AGENT_SYSTEM }, ...history];
 
     for (let step = 0; step < 8; step++) {
       if (signal?.aborted) break;
@@ -121,7 +113,7 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
       const stream = await client.chat.completions.create({
         model,
         messages,
-        tools: HOME_TOOLS,
+        tools: TXN_HISTORY_TOOLS,
         stream: true,
       });
 
@@ -129,7 +121,7 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
       let assistantText = '';
       const toolCallBuf = new Map();
       const openedStart = new Set();
-      let statusEmitted = false; // only emit status once per reasoning line
+      let statusEmitted = false;
 
       for await (const chunk of stream) {
         if (signal?.aborted) break;
@@ -141,7 +133,6 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
           assistantText += delta.content;
           write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
 
-          // Detect a complete 💭 reasoning line and emit it as a STATUS_UPDATE
           if (!statusEmitted && assistantText.includes('💭')) {
             const lineEnd = assistantText.indexOf('\n', assistantText.indexOf('💭'));
             if (lineEnd !== -1) {
@@ -165,7 +156,6 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
             if (tc.id) slot.id = tc.id;
             if (tc.function?.name) slot.name = tc.function.name;
             if (tc.function?.arguments) slot.args += tc.function.arguments;
-
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
               write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
@@ -183,25 +173,6 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
 
       if (toolCallBuf.size === 0) {
         messages.push({ role: 'assistant', content: assistantText || '' });
-
-        // ── Fallback: model wrote navigate_to as text instead of using the tool ──
-        const textLower = assistantText;
-        if (/navigate_to/i.test(textLower)) {
-          const destMatch = textLower.match(/destination\s*[=:]\s*["']?(upi_payment|fund_transfer|loan_application|create_deposit|transaction_history)["']?/i);
-          const ctxMatch = textLower.match(/context\s*[=:]\s*["']([^"'\n]+)["']/i);
-          if (destMatch) {
-            const args = { destination: destMatch[1], context: ctxMatch?.[1] || '' };
-            write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination, assistantText) });
-            write({ type: 'STATE_DELTA', delta: [{ op: 'replace', path: '/navigate_to', value: args }] });
-            // Emit synthetic tool events so the client handler fires
-            const fakeId = `fallback_${Date.now()}`;
-            write({ type: 'TOOL_CALL_START', tool_call_id: fakeId, tool_call_name: 'navigate_to', parent_message_id: messageId });
-            write({ type: 'TOOL_CALL_ARGS', tool_call_id: fakeId, delta: JSON.stringify(args) });
-            write({ type: 'TOOL_CALL_END', tool_call_id: fakeId });
-            write({ type: 'TOOL_CALL_RESULT', message_id: randomUUID(), tool_call_id: fakeId, content: JSON.stringify({ ok: true, destination: args.destination }), role: 'tool' });
-          }
-        }
-
         break;
       }
 
@@ -218,12 +189,11 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
         let args = {};
         try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
 
-        write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination, assistantText) });
-
-        // Emit STATE_DELTA so the client can read navigate_to args
+        const routingStatus = buildRoutingStatus(args.destination, assistantText);
+        write({ type: 'STATUS_UPDATE', status: routingStatus });
         write({
           type: 'STATE_DELTA',
-          delta: [{ op: 'replace', path: '/navigate_to', value: args }],
+          delta: [{ op: 'replace', path: '/navigate_to', value: { ...args, routingStatus } }],
         });
 
         const result = { ok: true, destination: args.destination };
@@ -234,17 +204,16 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
           content: JSON.stringify(result),
           role: 'tool',
         });
-
         messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(result) });
       }
     }
 
     write({ type: 'RUN_FINISHED', thread_id: threadId, run_id: runId });
   } catch (err) {
-    log.error({ err: err?.message || String(err) }, 'home agui stream error');
+    log.error({ err: err?.message || String(err) }, 'txn history agui stream error');
     write({ type: 'RUN_ERROR', message: `${err?.name || 'Error'}: ${err?.message || String(err)}` });
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try { res.end(); } catch { /* ignore */ }
+    try { res.end(); } catch { /* noop */ }
   }
 }

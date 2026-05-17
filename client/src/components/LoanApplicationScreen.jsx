@@ -721,7 +721,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
         formValues={fv}
         onFormChange={setFv}
         onToolCall={handleAgentToolCall}
-        greeting={aiPrimerProp ? `Got it! I understand you want: "${aiPrimerProp}". Let me help you fill this loan application — I'll ask one thing at a time.` : J.aiGreeting}
+        greeting={J.aiGreeting}
         assistTitle={J.aiAssistTitle}
         assistHint={J.aiAssistHint}
         primer={aiPrimer}

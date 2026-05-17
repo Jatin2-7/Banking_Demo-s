@@ -11,7 +11,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Repo root .env (optional shared defaults)
 loadEnv({ path: path.resolve(__dirname, '../.env') });
+// client/.env — Vite + shared keys (STT flags, etc.)
+loadEnv({ path: path.resolve(__dirname, '../client/.env') });
 // cwd .env when you start the process from project root or elsewhere
 loadEnv();
-// server/.env — last so it always wins over root/cwd for the same keys
+// server/.env — last so it always wins over root/cwd/client for the same keys
 loadEnv({ path: path.resolve(__dirname, '.env'), override: true });

@@ -103,7 +103,7 @@ function FromAccountCard({ account }) {
           <p className="text-[12px] text-slate-700">XXXXXX{account?.last4 || '1762'} ⓘ</p>
           <p className="text-[12px] text-slate-700">Savings</p>
           <p className="text-[12px] font-semibold text-slate-900">
-            ₹ {account?.balance ? Number(account.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '2,450.00'}
+            ₹ {account?.balance ? Number(account.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '2,51,000.00'}
           </p>
         </div>
       </div>
@@ -750,11 +750,7 @@ export default function ImpsFundTransferScreen({ onClose, lang, accounts, aiPrim
         formValues={fv}
         onFormChange={setFvFromAgent}
         onToolCall={handleAgentToolCall}
-        greeting={
-          aiPrimerProp
-            ? `Hi! I understand you want to: "${aiPrimerProp}" — let me get started. First, is the payee's account in Indian Bank, or another bank?`
-            : "Hi! Let's set up your fund transfer. First — is the payee's account in Indian Bank, or another bank?"
-        }
+        greeting="Hi! Let's set up your fund transfer. First, is the payee's account in Indian Bank, or another bank?"
         primer={aiPrimerProp || null}
         assistTitle="Fund Transfer Assist"
         assistHint="Say 'Indian Bank' or the other bank name to start"

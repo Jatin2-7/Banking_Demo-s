@@ -118,9 +118,9 @@ export const CONTACTS = [
 ];
 
 export const ACCOUNTS = [
-  { id: 'a1', label: 'Indian Bank Savings', last4: '4821', balance: 18500, type: 'savings' },
-  { id: 'a2', label: 'Indian Bank Current', last4: '7102', balance: 7250, type: 'current' },
-  { id: 'a3', label: 'IB Wallet', last4: 'WAL', balance: 2340, type: 'wallet' },
+  { id: 'a1', label: 'Indian Bank Savings', last4: '1762', balance: 251000, type: 'savings' },
+  { id: 'a2', label: 'Indian Bank Current', last4: '7102', balance: 85000, type: 'current' },
+  { id: 'a3', label: 'IB Wallet', last4: 'WAL', balance: 4500, type: 'wallet' },
 ];
 
 export const BILLERS = [

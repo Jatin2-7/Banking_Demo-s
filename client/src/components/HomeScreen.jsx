@@ -103,7 +103,7 @@ function BottomNavItem({ icon, label, onClick }) {
   );
 }
 
-export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransferImps, onApplyNewLoan, onNavigate, accounts }) {
+export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransferImps, onApplyNewLoan, onOpenDeposit, onOpenTxnHistory, onNavigate, accounts }) {
   const L = STRINGS[lang] || STRINGS.en;
   const [balancesVisible, setBalancesVisible] = useState(false);
   const [homeAiOpen, setHomeAiOpen] = useState(false);
@@ -349,7 +349,7 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
               </svg>
             }
             label={L.tileAccountStatement}
-            onClick={() => onQuickAction('check_balance')}
+            onClick={() => onOpenTxnHistory ? onOpenTxnHistory() : onQuickAction('check_balance')}
           />
           <GoldQuickTile
             icon={<span className="text-sm font-bold">m</span>}
@@ -468,6 +468,13 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
           />
           <ServiceTile
             icon={
+              <div className="flex h-full w-full items-center justify-center bg-emerald-600 text-xl">🏦</div>
+            }
+            label="Create Deposit"
+            onClick={() => (onOpenDeposit ? onOpenDeposit() : onQuickAction('check_balance'))}
+          />
+          <ServiceTile
+            icon={
               <div className="flex h-full w-full items-center justify-center bg-indigo-600 px-1 text-center text-[10px] font-bold leading-tight text-white">
                 NCMC
               </div>
@@ -578,10 +585,10 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
         onToolCall={(name, args) => {
           if (name === 'navigate_to' && args?.destination) {
             setHomeAiOpen(false);
-            onNavigate?.(args.destination, args.context || '');
+            onNavigate?.(args.destination, args.context || '', args.routingStatus || '');
           }
         }}
-        greeting="Namaste! 🙏 I'm Aarav, your Indian Bank assistant. Tell me what you'd like to do — pay someone, transfer funds, apply for a loan, or anything else!"
+        greeting="Namaste. I'm Aarav, your Indian Bank assistant. Tell me what you'd like to do. You can pay someone, transfer funds, apply for a loan, or anything else."
         assistTitle="AI Banking Assistant"
         showReasoning
         lang={lang}

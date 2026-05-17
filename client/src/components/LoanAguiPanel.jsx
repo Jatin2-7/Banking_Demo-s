@@ -5,6 +5,11 @@ import { applyStateDelta, runAgent, LOAN_AGUI_AGENT_ID } from '../lib/aguiClient
 import { useSpeech } from '../hooks/useSpeech.js';
 import { useElevenSpeech } from '../hooks/useElevenSpeech.js';
 import { ELEVENLABS_STT_ENABLED } from '../config/voiceBackend.js';
+import {
+  speakViaCartesia,
+  stopGlobalCartesiaTts,
+  textForTtsDisplay,
+} from '../lib/cartesiaTts.js';
 
 function tid() {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -83,6 +88,7 @@ export default function LoanAguiPanel({
   const [running, setRunning] = useState(false);
   const [voiceBanner, setVoiceBanner] = useState(null);
   const [statusSteps, setStatusSteps] = useState([]); // reasoning/status ticker
+  const statusStepsRef = useRef([]);
   const threadRef = useRef(tid());
   const valuesRef = useRef(formValues);
   const toolCallReg = useRef({});
@@ -107,76 +113,19 @@ export default function LoanAguiPanel({
   const useBrowserStt = !useEleven && browserSpeech.supported;
   const micActive = useEleven ? elevenSpeech.listening : (useBrowserStt ? browserSpeech.listening : false);
 
-  // Stop any currently playing audio
+  const skipTtsRef = useRef(false);
+
+  useEffect(() => {
+    statusStepsRef.current = statusSteps;
+  }, [statusSteps]);
+
   const stopAudio = useCallback(() => {
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.src = '';
-      currentAudioRef.current = null;
-    }
+    stopGlobalCartesiaTts();
+    currentAudioRef.current = null;
   }, []);
 
-  // TTS via Cartesia (server proxy at /api/tts), falls back to browser speechSynthesis
-  const speakText = useCallback(async (text) => {
-    const clean = text
-      // Remove emojis and special symbols (Cartesia reads them aloud)
-      .replace(/\p{Emoji_Presentation}/gu, '')
-      .replace(/\p{Extended_Pictographic}/gu, '')
-      .replace(/[✦•·★☆©®™°]/g, '')
-      // Strip markdown and formatting chars
-      .replace(/[*_`#~|]/g, '')
-      // Punctuation that Cartesia spells out — convert to natural pauses
-      .replace(/[!？！]/g, '.')
-      .replace(/[?]/g, '')
-      .replace(/:{1,}/g, ',')
-      .replace(/\.{2,}/g, '.')
-      // Collapse whitespace
-      .replace(/\n+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    if (!clean) return;
+  const speakText = useCallback((text) => speakViaCartesia(text), []);
 
-    stopAudio();
-
-    // Detect language: any Devanagari → "hi", else "en"
-    const devanagari = (clean.match(/[\u0900-\u097F]/g) || []).length;
-    const langHint = devanagari / (clean.replace(/\s/g, '').length || 1) > 0.05 ? 'hi' : 'en';
-
-    try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: clean, lang: langHint }),
-      });
-
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        currentAudioRef.current = audio;
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          if (currentAudioRef.current === audio) currentAudioRef.current = null;
-        };
-        audio.onerror = () => URL.revokeObjectURL(url);
-        audio.play().catch(() => {});
-        return;
-      }
-    } catch {
-      // fall through to browser TTS
-    }
-
-    // Browser speechSynthesis fallback (when Cartesia key is not yet configured)
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(clean);
-      utt.lang = langHint === 'hi' ? 'hi-IN' : 'en-IN';
-      utt.rate = 0.95;
-      window.speechSynthesis.speak(utt);
-    }
-  }, [stopAudio]);
-
-  // Stop audio when panel closes
   useEffect(() => {
     if (!open) stopAudio();
   }, [open, stopAudio]);
@@ -235,7 +184,7 @@ export default function LoanAguiPanel({
         for (const patch of ev.delta || []) {
           const next = applyStateDelta(valuesRef.current, [patch]);
           valuesRef.current = next;
-          onFormChange(next);
+          onFormChange?.(next);
         }
       } else if (ev.type === 'TOOL_CALL_START') {
         toolCallReg.current[ev.tool_call_id] = { name: ev.tool_call_name, argsRaw: '' };
@@ -251,7 +200,12 @@ export default function LoanAguiPanel({
           } catch {
             args = {};
           }
-          if (slot.name === 'request_field' || slot.name === 'set_field' || slot.name === 'navigate_to') {
+          if (slot.name === 'navigate_to') {
+            skipTtsRef.current = true;
+            stopGlobalCartesiaTts();
+            const routingStatus = statusStepsRef.current.at(-1)?.text || '';
+            onToolCall?.(slot.name, { ...args, routingStatus });
+          } else if (slot.name === 'request_field' || slot.name === 'set_field') {
             onToolCall?.(slot.name, args);
           }
         }
@@ -337,8 +291,12 @@ export default function LoanAguiPanel({
         runningRef.current = false;
         setRunning(false);
         setMessages((prev) => prev.map((m) => (m.id === asstId ? { ...m, pending: false } : m)));
-        // Speak the completed AI response
-        if (collected.text) speakText(collected.text);
+        // Speak assistant reply — skip when redirecting (UPI/IMPS/loan takes over TTS)
+        if (collected.text && !skipTtsRef.current) {
+          const forTts = textForTtsDisplay(collected.text);
+          if (forTts) speakText(forTts);
+        }
+        skipTtsRef.current = false;
       }
     },
     [messages, handleEvent, speakText],
@@ -378,9 +336,7 @@ export default function LoanAguiPanel({
     if (runningRef.current) return;
     setVoiceBanner(null);
 
-    // Stop TTS so AI voice doesn't bleed into recording
     stopAudio();
-    if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
 
     if (useEleven) {
       if (elevenSpeech.listening) {

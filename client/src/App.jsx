@@ -4,6 +4,8 @@ import PhoneFrame from './components/PhoneFrame';
 import HomeScreen from './components/HomeScreen';
 import ImpsFundTransferScreen from './components/ImpsFundTransferScreen';
 import LoanApplicationScreen from './components/LoanApplicationScreen';
+import TransactionHistoryScreen from './components/TransactionHistoryScreen';
+import CreateDepositScreen from './components/CreateDepositScreen';
 import VoiceModal from './components/VoiceModal';
 import ConfirmCard from './components/ConfirmCard';
 import ResultCard from './components/ResultCard';
@@ -14,6 +16,22 @@ import { useRageDetect } from './hooks/useRageDetect.js';
 import { useSpeech } from './hooks/useSpeech';
 import { useElevenSpeech } from './hooks/useElevenSpeech';
 import { ELEVENLABS_STT_ENABLED } from './config/voiceBackend.js';
+import {
+  isTtsPlaying,
+  onTtsPlayingChange,
+  speakViaCartesia,
+  stopGlobalCartesiaTts,
+  waitUntilTtsIdle,
+} from './lib/cartesiaTts.js';
+
+function defaultRoutingStatus(destination) {
+  if (destination === 'upi_payment') return 'Within UPI limit. Redirecting to UPI payment.';
+  if (destination === 'fund_transfer') return 'Above UPI limit. Redirecting to fund transfer.';
+  if (destination === 'loan_application') return 'Redirecting to loan application.';
+  if (destination === 'create_deposit') return 'Redirecting to Create a Deposit.';
+  if (destination === 'transaction_history') return 'Opening your account statement.';
+  return '';
+}
 
 // Pick the STT backend at module load (env vars are baked in at build time
 // so this is stable across renders — safe to use as the hook reference).
@@ -61,9 +79,14 @@ export default function App() {
   const [mpinOpen, setMpinOpen] = useState(false);
   const [impsOpen, setImpsOpen] = useState(false);
   const [loanLosOpen, setLoanLosOpen] = useState(false);
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [txnHistOpen, setTxnHistOpen] = useState(false);
   const [rmUpiPromptOpen, setRmUpiPromptOpen] = useState(false);
   const [impsPrimer, setImpsPrimer] = useState('');
   const [loanPrimer, setLoanPrimer] = useState('');
+  const [depositPrimer, setDepositPrimer] = useState('');
+  const [txnHistPrimer, setTxnHistPrimer] = useState('');
+  const [ttsPlaying, setTtsPlaying] = useState(false);
 
   const bcp47 = LANGUAGES.find((l) => l.code === lang)?.bcp47 || 'en-IN';
   const speech = useVoiceHook({ lang: bcp47 });
@@ -77,6 +100,19 @@ export default function App() {
   });
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+
+  useEffect(() => onTtsPlayingChange(setTtsPlaying), []);
+
+  // Never listen while the assistant is speaking — user must hear the full prompt first
+  useEffect(() => {
+    if (ttsPlaying && speech.listening) {
+      try {
+        speech.stop();
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [ttsPlaying, speech.listening, speech.stop]);
 
   // Pull live balances from the server. Called on mount and after any turn
   // that ends in DONE (a successful payment / transfer / bill / booking).
@@ -158,37 +194,49 @@ export default function App() {
     runUtteranceRef.current = runUtterance;
   }, [runUtterance]);
 
-  // Hands-free: arm the mic once when the bot is done thinking and the session
-  // is waiting for input. Do NOT depend on `speech.listening` — every time
-  // recognition ends, listening flips false and would re-run this effect and
-  // schedule another start() ~600ms later, causing a start/stop blink loop.
+  // Hands-free: arm mic after bot finishes AND assistant TTS has finished speaking.
   useEffect(() => {
     if (!open) return;
     if (mpinOpen) return;
     if (!speech.supported) return;
     if (session?.thinking || session?.executing) return;
     if (!VOICE_INPUT_STATES.has(session?.state)) return;
+    if (ttsPlaying || isTtsPlaying()) return;
 
-    const t = setTimeout(() => {
+    let cancelled = false;
+
+    (async () => {
+      await waitUntilTtsIdle();
+      if (cancelled) return;
+      // Brief pause so the user can process the last word before we open the mic
+      await new Promise((r) => setTimeout(r, 500));
+      if (cancelled || !open || mpinOpen || isTtsPlaying()) return;
+      if (session?.thinking || session?.executing) return;
+
       try {
         speech.start((finalText) => {
           if (!finalText) return;
           runUtteranceRef.current?.(finalText);
         });
       } catch {
-        // recogniser may have been torn down by a language switch — ignore
+        /* recogniser torn down — ignore */
       }
-    }, 600);
-    return () => clearTimeout(t);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     open,
     mpinOpen,
+    ttsPlaying,
     session?.state,
     session?.history?.length,
     session?.thinking,
     session?.executing,
     speech.supported,
     speech.start,
+    speech.stop,
   ]);
 
   const handleMicTap = useCallback(() => {
@@ -325,21 +373,38 @@ export default function App() {
   }, [session, refresh, refreshAccounts]);
 
   // Called by HomeScreen's AI assistant when navigate_to tool fires
-  const handleNavigate = useCallback((destination, context) => {
-    if (destination === 'upi_payment') {
-      setOpen(true);
-      // Pre-fill the UPI utterance if context was provided
-      if (context) {
-        setTimeout(() => runUtterance(context), 400);
+  const handleNavigate = useCallback(
+    async (destination, context, routingStatus) => {
+      stopGlobalCartesiaTts();
+
+      const statusLine = (routingStatus || defaultRoutingStatus(destination)).trim();
+      if (statusLine) {
+        await speakViaCartesia(statusLine);
+        await waitUntilTtsIdle();
+        await new Promise((r) => setTimeout(r, 350));
       }
-    } else if (destination === 'fund_transfer') {
-      setImpsPrimer(context || '');
-      setImpsOpen(true);
-    } else if (destination === 'loan_application') {
-      setLoanPrimer(context || '');
-      setLoanLosOpen(true);
-    }
-  }, [runUtterance]);
+
+      if (destination === 'upi_payment') {
+        setOpen(true);
+        await ensureFresh();
+        await startAction(session, 'send_money');
+        refresh();
+      } else if (destination === 'fund_transfer') {
+        setImpsPrimer(context || '');
+        setImpsOpen(true);
+      } else if (destination === 'loan_application') {
+        setLoanPrimer(context || '');
+        setLoanLosOpen(true);
+      } else if (destination === 'create_deposit') {
+        setDepositPrimer(context || '');
+        setDepositOpen(true);
+      } else if (destination === 'transaction_history') {
+        setTxnHistPrimer(context || '');
+        setTxnHistOpen(true);
+      }
+    },
+    [ensureFresh, session, refresh],
+  );
 
   const inlineExtra = (
     <>
@@ -397,6 +462,35 @@ export default function App() {
                 />
               )}
             </AnimatePresence>
+            <AnimatePresence>
+              {txnHistOpen && (
+                <TransactionHistoryScreen
+                  key="txn-history"
+                  onClose={() => { setTxnHistOpen(false); setTxnHistPrimer(''); }}
+                  onNavigate={async (dest, ctx, routingStatus) => {
+                    setTxnHistOpen(false);
+                    setTxnHistPrimer('');
+                    await handleNavigate(dest, ctx, routingStatus);
+                  }}
+                  lang={lang}
+                  aiPrimer={txnHistPrimer}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {depositOpen && (
+                <CreateDepositScreen
+                  key="create-deposit"
+                  onClose={() => { setDepositOpen(false); setDepositPrimer(''); }}
+                  onNavigate={async (dest, ctx, routingStatus) => {
+                    setDepositOpen(false);
+                    await handleNavigate(dest, ctx, routingStatus);
+                  }}
+                  lang={lang}
+                  aiPrimer={depositPrimer}
+                />
+              )}
+            </AnimatePresence>
             <VoiceModal
               open={open}
               session={session}
@@ -426,6 +520,8 @@ export default function App() {
           onQuickAction={handleOpenWithAction}
           onFundTransferImps={() => setImpsOpen(true)}
           onApplyNewLoan={() => setLoanLosOpen(true)}
+          onOpenDeposit={() => setDepositOpen(true)}
+          onOpenTxnHistory={() => setTxnHistOpen(true)}
           onNavigate={handleNavigate}
           accounts={accounts}
         />
