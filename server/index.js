@@ -13,6 +13,7 @@ import { processInput } from './engine/engine.js';
 import { sessions, createSession } from './engine/session.js';
 import { log, sessionLog } from './lib/log.js';
 import { handleLoanAguiPost } from './agui/loanAguiRoute.js';
+import { PRIMARY_ACCOUNT, TRANSACTIONS } from './data/mock.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,6 +47,12 @@ app.get('/api/health', (_req, res) => {
     actions: registry.list().map((m) => m.action),
     agui: { loanAgent: 'indian_bank_loan_los' },
   });
+});
+
+// ── Account Statement API ───────────────────────────────────────────
+// Single source of truth: returns the same data used to build the AI system prompt.
+app.get('/api/account-statement', (_req, res) => {
+  res.json({ account: PRIMARY_ACCOUNT, transactions: TRANSACTIONS });
 });
 
 // ── ElevenLabs Speech-to-Text proxy ────────────────────────────────

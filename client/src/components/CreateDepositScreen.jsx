@@ -157,6 +157,7 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
     if (toolName === 'set_field') {
       setFvFromAgent(args.field, args.value);
     } else if (toolName === 'submit_deposit') {
+      setAgreedTnc(true);
       setPhase('review');
     } else if (toolName === 'navigate_to') {
       const { destination, context, routingStatus } = args;

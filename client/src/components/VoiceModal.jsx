@@ -181,7 +181,7 @@ function PaymentSummaryCard({ session }) {
       <div>
         <p className="text-sm font-bold text-white">UPI Payment</p>
         <p className="text-[11px] text-white/60 mt-0.5">
-          {session?.thinking ? 'Aarav is thinking…' : 'Tell Aarav who to pay and how much'}
+          {session?.thinking ? 'AI is thinking…' : 'Tell me who to pay and how much'}
         </p>
       </div>
     </div>
@@ -332,11 +332,11 @@ export default function VoiceModal({
         {/* ── Header ── */}
         <div className="shrink-0 px-4 pt-3 pb-2">
           <div className="flex items-center gap-3">
-            {/* Aarav identity */}
+            {/* AI identity */}
             <AaravAvatar size={36} pulse={isListening} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-white">Aarav</span>
+                <span className="text-sm font-bold text-white">AI Assistant</span>
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
                     isListening ? 'bg-bank-gold animate-pulse' : session?.thinking ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'

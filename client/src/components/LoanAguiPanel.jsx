@@ -8,6 +8,7 @@ import { ELEVENLABS_STT_ENABLED } from '../config/voiceBackend.js';
 import {
   speakViaCartesia,
   stopGlobalCartesiaTts,
+  waitUntilTtsIdle,
   textForTtsDisplay,
 } from '../lib/cartesiaTts.js';
 
@@ -164,9 +165,13 @@ export default function LoanAguiPanel({
       primerSent.current = false;
       setStatusSteps([]);
     } else {
-      // Speak greeting when panel opens (slight delay so it doesn't overlap animation)
-      const t = setTimeout(() => speakText(greeting || "Let's fill this form together."), 400);
-      return () => clearTimeout(t);
+      // Speak greeting only after any ongoing TTS (e.g. routing status) finishes
+      let cancelled = false;
+      const t = setTimeout(async () => {
+        await waitUntilTtsIdle();
+        if (!cancelled) speakText(greeting || "Let's fill this form together.");
+      }, 300);
+      return () => { cancelled = true; clearTimeout(t); };
     }
     return undefined;
   }, [open, greeting, speakText]);

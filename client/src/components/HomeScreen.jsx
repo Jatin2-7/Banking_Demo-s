@@ -588,7 +588,7 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
             onNavigate?.(args.destination, args.context || '', args.routingStatus || '');
           }
         }}
-        greeting="Namaste. I'm Aarav, your Indian Bank assistant. Tell me what you'd like to do. You can pay someone, transfer funds, apply for a loan, or anything else."
+        greeting="Namaste! I'm your Indian Bank AI assistant. Tell me what you'd like to do — pay someone, transfer funds, apply for a loan, or anything else."
         assistTitle="AI Banking Assistant"
         showReasoning
         lang={lang}

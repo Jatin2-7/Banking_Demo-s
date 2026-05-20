@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
-import { TXN_HISTORY_AGENT_ID, TXN_HISTORY_AGENT_SYSTEM } from './txnHistoryAguiConfig.js';
+import { TXN_HISTORY_AGENT_ID, buildTxnHistorySystemPrompt } from './txnHistoryAguiConfig.js';
 import { module_ } from '../lib/log.js';
 
 const log = module_('agui-txn-history');
@@ -105,7 +105,7 @@ export async function streamTxnHistoryAguiRun(res, agentId, inputData, { signal 
   try {
     const raw = agUiMessagesToOpenAI(inputData.messages);
     const history = raw.filter((m) => m.role !== 'system');
-    const messages = [{ role: 'system', content: TXN_HISTORY_AGENT_SYSTEM }, ...history];
+    const messages = [{ role: 'system', content: buildTxnHistorySystemPrompt() }, ...history];
 
     for (let step = 0; step < 8; step++) {
       if (signal?.aborted) break;
