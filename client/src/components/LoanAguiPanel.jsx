@@ -76,6 +76,8 @@ export default function LoanAguiPanel({
   lang = 'en',
   agentId = LOAN_AGUI_AGENT_ID,
   showReasoning = false,
+  navOnly = false,
+  onVoiceCommand,
 }) {
   const [messages, setMessages] = useState(() => [
     {
@@ -239,8 +241,59 @@ export default function LoanAguiPanel({
     [onFormChange, onToolCall],
   );
 
+  // Voice-to-Command (navigation-only) path. No LLM conversation: the utterance
+  // is mapped to a screen via the shared command router (App#handleVoiceCommand)
+  // and we just navigate, with a one-line confirmation.
+  const navOnlyRef = useRef(navOnly);
+  navOnlyRef.current = navOnly;
+  const onVoiceCommandRef = useRef(onVoiceCommand);
+  onVoiceCommandRef.current = onVoiceCommand;
+
+  const sendNavCommand = useCallback(
+    async (userText) => {
+      const trimmed = String(userText || '').trim();
+      if (!trimmed || runningRef.current) return;
+      runningRef.current = true;
+      setRunning(true);
+      setStatusSteps([]);
+      setMessages((prev) => [...prev, { id: tid(), role: 'user', content: trimmed }]);
+
+      let reply;
+      let matched = false;
+      try {
+        const result = await onVoiceCommandRef.current?.(trimmed);
+        const match = result?.match;
+        matched = Boolean(match);
+        if (match) {
+          reply =
+            match.destination === 'home' ? 'Taking you back to the home screen.' : `Opening ${match.label}.`;
+        } else {
+          reply =
+            'I can open: Transaction history, Fund transfer, Loan application, Create deposit, UPI payment, Hotel booking, Flight booking, Debit card, or Credit card statement. Which one?';
+        }
+      } catch {
+        reply = 'Sorry — I could not navigate just now. Please try again.';
+      } finally {
+        setMessages((prev) => [...prev, { id: tid(), role: 'assistant', content: reply }]);
+        runningRef.current = false;
+        setRunning(false);
+        if (matched) {
+          // Navigation already triggered — close the assistant so the target screen shows.
+          setTimeout(() => onClose?.(), 300);
+        } else if (reply) {
+          speakText(reply);
+        }
+      }
+    },
+    [onClose, speakText],
+  );
+
   const send = useCallback(
     async (userText, opts = {}) => {
+      if (navOnlyRef.current) {
+        await sendNavCommand(userText);
+        return;
+      }
       if (runningRef.current) return;
       runningRef.current = true;
 
@@ -304,7 +357,7 @@ export default function LoanAguiPanel({
         skipTtsRef.current = false;
       }
     },
-    [messages, handleEvent, speakText],
+    [messages, handleEvent, speakText, sendNavCommand],
   );
 
   const sendRef = useRef(send);

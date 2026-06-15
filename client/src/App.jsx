@@ -6,6 +6,10 @@ import ImpsFundTransferScreen from './components/ImpsFundTransferScreen';
 import LoanApplicationScreen from './components/LoanApplicationScreen';
 import TransactionHistoryScreen from './components/TransactionHistoryScreen';
 import CreateDepositScreen from './components/CreateDepositScreen';
+import HotelBookingScreen from './components/HotelBookingScreen';
+import FlightBookingScreen from './components/FlightBookingScreen';
+import DebitCardDashboardScreen from './components/DebitCardDashboardScreen';
+import CreditCardDashboardScreen from './components/CreditCardDashboardScreen';
 import VoiceModal from './components/VoiceModal';
 import ConfirmCard from './components/ConfirmCard';
 import ResultCard from './components/ResultCard';
@@ -30,6 +34,10 @@ function defaultRoutingStatus(destination) {
   if (destination === 'loan_application') return 'Redirecting to loan application.';
   if (destination === 'create_deposit') return 'Redirecting to Create a Deposit.';
   if (destination === 'transaction_history') return 'Opening your account statement.';
+  if (destination === 'hotel_booking') return 'Opening hotel booking.';
+  if (destination === 'flight_booking') return 'Opening flight booking.';
+  if (destination === 'debit_card') return 'Opening debit card dashboard.';
+  if (destination === 'credit_card') return 'Opening credit card dashboard.';
   return '';
 }
 
@@ -49,6 +57,7 @@ import {
 } from './engine/simEngine.js';
 import { LANGUAGES, DEFAULT_LANG } from './i18n/strings.js';
 import { getAccounts, resetServerState } from './services/engineClient.js';
+import { routeVoiceCommand } from './lib/voiceCommandRouter.js';
 
 // Quick per-language "yes" matcher. Mirrors the patterns in
 // server/engine/confirmParser.js so the client can intercept voice confirm and
@@ -81,15 +90,29 @@ export default function App() {
   const [loanLosOpen, setLoanLosOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [txnHistOpen, setTxnHistOpen] = useState(false);
+  const [hotelBookingOpen, setHotelBookingOpen] = useState(false);
+  const [flightBookingOpen, setFlightBookingOpen] = useState(false);
+  const [debitCardOpen, setDebitCardOpen] = useState(false);
+  const [debitCardSubFlow, setDebitCardSubFlow] = useState(null);
+  const [creditCardOpen, setCreditCardOpen] = useState(false);
+  const [creditCardSubFlow, setCreditCardSubFlow] = useState(null);
   const [rmUpiPromptOpen, setRmUpiPromptOpen] = useState(false);
   const [impsPrimer, setImpsPrimer] = useState('');
   const [loanPrimer, setLoanPrimer] = useState('');
   const [depositPrimer, setDepositPrimer] = useState('');
   const [txnHistPrimer, setTxnHistPrimer] = useState('');
   const [ttsPlaying, setTtsPlaying] = useState(false);
+  // When true, the AI RM is scoped to pure screen navigation (no conversation).
+  // Toggled from the demo panel's Voice-to-Command mode. Kept fully separate
+  // from the normal-mode conversational flows.
+  const [voiceCommandMode, setVoiceCommandMode] = useState(false);
 
   const bcp47 = LANGUAGES.find((l) => l.code === lang)?.bcp47 || 'en-IN';
   const speech = useVoiceHook({ lang: bcp47 });
+  // Dedicated, independent voice channel for the "Voice-to-Command" demo mode.
+  // Kept separate from `speech` so navigation commands never interfere with the
+  // conversational flow's hands-free mic.
+  const cmdSpeech = useVoiceHook({ lang: bcp47 });
 
   // Rage detection for UPI voice flow — fires only when the voice modal is already open
   // (HomeScreen has its own rage detection for the home AI assistant)
@@ -354,6 +377,26 @@ export default function App() {
     [runUtterance],
   );
 
+  // Close every open journey overlay + the conversational modal → back to Home.
+  const goHome = useCallback(() => {
+    speech.abort();
+    setOpen(false);
+    setImpsOpen(false);
+    setLoanLosOpen(false);
+    setDepositOpen(false);
+    setTxnHistOpen(false);
+    setHotelBookingOpen(false);
+    setFlightBookingOpen(false);
+    setDebitCardOpen(false);
+    setDebitCardSubFlow(null);
+    setCreditCardOpen(false);
+    setCreditCardSubFlow(null);
+    setImpsPrimer('');
+    setLoanPrimer('');
+    setDepositPrimer('');
+    setTxnHistPrimer('');
+  }, [speech]);
+
   const handleForceFail = useCallback(
     (mode) => {
       setFF(mode);
@@ -401,9 +444,55 @@ export default function App() {
       } else if (destination === 'transaction_history') {
         setTxnHistPrimer(context || '');
         setTxnHistOpen(true);
+      } else if (destination === 'hotel_booking') {
+        setHotelBookingOpen(true);
+      } else if (destination === 'flight_booking') {
+        setFlightBookingOpen(true);
+      } else if (destination === 'debit_card') {
+        setDebitCardSubFlow(context || null);
+        setDebitCardOpen(true);
+      } else if (destination === 'credit_card') {
+        setCreditCardSubFlow(context || null);
+        setCreditCardOpen(true);
       }
     },
     [ensureFresh, session, refresh],
+  );
+
+  // Voice-to-Command: map an utterance straight to a screen and navigate, with
+  // no dialogue. Returns the match (or null) so the demo panel can show feedback.
+  const handleVoiceCommand = useCallback(
+    async (text) => {
+      const match = routeVoiceCommand(text);
+      if (!match) return { text, match: null };
+
+      if (match.destination === 'home') {
+        goHome();
+        return { text, match };
+      }
+
+      // Leave whatever flow we're in before opening the requested screen.
+      goHome();
+      await handleNavigate(match.destination, match.subFlow || '', match.routingStatus);
+      return { text, match };
+    },
+    [goHome, handleNavigate],
+  );
+
+  const handleVoiceCommandMic = useCallback(
+    (onResult) => {
+      if (!cmdSpeech.supported) return;
+      if (cmdSpeech.listening) {
+        cmdSpeech.stop();
+        return;
+      }
+      cmdSpeech.start(async (finalText) => {
+        if (!finalText) return;
+        const result = await handleVoiceCommand(finalText);
+        onResult?.(result);
+      });
+    },
+    [cmdSpeech, handleVoiceCommand],
   );
 
   const inlineExtra = (
@@ -491,6 +580,46 @@ export default function App() {
                 />
               )}
             </AnimatePresence>
+            <AnimatePresence>
+              {hotelBookingOpen && (
+                <HotelBookingScreen
+                  key="hotel-booking"
+                  onClose={() => setHotelBookingOpen(false)}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {flightBookingOpen && (
+                <FlightBookingScreen
+                  key="flight-booking"
+                  onClose={() => setFlightBookingOpen(false)}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {debitCardOpen && (
+                <DebitCardDashboardScreen
+                  key="debit-card"
+                  initialSubFlow={debitCardSubFlow}
+                  onClose={() => {
+                    setDebitCardOpen(false);
+                    setDebitCardSubFlow(null);
+                  }}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {creditCardOpen && (
+                <CreditCardDashboardScreen
+                  key={`credit-card-${creditCardSubFlow || 'default'}`}
+                  initialSubFlow={creditCardSubFlow}
+                  onClose={() => {
+                    setCreditCardOpen(false);
+                    setCreditCardSubFlow(null);
+                  }}
+                />
+              )}
+            </AnimatePresence>
             <VoiceModal
               open={open}
               session={session}
@@ -523,6 +652,8 @@ export default function App() {
           onOpenDeposit={() => setDepositOpen(true)}
           onOpenTxnHistory={() => setTxnHistOpen(true)}
           onNavigate={handleNavigate}
+          navMode={voiceCommandMode}
+          onVoiceCommand={handleVoiceCommand}
           accounts={accounts}
         />
       </PhoneFrame>
@@ -533,6 +664,13 @@ export default function App() {
         forceFail={forceFail}
         onResetBalances={handleResetBalances}
         onChangeLang={handleChangeLang}
+        onVoiceCommand={handleVoiceCommand}
+        onVoiceCommandMic={handleVoiceCommandMic}
+        voiceCommandSupported={cmdSpeech.supported}
+        voiceCommandListening={cmdSpeech.listening}
+        voiceCommandTranscript={cmdSpeech.transcript}
+        voiceCommandMode={voiceCommandMode}
+        onVoiceCommandModeChange={setVoiceCommandMode}
       />
     </div>
   );

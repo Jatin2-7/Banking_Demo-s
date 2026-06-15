@@ -103,7 +103,7 @@ function BottomNavItem({ icon, label, onClick }) {
   );
 }
 
-export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransferImps, onApplyNewLoan, onOpenDeposit, onOpenTxnHistory, onNavigate, accounts }) {
+export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransferImps, onApplyNewLoan, onOpenDeposit, onOpenTxnHistory, onNavigate, navMode = false, onVoiceCommand, accounts }) {
   const L = STRINGS[lang] || STRINGS.en;
   const [balancesVisible, setBalancesVisible] = useState(false);
   const [homeAiOpen, setHomeAiOpen] = useState(false);
@@ -582,14 +582,25 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
         onClose={() => setHomeAiOpen(false)}
         formValues={{}}
         onFormChange={() => {}}
+        navOnly={navMode}
+        onVoiceCommand={onVoiceCommand}
         onToolCall={(name, args) => {
           if (name === 'navigate_to' && args?.destination) {
             setHomeAiOpen(false);
             onNavigate?.(args.destination, args.context || '', args.routingStatus || '');
           }
         }}
-        greeting="Namaste! I'm your Indian Bank AI assistant. Tell me what you'd like to do — pay someone, transfer funds, apply for a loan, or anything else."
-        assistTitle="AI Banking Assistant"
+        greeting={
+          navMode
+            ? 'Sure. Tell me the screen you want to open, and I will take you there.'
+            : "Namaste! I'm your Indian Bank AI assistant. Tell me what you'd like to do — pay someone, transfer funds, apply for a loan, or anything else."
+        }
+        assistHint={
+          navMode
+            ? 'Try: account statement, fund transfer, loan, deposit, UPI, hotel, flight, debit card, or credit card statement.'
+            : undefined
+        }
+        assistTitle={navMode ? 'AI RM · Voice Navigation' : 'AI Banking Assistant'}
         showReasoning
         lang={lang}
       />

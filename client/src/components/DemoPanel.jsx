@@ -1,4 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { VOICE_COMMAND_EXAMPLES } from '../lib/voiceCommandRouter.js';
+
+// Special tab key for the Voice-to-Command navigation demo. Kept distinct from
+// the conversational SCRIPTS tabs so the two demo modes never blur together.
+const VOICE_TO_COMMAND = 'Voice-to-Command';
 
 // Categorised, scripted utterances designed to showcase every flow + edge case.
 // Clicking a script "speaks" it into the engine. Lets you demo without typing.
@@ -73,9 +78,31 @@ export default function DemoPanel({
   forceFail,
   onResetBalances,
   onChangeLang,
+  onVoiceCommand,
+  onVoiceCommandMic,
+  voiceCommandSupported = false,
+  voiceCommandListening = false,
+  voiceCommandTranscript = '',
+  voiceCommandMode = false,
+  onVoiceCommandModeChange,
 }) {
   const [open, setOpen] = useState(true);
   const [tab, setTab] = useState(Object.keys(SCRIPTS)[0]);
+  const [cmdFeedback, setCmdFeedback] = useState(null);
+
+  // Selecting the Voice-to-Command tab flips the whole app into navigation mode;
+  // switching to any conversational tab returns to normal mode.
+  useEffect(() => {
+    onVoiceCommandModeChange?.(tab === VOICE_TO_COMMAND);
+  }, [tab, onVoiceCommandModeChange]);
+
+  const runCommand = async (text) => {
+    if (!onVoiceCommand) return;
+    const result = await onVoiceCommand(text);
+    setCmdFeedback(result || { text, match: null });
+  };
+
+  const TAB_KEYS = [VOICE_TO_COMMAND, ...Object.keys(SCRIPTS)];
 
   if (!open) {
     return (
@@ -140,38 +167,143 @@ export default function DemoPanel({
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-1 px-2 py-2 border-b border-divider bg-page">
-        {Object.keys(SCRIPTS).map((k) => (
+        {TAB_KEYS.map((k) => (
           <button
             key={k}
             onClick={() => setTab(k)}
             className={`text-[10px] px-2 py-1 rounded-md ${
-              tab === k ? 'bg-brand text-white' : 'bg-white border border-divider text-muted'
+              tab === k
+                ? k === VOICE_TO_COMMAND
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-brand text-white'
+                : k === VOICE_TO_COMMAND
+                  ? 'bg-emerald-50 border border-emerald-300 text-emerald-700 font-semibold'
+                  : 'bg-white border border-divider text-muted'
             }`}
           >
-            {k}
+            {k === VOICE_TO_COMMAND ? '🎙 Voice-to-Command' : k}
           </button>
         ))}
       </div>
 
-      {/* Scripts */}
-      <div className="overflow-y-auto px-2 py-2 flex flex-col gap-1.5 no-scrollbar">
-        {SCRIPTS[tab].map((s, i) => (
-          <button
-            key={i}
-            onClick={() => {
-              if (s.lang) onChangeLang(s.lang);
-              setTimeout(() => onSpeak(s.text), s.lang ? 80 : 0);
-            }}
-            className="press text-left px-3 py-2 rounded-lg bg-page hover:bg-brand/5 border border-divider/60"
-          >
-            <div className="text-[12px] font-semibold text-ink">{s.label}</div>
-            <div className="text-[10px] text-muted font-mono mt-0.5 truncate">"{s.text}"</div>
-          </button>
-        ))}
+      {tab === VOICE_TO_COMMAND ? (
+        <VoiceCommandPanel
+          supported={voiceCommandSupported}
+          listening={voiceCommandListening}
+          transcript={voiceCommandTranscript}
+          feedback={cmdFeedback}
+          modeActive={voiceCommandMode}
+          onMic={() => onVoiceCommandMic?.((result) => setCmdFeedback(result))}
+          onRunExample={runCommand}
+        />
+      ) : (
+        <>
+          {/* Scripts */}
+          <div className="overflow-y-auto px-2 py-2 flex flex-col gap-1.5 no-scrollbar">
+            {SCRIPTS[tab].map((s, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (s.lang) onChangeLang(s.lang);
+                  setTimeout(() => onSpeak(s.text), s.lang ? 80 : 0);
+                }}
+                className="press text-left px-3 py-2 rounded-lg bg-page hover:bg-brand/5 border border-divider/60"
+              >
+                <div className="text-[12px] font-semibold text-ink">{s.label}</div>
+                <div className="text-[10px] text-muted font-mono mt-0.5 truncate">"{s.text}"</div>
+              </button>
+            ))}
+          </div>
+
+          <div className="px-3 py-1.5 border-t border-divider bg-page text-[9px] text-muted text-center">
+            Click any script · Acts as user voice input
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function VoiceCommandPanel({ supported, listening, transcript, feedback, modeActive, onMic, onRunExample }) {
+  return (
+    <div className="overflow-y-auto px-2 py-2 flex flex-col gap-2 no-scrollbar">
+      {/* App-wide mode banner */}
+      <div
+        className={`px-2 py-1.5 rounded-lg text-[10px] border ${
+          modeActive
+            ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+            : 'bg-slate-50 border-divider text-muted'
+        }`}
+      >
+        <span className="font-bold">{modeActive ? '● Mode active' : '○ Mode inactive'}</span>
+        <span className="ml-1">
+          The AI RM (🧑‍💼 button) now <b>navigates only</b> — no full conversation.
+        </span>
       </div>
 
-      <div className="px-3 py-1.5 border-t border-divider bg-page text-[9px] text-muted text-center">
-        Click any script · Acts as user voice input
+      <div className="px-1">
+        <div className="text-[11px] font-bold text-ink">Voice navigation</div>
+        <div className="text-[9px] text-muted leading-snug mt-0.5">
+          Open the AI RM and speak — or use the quick mic below. Either way the
+          app jumps straight to the requested screen.
+        </div>
+      </div>
+
+      {/* Mic — push to talk */}
+      <button
+        onClick={onMic}
+        disabled={!supported}
+        className={`press w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[12px] ${
+          !supported
+            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            : listening
+              ? 'bg-rose-500 text-white animate-pulse'
+              : 'bg-emerald-600 text-white'
+        }`}
+      >
+        <span className="text-base">🎙</span>
+        {!supported ? 'Mic not supported' : listening ? 'Listening… tap to stop' : 'Tap & speak a command'}
+      </button>
+
+      {/* Live transcript */}
+      {listening && (
+        <div className="px-2 py-1.5 rounded-lg bg-page border border-divider/60 text-[10px] text-muted min-h-[1.75rem]">
+          {transcript ? `"${transcript}"` : 'Listening…'}
+        </div>
+      )}
+
+      {/* Last result feedback */}
+      {feedback && (
+        <div
+          className={`px-2 py-1.5 rounded-lg text-[10px] border ${
+            feedback.match
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              : 'bg-amber-50 border-amber-300 text-amber-800'
+          }`}
+        >
+          <div className="font-mono truncate">Heard: "{feedback.text}"</div>
+          <div className="font-semibold mt-0.5">
+            {feedback.match ? `→ Opening ${feedback.match.label}` : 'No matching screen — try another phrase'}
+          </div>
+        </div>
+      )}
+
+      <div className="text-[9px] uppercase tracking-wider text-muted font-semibold mt-1 px-1">
+        Example commands
+      </div>
+      {VOICE_COMMAND_EXAMPLES.map((c, i) => (
+        <button
+          key={i}
+          onClick={() => onRunExample(c.text)}
+          className="press text-left px-3 py-2 rounded-lg bg-page hover:bg-emerald-50 border border-divider/60"
+        >
+          <div className="text-[12px] font-semibold text-ink">{c.label}</div>
+          <div className="text-[10px] text-muted font-mono mt-0.5 truncate">"{c.text}"</div>
+        </button>
+      ))}
+
+      <div className="border-t border-divider mt-1 pt-1.5 text-[9px] text-muted text-center">
+        Tap an example or use the mic · Navigates instantly
       </div>
     </div>
   );
