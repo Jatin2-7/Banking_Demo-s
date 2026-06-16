@@ -3,6 +3,8 @@ import { AnimatePresence } from 'framer-motion';
 import PhoneFrame from './components/PhoneFrame';
 import HomeScreen from './components/HomeScreen';
 import ImpsFundTransferScreen from './components/ImpsFundTransferScreen';
+import FundTransferVoiceScreen from './components/FundTransferVoiceScreen';
+import CreateDepositVoiceScreen from './components/CreateDepositVoiceScreen';
 import LoanApplicationScreen from './components/LoanApplicationScreen';
 import TransactionHistoryScreen from './components/TransactionHistoryScreen';
 import CreateDepositScreen from './components/CreateDepositScreen';
@@ -87,6 +89,10 @@ export default function App() {
   const [accounts, setAccounts] = useState([]);
   const [mpinOpen, setMpinOpen] = useState(false);
   const [impsOpen, setImpsOpen] = useState(false);
+  const [fundTransferVoiceOpen, setFundTransferVoiceOpen] = useState(false);
+  const [fundTransferVoicePrimer, setFundTransferVoicePrimer] = useState('');
+  const [depositVoiceOpen, setDepositVoiceOpen] = useState(false);
+  const [depositVoicePrimer, setDepositVoicePrimer] = useState('');
   const [loanLosOpen, setLoanLosOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [txnHistOpen, setTxnHistOpen] = useState(false);
@@ -382,6 +388,10 @@ export default function App() {
     speech.abort();
     setOpen(false);
     setImpsOpen(false);
+    setFundTransferVoiceOpen(false);
+    setFundTransferVoicePrimer('');
+    setDepositVoiceOpen(false);
+    setDepositVoicePrimer('');
     setLoanLosOpen(false);
     setDepositOpen(false);
     setTxnHistOpen(false);
@@ -473,6 +483,39 @@ export default function App() {
 
       // Leave whatever flow we're in before opening the requested screen.
       goHome();
+
+      if (match.destination === 'fund_transfer') {
+        stopGlobalCartesiaTts();
+        const statusLine = (match.routingStatus || 'Opening fund transfer.').trim();
+        if (statusLine) {
+          await speakViaCartesia(statusLine);
+          await waitUntilTtsIdle();
+          await new Promise((r) => setTimeout(r, 350));
+        }
+        setFundTransferVoicePrimer(
+          match.subFlow ||
+            'Customer opened fund transfer via voice navigation. Ask whether the payee is within Indian Bank or another bank, then collect account or mobile details.',
+        );
+        setFundTransferVoiceOpen(true);
+        return { text, match };
+      }
+
+      if (match.destination === 'create_deposit') {
+        stopGlobalCartesiaTts();
+        const statusLine = (match.routingStatus || 'Opening create deposit.').trim();
+        if (statusLine) {
+          await speakViaCartesia(statusLine);
+          await waitUntilTtsIdle();
+          await new Promise((r) => setTimeout(r, 350));
+        }
+        setDepositVoicePrimer(
+          match.subFlow ||
+            'Customer opened create deposit via voice navigation. Help them choose FD, MMD, or RD, then collect amount and tenure.',
+        );
+        setDepositVoiceOpen(true);
+        return { text, match };
+      }
+
       await handleNavigate(match.destination, match.subFlow || '', match.routingStatus);
       return { text, match };
     },
@@ -530,6 +573,32 @@ export default function App() {
                 dismissUpiRage();
               }}
             />
+            <AnimatePresence>
+              {depositVoiceOpen && (
+                <CreateDepositVoiceScreen
+                  key="deposit-voice"
+                  onClose={() => {
+                    setDepositVoiceOpen(false);
+                    setDepositVoicePrimer('');
+                  }}
+                  lang={lang}
+                  aiPrimer={depositVoicePrimer}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {fundTransferVoiceOpen && (
+                <FundTransferVoiceScreen
+                  key="fund-transfer-voice"
+                  onClose={() => {
+                    setFundTransferVoiceOpen(false);
+                    setFundTransferVoicePrimer('');
+                  }}
+                  lang={lang}
+                  aiPrimer={fundTransferVoicePrimer}
+                />
+              )}
+            </AnimatePresence>
             <AnimatePresence>
               {impsOpen && (
                 <ImpsFundTransferScreen

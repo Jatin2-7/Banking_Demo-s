@@ -44,6 +44,70 @@ function UpiLogo({ size = 20 }) {
   );
 }
 
+function TransferIcon({ size = 20 }) {
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center rounded-full bg-[#003D7C]/90 text-white shadow-sm"
+      style={{ width: size, height: size }}
+      aria-hidden
+    >
+      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+        <path d="M7 7h11M7 7l3-3M7 7l3 3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M17 17H6M17 17l-3 3M17 17l-3-3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+const JOURNEY_META = {
+  send_money: {
+    title: 'UPI Payment',
+    hint: 'Tell me who to pay and how much',
+    confirmLabel: 'Confirm Payment',
+    processing: 'Processing payment…',
+    icon: 'upi',
+  },
+  internal_transfer: {
+    title: 'Fund Transfer',
+    hint: 'Tell me the amount and which accounts to use',
+    confirmLabel: 'Confirm Transfer',
+    processing: 'Processing transfer…',
+    icon: 'transfer',
+  },
+  pay_bill: {
+    title: 'Bill Payment',
+    hint: 'Tell me which bill to pay',
+    confirmLabel: 'Confirm Payment',
+    processing: 'Processing payment…',
+    icon: 'payment',
+  },
+  book_flight: {
+    title: 'Flight Booking',
+    hint: 'Tell me where you want to fly',
+    confirmLabel: 'Confirm Booking',
+    processing: 'Processing…',
+    icon: 'generic',
+  },
+};
+
+function journeyMeta(session) {
+  return JOURNEY_META[session?.action] || JOURNEY_META.send_money;
+}
+
+function JourneyIcon({ kind, size = 20 }) {
+  if (kind === 'upi') return <UpiLogo size={size} />;
+  if (kind === 'transfer') return <TransferIcon size={size} />;
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center rounded-full bg-bank-gold/25 text-bank-gold"
+      style={{ width: size, height: size }}
+      aria-hidden
+    >
+      ₹
+    </div>
+  );
+}
+
 /* ─── Aarav avatar ─── */
 function AaravAvatar({ size = 32, pulse = false }) {
   return (
@@ -121,19 +185,23 @@ function PaymentSummaryCard({ session }) {
   const state = session?.state;
   const pending = session?.pending;
   const details = pending?.details || [];
+  const meta = journeyMeta(session);
 
   const amount = pluck(details, '^amount', 'राशि', 'మొత్తం', 'தொகை');
   const to = pluck(details, '^to$', '^biller', '^recipient', 'किसे', 'ఎవరికి', 'யாருக்கு');
+  const from = pluck(details, '^from', 'खाता', 'ఖాతా', 'கணக்கு');
   const upiId = pluck(details, '^upi', '^vpa', '^handle');
+  const isTransfer = session?.action === 'internal_transfer';
 
   const isConfirm = state === 'CONFIRM';
   // DONE/FAILED/CANCELLED handled by ResultCard in inlineExtra — don't double-render
   const isTerminal = ['DONE', 'FAILED', 'CANCELLED'].includes(state);
   if (isTerminal) return null;
 
-  if (isConfirm && (amount || to)) {
-    const initials = to ? initialsOf(to) : '₹';
-    const avatarBg = to ? avatarColor(to) : '#5B3D8A';
+  if (isConfirm && (amount || to || from)) {
+    const heroLabel = isTransfer ? to || from : to;
+    const initials = heroLabel ? initialsOf(heroLabel) : '₹';
+    const avatarBg = heroLabel ? avatarColor(heroLabel) : '#5B3D8A';
     return (
       <motion.div
         initial={{ y: 10, opacity: 0 }}
@@ -141,29 +209,49 @@ function PaymentSummaryCard({ session }) {
         className="mx-4 my-3 rounded-2xl bg-white overflow-hidden shadow-lg"
       >
         <div className="bg-gradient-to-r from-[#3D2666]/10 to-[#5B3D8A]/10 px-4 py-2">
-          <p className="text-[10px] uppercase tracking-widest font-bold text-[#3D2666]">Confirm Payment</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-[#3D2666]">{meta.confirmLabel}</p>
         </div>
         {amount && (
           <div className="text-center py-3">
             <p className="text-3xl font-black text-slate-800 tracking-tight">{amount}</p>
           </div>
         )}
-        {to && (
-          <div className="flex items-center gap-3 px-4 pb-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-              style={{ background: avatarBg }}
-            >
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-800 truncate">{to}</p>
-              {upiId && <p className="text-xs text-slate-500 truncate">{upiId}</p>}
-            </div>
-            <div className="ml-auto">
-              <UpiLogo size={22} />
+        {isTransfer ? (
+          <div className="space-y-2 px-4 pb-3">
+            {from && (
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-slate-500">From</span>
+                <span className="font-semibold text-slate-800 truncate">{from}</span>
+              </div>
+            )}
+            {to && (
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-slate-500">To</span>
+                <span className="font-semibold text-slate-800 truncate">{to}</span>
+              </div>
+            )}
+            <div className="flex justify-end pt-1">
+              <JourneyIcon kind={meta.icon} size={22} />
             </div>
           </div>
+        ) : (
+          to && (
+            <div className="flex items-center gap-3 px-4 pb-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                style={{ background: avatarBg }}
+              >
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-800 truncate">{to}</p>
+                {upiId && <p className="text-xs text-slate-500 truncate">{upiId}</p>}
+              </div>
+              <div className="ml-auto">
+                <JourneyIcon kind={meta.icon} size={22} />
+              </div>
+            </div>
+          )
         )}
       </motion.div>
     );
@@ -175,13 +263,13 @@ function PaymentSummaryCard({ session }) {
       <div className="relative w-10 h-10 shrink-0">
         <div className="absolute inset-0 rounded-full bg-bank-gold/30 animate-ping" />
         <div className="relative w-10 h-10 rounded-full bg-bank-gold/20 flex items-center justify-center">
-          <UpiLogo size={20} />
+          <JourneyIcon kind={meta.icon} size={20} />
         </div>
       </div>
       <div>
-        <p className="text-sm font-bold text-white">UPI Payment</p>
+        <p className="text-sm font-bold text-white">{meta.title}</p>
         <p className="text-[11px] text-white/60 mt-0.5">
-          {session?.thinking ? 'AI is thinking…' : 'Tell me who to pay and how much'}
+          {session?.thinking ? 'AI is thinking…' : meta.hint}
         </p>
       </div>
     </div>
@@ -207,7 +295,8 @@ function ThinkingDots() {
 }
 
 /* ─── Processing indicator ─── */
-function ProcessingBubble() {
+function ProcessingBubble({ session }) {
+  const processing = journeyMeta(session).processing;
   return (
     <div className="flex items-end gap-2 justify-start">
       <AaravAvatar size={28} />
@@ -215,7 +304,7 @@ function ProcessingBubble() {
         <svg className="w-4 h-4 animate-spin text-[#3D2666]" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="42" strokeLinecap="round" />
         </svg>
-        <span className="text-[12px] text-slate-600">Processing payment…</span>
+        <span className="text-[12px] text-slate-600">{processing}</span>
       </div>
     </div>
   );
@@ -319,7 +408,7 @@ export default function VoiceModal({
   return (
     <AnimatePresence>
       <motion.div
-        key="upi-screen"
+        key={session.action || 'voice-screen'}
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
@@ -419,7 +508,7 @@ export default function VoiceModal({
 
           {/* Thinking / processing indicators */}
           {session?.thinking && <ThinkingDots />}
-          {session?.executing && <ProcessingBubble />}
+          {session?.executing && <ProcessingBubble session={session} />}
 
           {/* Inline confirm / result (from App.jsx — ConfirmCard, ResultCard) */}
           {inlineExtra}

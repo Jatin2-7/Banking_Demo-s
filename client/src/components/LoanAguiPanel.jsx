@@ -62,6 +62,7 @@ function LoanAssistAvatar({ size = 24 }) {
  * @param {string | null} [props.primer]
  * @param {string} [props.lang]
  * @param {boolean} [props.showReasoning] - Show thinking/status ticker (for home routing agent)
+ * @param {boolean} [props.chatFullscreen] - Full-screen VoiceModal-style chat (fund transfer voice journey)
  */
 export default function LoanAguiPanel({
   open,
@@ -78,6 +79,7 @@ export default function LoanAguiPanel({
   showReasoning = false,
   navOnly = false,
   onVoiceCommand,
+  chatFullscreen = false,
 }) {
   const [messages, setMessages] = useState(() => [
     {
@@ -220,7 +222,7 @@ export default function LoanAguiPanel({
         const slot = toolCallReg.current[ev.tool_call_id];
         try {
           const data = JSON.parse(ev.content);
-          if (slot?.name === 'click_button' || slot?.name === 'validate_form' || slot?.name === 'submit_transfer') {
+          if (slot?.name === 'click_button' || slot?.name === 'validate_form' || slot?.name === 'submit_transfer' || slot?.name === 'submit_deposit') {
             onToolCall?.(slot.name, { tool_call_id: ev.tool_call_id, ...data });
           }
         } catch {
@@ -431,14 +433,20 @@ export default function LoanAguiPanel({
           ref={panelRef}
           data-loan-assistant
           role="dialog"
-          aria-label="Loan assistant"
-          initial={{ opacity: 0, y: 14 }}
+          aria-label={chatFullscreen ? 'Fund transfer assistant' : 'Loan assistant'}
+          initial={{ opacity: 0, y: chatFullscreen ? 0 : 14 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 14 }}
+          exit={{ opacity: 0, y: chatFullscreen ? 0 : 14 }}
           transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-          className="pointer-events-auto absolute bottom-[3.85rem] left-2 right-2 z-[84] flex min-h-0 flex-col overflow-hidden rounded-2xl border border-bank-gold/50 bg-white/96 text-black shadow-[0_10px_32px_rgba(15,23,42,0.18)] backdrop-blur-md"
-          style={{ height: panelH ? `${panelH}px` : 'min(34vh, 280px)' }}
+          className={
+            chatFullscreen
+              ? 'pointer-events-auto absolute inset-0 z-10 flex min-h-0 flex-col overflow-hidden bg-transparent text-white'
+              : 'pointer-events-auto absolute bottom-[3.85rem] left-2 right-2 z-[84] flex min-h-0 flex-col overflow-hidden rounded-2xl border border-bank-gold/50 bg-white/96 text-black shadow-[0_10px_32px_rgba(15,23,42,0.18)] backdrop-blur-md'
+          }
+          style={chatFullscreen ? undefined : { height: panelH ? `${panelH}px` : 'min(34vh, 280px)' }}
         >
+          {!chatFullscreen && (
+          <>
           {/* Drag-to-resize handle */}
           <div
             className="flex shrink-0 cursor-ns-resize items-center justify-center py-1 touch-none select-none"
@@ -483,15 +491,21 @@ export default function LoanAguiPanel({
               ×
             </button>
           </div>
+          </>
+          )}
 
           {/* Scrollable transcript — user + assistant, rubber-band on iOS */}
           <div
             ref={transcriptScrollRef}
-            className="min-h-[72px] max-h-[min(30vh,220px)] flex-1 space-y-1.5 overflow-y-auto overscroll-y-auto px-2.5 py-2 text-black [-webkit-overflow-scrolling:touch]"
+            className={
+              chatFullscreen
+                ? 'min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-y-auto px-4 py-2 [-webkit-overflow-scrolling:touch]'
+                : 'min-h-[72px] max-h-[min(30vh,220px)] flex-1 space-y-1.5 overflow-y-auto overscroll-y-auto px-2.5 py-2 text-black [-webkit-overflow-scrolling:touch]'
+            }
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {messages.length <= 1 ? (
-              <p className="text-[10px] leading-snug text-black">{assistHint}</p>
+              <p className={`text-[10px] leading-snug ${chatFullscreen ? 'text-white/55' : 'text-black'}`}>{assistHint}</p>
             ) : null}
             {transcriptRows.map((m) => {
               const isUser = m.role === 'user';
@@ -510,9 +524,13 @@ export default function LoanAguiPanel({
                 <div key={m.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                   <div
                     className={`max-w-[94%] whitespace-pre-wrap break-words rounded-lg px-2.5 py-1.5 text-[11px] leading-snug shadow-sm ${
-                      isUser
-                        ? 'bg-bank-gold/90 text-black ring-1 ring-bank-gold/55'
-                        : 'bg-zinc-100 text-black ring-1 ring-zinc-200'
+                      chatFullscreen
+                        ? isUser
+                          ? 'rounded-2xl rounded-br-sm bg-white/15 text-white ring-1 ring-white/20 backdrop-blur-md'
+                          : 'rounded-2xl rounded-bl-sm bg-white text-slate-800'
+                        : isUser
+                          ? 'bg-bank-gold/90 text-black ring-1 ring-bank-gold/55'
+                          : 'bg-zinc-100 text-black ring-1 ring-zinc-200'
                     }`}
                   >
                     {isUser ? text : show}
@@ -569,7 +587,11 @@ export default function LoanAguiPanel({
           )}
 
           {voiceBanner ? (
-            <p className="mx-2 shrink-0 rounded-lg border border-amber-300/80 bg-amber-100/95 px-2 py-1 text-center text-[10px] leading-snug text-black">
+            <p className={`mx-2 shrink-0 rounded-lg border px-2 py-1 text-center text-[10px] leading-snug ${
+              chatFullscreen
+                ? 'border-amber-300/40 bg-amber-500/15 text-amber-100'
+                : 'border-amber-300/80 bg-amber-100/95 text-black'
+            }`}>
               {voiceBanner}
             </p>
           ) : null}
@@ -580,16 +602,24 @@ export default function LoanAguiPanel({
             </div>
           ) : null}
 
-          <div className="shrink-0 border-t border-zinc-200 px-2 pb-2 pt-1.5">
-            <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1.5 shadow-inner">
+          <div className={`shrink-0 px-2 pb-2 pt-1.5 ${chatFullscreen ? 'px-3 pb-4' : 'border-t border-zinc-200'}`}>
+            <div className={`flex items-center gap-2 rounded-xl p-1.5 ${
+              chatFullscreen
+                ? 'bg-white/10 ring-1 ring-white/20 backdrop-blur-xl'
+                : 'border border-zinc-200 bg-zinc-50 shadow-inner'
+            }`}>
               <button
                 type="button"
                 onClick={() => void toggleMic()}
                 disabled={running}
                 className={`press flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
-                  useBrowserStt
-                    ? 'bg-bank-gold text-black ring-4 ring-bank-gold/35'
-                    : 'bg-zinc-200 text-black ring-1 ring-zinc-300'
+                  chatFullscreen
+                    ? micActive
+                      ? 'bg-bank-gold text-bank-purpleDeep ring-4 ring-bank-gold/30'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                    : useBrowserStt
+                      ? 'bg-bank-gold text-black ring-4 ring-bank-gold/35'
+                      : 'bg-zinc-200 text-black ring-1 ring-zinc-300'
                 }`}
                 title={micActive ? 'Tap to finish' : 'Tap to speak'}
                 aria-label={micActive ? 'Stop recording' : 'Start recording'}
@@ -609,13 +639,17 @@ export default function LoanAguiPanel({
                   }
                 }}
                 placeholder="Type or say something…"
-                className="min-w-0 flex-1 bg-transparent px-1 text-[13px] text-black outline-none placeholder:text-black/40"
+                className={`min-w-0 flex-1 bg-transparent px-1 text-[13px] outline-none ${
+                  chatFullscreen ? 'text-white placeholder:text-white/40' : 'text-black placeholder:text-black/40'
+                }`}
               />
               {input.trim() ? (
                 <button
                   type="button"
                   onClick={() => setInput('')}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm text-black/55 hover:bg-zinc-200 hover:text-black"
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm hover:bg-zinc-200 ${
+                    chatFullscreen ? 'text-white/55 hover:text-white hover:bg-white/10' : 'text-black/55 hover:text-black'
+                  }`}
                   aria-label="Clear"
                 >
                   ×
@@ -627,8 +661,12 @@ export default function LoanAguiPanel({
                 disabled={!input.trim() || running}
                 className={`press flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all ${
                   input.trim() && !running
-                    ? 'bg-gradient-to-br from-bank-gold to-amber-500 text-black shadow-sm ring-1 ring-bank-gold/50'
-                    : 'cursor-not-allowed bg-zinc-200 text-black/35'
+                    ? chatFullscreen
+                      ? 'bg-bank-gold text-bank-purpleDeep shadow-sm'
+                      : 'bg-gradient-to-br from-bank-gold to-amber-500 text-black shadow-sm ring-1 ring-bank-gold/50'
+                    : chatFullscreen
+                      ? 'cursor-not-allowed bg-white/10 text-white/30'
+                      : 'cursor-not-allowed bg-zinc-200 text-black/35'
                 }`}
                 aria-label="Send"
               >

@@ -29,6 +29,8 @@ export default function ResultCard({ session, onDone, onRetry, lang }) {
 
   if (session.state === 'DONE' && session.result?.success) {
     const r = session.result;
+    const successTitle =
+      session.action === 'internal_transfer' ? L.transferSuccess : L.paymentSuccess;
     return (
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
@@ -40,7 +42,7 @@ export default function ResultCard({ session, onDone, onRetry, lang }) {
           <div className="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center text-white text-2xl mb-2">
             ✓
           </div>
-          <div className="text-[15px] font-bold text-ink">{L.paymentSuccess}</div>
+          <div className="text-[15px] font-bold text-ink">{successTitle}</div>
           <div className="text-[12px] text-muted mt-1">{r.message}</div>
           {r.txnId && (
             <div className="mt-3 text-[10px] text-muted">

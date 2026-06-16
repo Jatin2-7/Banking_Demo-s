@@ -26,6 +26,8 @@ export default function ConfirmCard({ session, onConfirm, onCancel, lang }) {
     pay_bill: '#C9A227',
     book_flight: '#0288D1',
   }[action] || '#3D2666';
+  const confirmTitle =
+    action === 'internal_transfer' ? 'Confirm transfer' : L.confirmTitle;
 
   // Pull out the primary fields so we can render them as hero rows. Anything
   // left over is shown as a subtle "more details" list at the bottom.
@@ -68,7 +70,7 @@ export default function ConfirmCard({ session, onConfirm, onCancel, lang }) {
           className="text-[10px] uppercase tracking-[0.12em] font-bold"
           style={{ color: accent }}
         >
-          {L.confirmTitle}
+          {confirmTitle}
         </div>
       </div>
 
