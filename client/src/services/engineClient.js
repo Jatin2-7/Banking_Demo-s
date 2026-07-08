@@ -1,7 +1,9 @@
 // Thin HTTP client for the server-side engine. The server holds all state;
 // the client just renders the SessionView returned by every turn.
 
-const API_BASE = (import.meta.env?.VITE_API_BASE || 'http://localhost:3001').replace(/\/$/, '');
+const API_BASE = (
+  import.meta.env?.VITE_API_BASE || (import.meta.env?.DEV ? '' : 'http://localhost:3001')
+).replace(/\/$/, '');
 
 export async function turn({ sessionId, lang, forceFail, input }) {
   const r = await fetch(`${API_BASE}/api/engine/turn`, {

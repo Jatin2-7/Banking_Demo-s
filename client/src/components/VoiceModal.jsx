@@ -315,6 +315,7 @@ export default function VoiceModal({
   open,
   session,
   liveTranscript,
+  onSendVoice,
   isListening,
   speechSupported,
   onClose,
@@ -497,11 +498,21 @@ export default function VoiceModal({
             ))}
           </AnimatePresence>
 
-          {/* Live transcript */}
-          {liveTranscript && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-end">
-              <div className="text-[12px] text-white/80 italic px-3 py-1.5 rounded-full bg-white/10 ring-1 ring-white/15">
-                "{liveTranscript}"
+          {/* Live transcript — shown while mic is active */}
+          {isListening && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-end items-end gap-2"
+            >
+              {/* mini wave */}
+              <div className="flex items-end gap-[2px] shrink-0 mb-0.5" aria-hidden>
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="wave-bar" style={{ animationDelay: `${i * 0.12}s` }} />
+                ))}
+              </div>
+              <div className="max-w-[78%] text-[13px] text-white/90 italic px-3.5 py-2.5 rounded-2xl rounded-br-sm bg-white/10 ring-1 ring-white/20 leading-snug">
+                {liveTranscript ? `"${liveTranscript}"` : <span className="text-white/40">Speak now…</span>}
               </div>
             </motion.div>
           )}
@@ -534,10 +545,20 @@ export default function VoiceModal({
           <div ref={bottomRef} aria-hidden="true" />
         </div>
 
-        {/* ── Mic wave (above input) ── */}
-        {isListening && (
-          <div className="shrink-0 flex justify-center pb-1">
-            <Wave active />
+        {/* ── Voice send bar (shown while mic is active) ── */}
+        {isListening && !isTerminal && (
+          <div className="shrink-0 px-3 pb-1">
+            <button
+              type="button"
+              onClick={onSendVoice}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-bank-gold py-2.5 text-[13px] font-bold text-bank-purpleDeep shadow-md press"
+              aria-label="Send voice input now"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M4 12L20 4l-3 16-5-7-8-1z" />
+              </svg>
+              Send — done speaking
+            </button>
           </div>
         )}
 
@@ -553,15 +574,23 @@ export default function VoiceModal({
                   !speechSupported
                     ? 'bg-white/10 opacity-40'
                     : isListening
-                      ? 'bg-bank-gold ring-4 ring-bank-gold/30 text-bank-purpleDeep'
+                      ? 'bg-red-500/80 ring-4 ring-red-400/30 text-white'
                       : 'bg-white/20 hover:bg-white/30'
                 }`}
                 aria-label={isListening ? 'Stop recording' : 'Start recording'}
               >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3z" />
-                  <path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3v-2.08A7 7 0 0 0 19 11z" />
-                </svg>
+                {isListening ? (
+                  /* stop square icon */
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                    <rect x="5" y="5" width="14" height="14" rx="2" />
+                  </svg>
+                ) : (
+                  /* mic icon */
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                    <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3z" />
+                    <path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3v-2.08A7 7 0 0 0 19 11z" />
+                  </svg>
+                )}
               </button>
 
               {/* Text input */}
@@ -569,7 +598,7 @@ export default function VoiceModal({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
-                placeholder={L.typeHere || 'Type or speak…'}
+                placeholder={isListening ? 'Or type your answer…' : (L.typeHere || 'Type or speak…')}
                 className="flex-1 text-[13px] bg-transparent outline-none text-white placeholder:text-white/40 px-1"
               />
 
@@ -584,7 +613,7 @@ export default function VoiceModal({
                 </button>
               )}
 
-              {/* Send */}
+              {/* Text send */}
               <button
                 onClick={submit}
                 disabled={!text.trim()}
@@ -593,7 +622,7 @@ export default function VoiceModal({
                     ? 'bg-bank-gold text-bank-purpleDeep shadow-sm'
                     : 'bg-white/10 text-white/30 cursor-not-allowed'
                 }`}
-                aria-label="Send"
+                aria-label="Send text"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path

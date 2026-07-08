@@ -37,7 +37,7 @@
         "coerce": "number",
         "llm_hint": "Word numbers, multi-script: 'do hazaar'->2000, '1.5 lakh'->150000, ५००->500."
       },
-      "constraints": { "min": 1, "max": 100000 }
+      "constraints": { "min": 1, "max": 200000 }
     },
     "from_account_type": {
       "type": "enum",
@@ -59,7 +59,7 @@
       "success_pay": "Done. ₹{currency:0} sent to {1}.",
       "invalid_amount_zero": "Amount must be greater than zero. How much?",
       "invalid_amount_neg": "Amount cannot be negative. Try again.",
-      "invalid_amount_high": "That amount exceeds your per-transaction limit of ₹{currency:0}.",
+      "invalid_amount_high": "That amount is above the ₹{currency:0} per-transaction limit. Please try a smaller amount.",
       "insufficient_balance_offer_switch": "{0} only has ₹{currency:1} but you need ₹{currency:2}. Pick a different account to pay from:",
       "pick_alt_account": "Which account should I use instead?",
       "no_funds_anywhere": "No account has enough balance to send ₹{currency:0}. Try a smaller amount."
@@ -74,7 +74,7 @@
       "success_pay": "हो गया। ₹{currency:0} {1} को भेज दिए।",
       "invalid_amount_zero": "राशि शून्य से अधिक होनी चाहिए।",
       "invalid_amount_neg": "राशि ऋणात्मक नहीं हो सकती।",
-      "invalid_amount_high": "यह राशि सीमा ₹{currency:0} से अधिक है।",
+      "invalid_amount_high": "यह राशि प्रति-लेनदेन सीमा ₹{currency:0} से अधिक है। कम राशि बोलें।",
       "insufficient_balance_offer_switch": "{0} में सिर्फ़ ₹{currency:1} है, ₹{currency:2} चाहिए। दूसरा खाता चुनें:",
       "pick_alt_account": "किस खाते से भेजें?",
       "no_funds_anywhere": "किसी भी खाते में ₹{currency:0} नहीं है। कम राशि बोलें।"
@@ -173,7 +173,7 @@
       "slot": "amount",
       "rules": [
         { "type": "positive", "msg_key": "invalid_amount_zero" },
-        { "type": "max", "value": 100000, "msg_key": "invalid_amount_high", "msg_args": [100000] }
+        { "type": "max", "value": 200000, "msg_key": "invalid_amount_high", "msg_args": [200000] }
       ],
       "on_fail_goto": "ask_amount"
     },

@@ -14,10 +14,11 @@ import { sessions, createSession } from './engine/session.js';
 import { log, sessionLog } from './lib/log.js';
 import { handleLoanAguiPost } from './agui/loanAguiRoute.js';
 import { PRIMARY_ACCOUNT, TRANSACTIONS } from './data/mock.js';
+import { getChatModel, getLlmProvider, hasLlmConfigured } from './lib/openaiClient.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = getChatModel();
 const STT_MODEL = process.env.ELEVENLABS_STT_MODEL || 'scribe_v1';
 const STT_ENDPOINT = 'https://api.elevenlabs.io/v1/speech-to-text';
 
@@ -25,12 +26,15 @@ app.use(cors());
 app.use(express.json({ limit: '256kb' }));
 
 app.get('/api/health', (_req, res) => {
-  const k = process.env.OPENAI_API_KEY?.trim();
   const sk = process.env.ELEVENLABS_API_KEY;
   res.json({
     ok: true,
     model: MODEL,
-    hasOpenAIKey: Boolean(k && !k.startsWith('your_') && k.length > 20),
+    llm: {
+      provider: getLlmProvider(),
+      hasKey: hasLlmConfigured(),
+    },
+    hasOpenAIKey: hasLlmConfigured(),
     stt: {
       provider: 'elevenlabs',
       model: STT_MODEL,

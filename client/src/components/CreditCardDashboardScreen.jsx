@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const AUTO_STATEMENT_MS = 1800;
+const AUTO_PIN_MS = 1200;
+const DEMO_CURRENT_PIN = '1234';
+const PIN_LEN = 4;
 
 const CARDS = [
   {
@@ -100,6 +103,180 @@ function DetailRow({ label, value, bold }) {
   );
 }
 
+// ── PIN change sub-screen ─────────────────────────────────────────────────────
+
+const PIN_STEPS = {
+  current: { title: 'Enter Current PIN', subtitle: 'Enter your 4-digit credit card PIN' },
+  new:     { title: 'Enter New PIN',     subtitle: 'Choose a new 4-digit PIN' },
+  confirm: { title: 'Confirm New PIN',   subtitle: 'Re-enter your new PIN to confirm' },
+};
+
+function PinKeypad({ value, maxLen, onPress, onBack }) {
+  const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, null, 0, 'back'];
+  return (
+    <div className="grid grid-cols-3 gap-2 px-6">
+      {digits.map((d, i) => {
+        if (d === null) return <div key={i} />;
+        if (d === 'back') {
+          return (
+            <button
+              key="back"
+              type="button"
+              onClick={onBack}
+              className="flex h-12 items-center justify-center rounded-xl bg-white/10 text-lg text-white press"
+              aria-label="Delete"
+            >
+              ⌫
+            </button>
+          );
+        }
+        return (
+          <button
+            key={d}
+            type="button"
+            onClick={() => value.length < maxLen && onPress(String(d))}
+            className="flex h-12 items-center justify-center rounded-xl bg-white/10 text-base font-bold text-white press hover:bg-white/20"
+          >
+            {d}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PinDots({ value, len }) {
+  return (
+    <div className="flex justify-center gap-3">
+      {Array.from({ length: len }, (_, i) => (
+        <div
+          key={i}
+          className={`h-3.5 w-3.5 rounded-full border-2 transition-all duration-150 ${
+            i < value.length ? 'scale-110 border-bank-gold bg-bank-gold' : 'border-white/40 bg-transparent'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ChangePinScreen({ onDone, onCancel }) {
+  const [pinStep, setPinStep] = useState('current');
+  const [entry, setEntry] = useState('');
+  const [savedNew, setSavedNew] = useState('');
+  const [error, setError] = useState(null);
+  const [shake, setShake] = useState(false);
+
+  const { title, subtitle } = PIN_STEPS[pinStep] || PIN_STEPS.current;
+
+  function triggerShake(msg) {
+    setError(msg);
+    setShake(true);
+    setEntry('');
+    setTimeout(() => setShake(false), 500);
+  }
+
+  function handlePress(d) {
+    setError(null);
+    const next = entry + d;
+    setEntry(next);
+
+    if (next.length < PIN_LEN) return;
+
+    if (pinStep === 'current') {
+      if (next !== DEMO_CURRENT_PIN) {
+        triggerShake('Incorrect PIN. Please try again.');
+      } else {
+        setEntry('');
+        setPinStep('new');
+      }
+    } else if (pinStep === 'new') {
+      setSavedNew(next);
+      setEntry('');
+      setPinStep('confirm');
+    } else if (pinStep === 'confirm') {
+      if (next !== savedNew) {
+        triggerShake('PINs do not match. Please re-enter.');
+        setSavedNew('');
+        setPinStep('new');
+      } else {
+        setPinStep('success');
+      }
+    }
+  }
+
+  function handleBack() {
+    setError(null);
+    setEntry((v) => v.slice(0, -1));
+  }
+
+  if (pinStep === 'success') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-1 flex-col items-center justify-center gap-5 px-8"
+      >
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 text-4xl shadow-xl">
+          ✓
+        </div>
+        <p className="text-lg font-bold text-white">PIN Changed!</p>
+        <p className="text-center text-sm text-white/70">
+          Your credit card PIN has been updated successfully.
+        </p>
+        <button
+          type="button"
+          onClick={onDone}
+          className="mt-4 w-full max-w-[200px] rounded-xl bg-bank-gold py-3 text-sm font-bold text-bank-purpleDeep press"
+        >
+          Done
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="flex flex-1 flex-col"
+    >
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
+        <div className="text-center">
+          <p className="text-base font-bold text-white">{title}</p>
+          <p className="mt-1 text-xs text-white/60">{subtitle}</p>
+        </div>
+
+        <motion.div animate={shake ? { x: [0, -8, 8, -8, 8, 0] } : {}} transition={{ duration: 0.4 }}>
+          <PinDots value={entry} len={PIN_LEN} />
+        </motion.div>
+
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center text-xs font-semibold text-red-300"
+          >
+            {error}
+          </motion.p>
+        )}
+
+        <PinKeypad value={entry} maxLen={PIN_LEN} onPress={handlePress} onBack={handleBack} />
+      </div>
+
+      <div className="shrink-0 px-6 pb-6">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full rounded-xl border border-white/20 py-2.5 text-sm font-semibold text-white/70 press"
+        >
+          Cancel
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function CreditCardDashboardScreen({ onClose, initialSubFlow = null }) {
   const [cardIndex, setCardIndex] = useState(0);
   const [flow, setFlow] = useState('dashboard');
@@ -107,29 +284,43 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
   const [payAmount, setPayAmount] = useState('0.00');
   const [showNumber, setShowNumber] = useState(false);
   const [highlightStatement, setHighlightStatement] = useState(false);
+  const [highlightPin, setHighlightPin] = useState(false);
   const autoNavRef = useRef(null);
 
   const card = CARDS[cardIndex];
   const autoStatement = initialSubFlow === 'card_statement';
+  const autoPin = initialSubFlow === 'change_pin';
 
   useEffect(() => {
     if (!autoStatement) return undefined;
-
     setHighlightStatement(true);
     autoNavRef.current = setTimeout(() => {
       setHighlightStatement(false);
       setFlow('statement');
     }, AUTO_STATEMENT_MS);
-
-    return () => {
-      if (autoNavRef.current) clearTimeout(autoNavRef.current);
-    };
+    return () => { if (autoNavRef.current) clearTimeout(autoNavRef.current); };
   }, [autoStatement]);
+
+  useEffect(() => {
+    if (!autoPin) return undefined;
+    setHighlightPin(true);
+    autoNavRef.current = setTimeout(() => {
+      setHighlightPin(false);
+      setFlow('change_pin');
+    }, AUTO_PIN_MS);
+    return () => { if (autoNavRef.current) clearTimeout(autoNavRef.current); };
+  }, [autoPin]);
 
   const openStatement = () => {
     if (autoNavRef.current) clearTimeout(autoNavRef.current);
     setHighlightStatement(false);
     setFlow('statement');
+  };
+
+  const openChangePin = () => {
+    if (autoNavRef.current) clearTimeout(autoNavRef.current);
+    setHighlightPin(false);
+    setFlow('change_pin');
   };
 
   return (
@@ -141,13 +332,28 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
       className="absolute inset-0 z-40 flex flex-col bg-slate-100"
     >
       <ScreenHeader
-        title="Credit Card"
-        onBack={flow === 'statement' ? () => setFlow('dashboard') : onClose}
+        title={flow === 'change_pin' ? 'Change Credit Card PIN' : 'Credit Card'}
+        onBack={flow === 'dashboard' ? onClose : () => setFlow('dashboard')}
         onHome={onClose}
       />
 
       <AnimatePresence mode="wait" initial={false}>
-        {flow === 'dashboard' ? (
+        {flow === 'change_pin' ? (
+          <motion.div
+            key="change_pin"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 40 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+            className="flex flex-1 flex-col"
+            style={{ background: 'linear-gradient(160deg, #003366 0%, #001F4D 50%, #0A0A2E 100%)' }}
+          >
+            <ChangePinScreen
+              onDone={() => setFlow('dashboard')}
+              onCancel={() => setFlow('dashboard')}
+            />
+          </motion.div>
+        ) : flow === 'dashboard' ? (
           <motion.div
             key="dashboard"
             initial={{ opacity: 1, x: 0 }}
@@ -156,9 +362,9 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
             transition={{ duration: 0.25 }}
             className="flex-1 overflow-y-auto pb-6"
           >
-            {autoStatement && (
+            {(autoStatement || autoPin) && (
               <div className="mx-4 mt-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-center text-[11px] font-medium text-sky-800">
-                Opening card statement…
+                {autoStatement ? 'Opening card statement…' : 'Opening PIN change…'}
               </div>
             )}
 
@@ -219,7 +425,7 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
 
             <div className="mx-4 mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <div className="bg-[#003D7C] px-3 py-2 text-center text-xs font-bold text-white">Card Actions</div>
-              <div className="flex justify-center p-4">
+              <div className="flex justify-around p-4">
                 <button
                   type="button"
                   onClick={openStatement}
@@ -231,6 +437,18 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
                     📄
                   </span>
                   <span className="text-[10px] font-semibold text-slate-700">Card Statement</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={openChangePin}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl px-3 py-1 transition ${
+                    highlightPin ? 'animate-pulse ring-2 ring-amber-400 ring-offset-2' : ''
+                  }`}
+                >
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-xl text-amber-700">
+                    🔑
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-700">Change PIN</span>
                 </button>
               </div>
             </div>

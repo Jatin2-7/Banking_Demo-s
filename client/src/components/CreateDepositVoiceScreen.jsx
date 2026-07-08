@@ -192,7 +192,7 @@ function SuccessOverlay({ fv, maturity, onDone }) {
   );
 }
 
-export default function CreateDepositVoiceScreen({ onClose, lang, aiPrimer }) {
+export default function CreateDepositVoiceScreen({ onClose, lang, aiPrimer, voiceAssist = false }) {
   const [depositType, setDepositType] = useState('');
   const [amount, setAmount] = useState('');
   const [years, setYears] = useState(0);
@@ -292,6 +292,7 @@ export default function CreateDepositVoiceScreen({ onClose, lang, aiPrimer }) {
           primer={aiPrimer || 'Customer opened create deposit via voice navigation.'}
           assistHint="Say FD, MMD, or RD · then amount and tenure (e.g. 2 years 6 months)"
           lang={lang || 'en'}
+          voiceAssist={voiceAssist}
         />
 
         {phase === 'review' && (

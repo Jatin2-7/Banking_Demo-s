@@ -10,9 +10,14 @@
 // Destinations mirror the `navigate_to` targets already handled by
 // App.jsx#handleNavigate, plus a "home" target to return to the dashboard.
 
+import {
+  formatPeriodLabel,
+  parseDateRangeFromUtterance,
+} from './transactionDateFilter.js';
+
 /**
  * @typedef {'transaction_history'|'fund_transfer'|'loan_application'|'create_deposit'|'upi_payment'|'hotel_booking'|'flight_booking'|'debit_card'|'credit_card'|'home'} Destination
- * @typedef {{ destination: Destination, label: string, routingStatus: string, subFlow?: string | null }} CommandMatch
+ * @typedef {{ destination: Destination, label: string, routingStatus: string, subFlow?: string | null, dateFrom?: string | null, dateTo?: string | null }} CommandMatch
  */
 
 // Order matters: the first command whose pattern matches wins, so list the more
@@ -105,15 +110,28 @@ const COMMANDS = [
   },
   {
     destination: 'credit_card',
+    subFlow: 'change_pin',
+    label: 'Change credit card PIN',
+    routingStatus: 'Opening credit card PIN change.',
+    patterns: [
+      /\b(change|reset|set|update)\s+(my\s+)?credit\s+card\s+pin\b/,
+      /\bcredit\s+card\s+pin\s+(change|reset|update|set)\b/,
+      /\b(change|reset|set|update)\s+credit\s+card\s+pin\b/,
+      /(क्रेडिट\s*कार्ड\s*(पिन|pin)\s*(बदल|रीसेट))/,
+    ],
+  },
+  {
+    destination: 'credit_card',
     subFlow: 'card_statement',
     label: 'Credit card statement',
     routingStatus: 'Opening your credit card statement.',
     patterns: [
-      /\b(get|show|open|view|see|download)\s+(me\s+)?(my\s+)?credit\s+card\s+(statement|bill)\b/,
-      /\b(get|give)\s+me\s+(my\s+)?credit\s+card\s+(statement|bill)\b/,
-      /\bcredit\s+card\s+(statement|billing\s+statement|bill)\b/,
-      /\bmy\s+credit\s+card\s+statement\b/,
-      /(क्रेडिट\s*कार्ड\s*स्टेटमेंट|क्रेडिट\s*कार्ड\s*बिल)/,
+      /\b(get|show|open|view|see|download)\s+(me\s+)?(my\s+)?credit\s+card\s+(statement|bill|transactions?|txns?|history)\b/,
+      /\b(get|give)\s+me\s+(my\s+)?credit\s+card\s+(statement|bill|transactions?|txns?)\b/,
+      /\bcredit\s+card\s+(statement|billing\s+statement|bill|transactions?|txns?|history)\b/,
+      /\bmy\s+credit\s+card\s+(statement|transactions?|txns?|history)\b/,
+      /\b(see|view|show)\s+(my\s+)?credit\s+card\s+(transactions?|txns?|history)\b/,
+      /(क्रेडिट\s*कार्ड\s*स्टेटमेंट|क्रेडिट\s*कार्ड\s*बिल|क्रेडिट\s*कार्ड\s*लेनदेन)/,
     ],
   },
   {
@@ -194,12 +212,24 @@ export function routeVoiceCommand(text) {
   if (!q) return null;
   for (const cmd of COMMANDS) {
     if (cmd.patterns.some((re) => re.test(q))) {
-      return {
+      /** @type {CommandMatch} */
+      const match = {
         destination: cmd.destination,
         label: cmd.label,
         routingStatus: cmd.routingStatus,
         subFlow: cmd.subFlow || null,
       };
+      if (cmd.destination === 'transaction_history') {
+        const range = parseDateRangeFromUtterance(text);
+        if (range?.dateFrom && range?.dateTo) {
+          match.dateFrom = range.dateFrom;
+          match.dateTo = range.dateTo;
+          const period = formatPeriodLabel(range.dateFrom, range.dateTo);
+          match.routingStatus = `Opening your account statement for ${period}.`;
+          match.label = `Transaction history (${period})`;
+        }
+      }
+      return match;
     }
   }
   return null;
@@ -208,6 +238,10 @@ export function routeVoiceCommand(text) {
 /** Example commands surfaced in the demo panel (label = what to say). */
 export const VOICE_COMMAND_EXAMPLES = [
   { label: 'Show me my transaction history', text: 'show me my account transaction history' },
+  {
+    label: 'Transactions 1 Apr – 14 Apr',
+    text: 'show me transaction history from first of april to 14th',
+  },
   { label: 'Open fund transfer', text: 'open fund transfer' },
   { label: 'Apply for a loan', text: 'apply for a loan' },
   { label: 'Create a deposit', text: 'create a fixed deposit' },
@@ -217,6 +251,8 @@ export const VOICE_COMMAND_EXAMPLES = [
   { label: 'Disable international transactions', text: 'disable international transactions on my debit card' },
   { label: 'Reset debit card PIN', text: 'reset my debit card pin' },
   { label: 'Open debit card dashboard', text: 'open my debit card dashboard' },
+  { label: 'Change credit card PIN', text: 'change my credit card pin' },
+  { label: 'See credit card transactions', text: 'I want to see my credit card transactions' },
   { label: 'Get credit card statement', text: 'get me my credit card statement' },
   { label: 'Go back home', text: 'go back home' },
 ];

@@ -9,6 +9,8 @@ import {
   speakViaCartesia,
   stopGlobalCartesiaTts,
   waitUntilTtsIdle,
+  onTtsPlayingChange,
+  isTtsPlaying,
   textForTtsDisplay,
 } from '../lib/cartesiaTts.js';
 
@@ -56,6 +58,7 @@ function LoanAssistAvatar({ size = 24 }) {
  * @param {Record<string, string>} props.formValues
  * @param {(next: Record<string, string>) => void} props.onFormChange
  * @param {(name: string, args: Record<string, unknown>) => void} [props.onToolCall]
+ * @param {(text: string) => false | string | true} [props.onUserMessage] - Fired when the user sends voice/text (before the agent run). Return a period label string (or true) if handled locally (e.g. date filter applied).
  * @param {string} [props.greeting]
  * @param {string} [props.assistTitle]
  * @param {string} [props.assistHint]
@@ -70,6 +73,7 @@ export default function LoanAguiPanel({
   formValues,
   onFormChange,
   onToolCall,
+  onUserMessage,
   greeting,
   assistTitle = 'Loan form assist',
   assistHint = 'Voice or text — your choice',
@@ -79,8 +83,21 @@ export default function LoanAguiPanel({
   showReasoning = false,
   navOnly = false,
   onVoiceCommand,
+  continuousVoiceActive = false,
+  continuousListening = false,
+  continuousTranscript = '',
+  continuousLiveTranscript = '',
+  onStopContinuousVoice,
+  onAutoHide,
+  suppressGreeting = false,
   chatFullscreen = false,
+  voiceAssist = false,
+  handsFree = false,
 }) {
+  // Auto-mic (listen → reply → auto-listen again) applies whenever either
+  // `voiceAssist` (Loan/FD Voice Assist demo mode) or `handsFree` (e.g. Fund
+  // Transfer, which is always hands-free like the UPI flow) is set.
+  const autoMicMode = voiceAssist || handsFree;
   const [messages, setMessages] = useState(() => [
     {
       id: 'greet',
@@ -117,6 +134,13 @@ export default function LoanAguiPanel({
   const useEleven = ELEVENLABS_STT_ENABLED && elevenSpeech.supported;
   const useBrowserStt = !useEleven && browserSpeech.supported;
   const micActive = useEleven ? elevenSpeech.listening : (useBrowserStt ? browserSpeech.listening : false);
+  const handsFreeActive = navOnly && continuousVoiceActive;
+  const showListening = handsFreeActive ? continuousListening : micActive;
+  // While listening, prefer the real-time Web Speech interim text (continuousLiveTranscript)
+  // over the ElevenLabs final-only transcript so the user sees words appear as they speak.
+  const liveTranscript = handsFreeActive
+    ? (continuousListening && continuousLiveTranscript) || continuousTranscript
+    : '';
 
   const skipTtsRef = useRef(false);
 
@@ -168,8 +192,18 @@ export default function LoanAguiPanel({
       threadRef.current = tid();
       primerSent.current = false;
       setStatusSteps([]);
-    } else {
-      // Speak greeting only after any ongoing TTS (e.g. routing status) finishes
+    } else if (!suppressGreeting && (!autoMicMode || !primer)) {
+      // Speak greeting only after any ongoing TTS (e.g. routing status) finishes.
+      // Skipped when `suppressGreeting` is set (hands-free session start speaks
+      // its own greeting synchronously before the mic arms, avoiding a race
+      // where this delayed timer fires after the mic has already started).
+      // In hands-free auto-mic modes with a `primer`, the agent's own first
+      // structured response (triggered by the primer below) is the one that
+      // should play instead — speaking this static greeting too would create
+      // two overlapping voices. But when there's no primer, nothing else will
+      // ever prompt the conversation, so the greeting must still be spoken —
+      // otherwise the mic silently auto-arms with no audible cue and the
+      // "hands-free" session feels broken/inert.
       let cancelled = false;
       const t = setTimeout(async () => {
         await waitUntilTtsIdle();
@@ -178,7 +212,7 @@ export default function LoanAguiPanel({
       return () => { cancelled = true; clearTimeout(t); };
     }
     return undefined;
-  }, [open, greeting, speakText]);
+  }, [open, greeting, speakText, suppressGreeting, autoMicMode, primer]);
 
   const handleEvent = useCallback(
     (ev, asstId, collected) => {
@@ -191,6 +225,10 @@ export default function LoanAguiPanel({
         );
       } else if (ev.type === 'STATE_DELTA') {
         for (const patch of ev.delta || []) {
+          if (patch.path === '/apply_date_filter' && patch.value) {
+            onToolCall?.('apply_date_filter', patch.value);
+            continue;
+          }
           const next = applyStateDelta(valuesRef.current, [patch]);
           valuesRef.current = next;
           onFormChange?.(next);
@@ -214,6 +252,8 @@ export default function LoanAguiPanel({
             stopGlobalCartesiaTts();
             const routingStatus = statusStepsRef.current.at(-1)?.text || '';
             onToolCall?.(slot.name, { ...args, routingStatus });
+          } else if (slot.name === 'apply_date_filter') {
+            onToolCall?.(slot.name, args);
           } else if (slot.name === 'request_field' || slot.name === 'set_field') {
             onToolCall?.(slot.name, args);
           }
@@ -250,11 +290,18 @@ export default function LoanAguiPanel({
   navOnlyRef.current = navOnly;
   const onVoiceCommandRef = useRef(onVoiceCommand);
   onVoiceCommandRef.current = onVoiceCommand;
+  const onUserMessageRef = useRef(onUserMessage);
+  onUserMessageRef.current = onUserMessage;
+  const continuousVoiceActiveRef = useRef(continuousVoiceActive);
+  continuousVoiceActiveRef.current = continuousVoiceActive;
+  const onAutoHideRef = useRef(onAutoHide);
+  onAutoHideRef.current = onAutoHide;
 
   const sendNavCommand = useCallback(
     async (userText) => {
       const trimmed = String(userText || '').trim();
       if (!trimmed || runningRef.current) return;
+      onUserMessageRef.current?.(trimmed);
       runningRef.current = true;
       setRunning(true);
       setStatusSteps([]);
@@ -262,6 +309,7 @@ export default function LoanAguiPanel({
 
       let reply;
       let matched = false;
+      let errored = false;
       try {
         const result = await onVoiceCommandRef.current?.(trimmed);
         const match = result?.match;
@@ -274,15 +322,20 @@ export default function LoanAguiPanel({
             'I can open: Transaction history, Fund transfer, Loan application, Create deposit, UPI payment, Hotel booking, Flight booking, Debit card, or Credit card statement. Which one?';
         }
       } catch {
+        errored = true;
         reply = 'Sorry — I could not navigate just now. Please try again.';
       } finally {
         setMessages((prev) => [...prev, { id: tid(), role: 'assistant', content: reply }]);
         runningRef.current = false;
         setRunning(false);
-        if (matched) {
-          // Navigation already triggered — close the assistant so the target screen shows.
+        // Routing/fallback confirmations are already spoken centrally by
+        // App#handleVoiceCommandCore (so hands-free mode gets audio feedback
+        // too) — only speak here for genuine errors, which never reached it.
+        if (matched && continuousVoiceActiveRef.current) {
+          onAutoHideRef.current?.();
+        } else if (matched) {
           setTimeout(() => onClose?.(), 300);
-        } else if (reply) {
+        } else if (errored) {
           speakText(reply);
         }
       }
@@ -301,6 +354,25 @@ export default function LoanAguiPanel({
 
       const trimmed = String(userText || '').trim();
       const userMsg = trimmed ? { id: tid(), role: 'user', content: trimmed } : null;
+
+      if (userMsg) {
+        const handled = onUserMessageRef.current?.(userMsg.content);
+        if (handled) {
+          const period =
+            typeof handled === 'string' && handled.trim()
+              ? handled.trim()
+              : 'the selected period';
+          const reply = `Done — showing transactions for ${period}. See the filtered list above.`;
+          setMessages((prev) => [
+            ...prev,
+            userMsg,
+            { id: tid(), role: 'assistant', content: reply, pending: false },
+          ]);
+          runningRef.current = false;
+          speakText(reply);
+          return;
+        }
+      }
 
       const apiMessages = [];
       for (const m of messages) {
@@ -394,6 +466,10 @@ export default function LoanAguiPanel({
 
   const toggleMic = () => {
     if (runningRef.current) return;
+    if (handsFreeActive) {
+      onStopContinuousVoice?.();
+      return;
+    }
     setVoiceBanner(null);
 
     stopAudio();
@@ -425,6 +501,49 @@ export default function LoanAguiPanel({
 
     setVoiceBanner('Voice input not available on this device/browser.');
   };
+
+  // ── Auto-mic: track TTS + auto-arm mic after bot responds ─────────────────
+  const [ttsPlayingLocal, setTtsPlayingLocal] = useState(false);
+  useEffect(() => {
+    if (!autoMicMode) return;
+    return onTtsPlayingChange(setTtsPlayingLocal);
+  }, [autoMicMode]);
+
+  // After each bot turn finishes and TTS goes idle, auto-arm the microphone.
+  // This creates a seamless hands-free conversation loop (Voice Assist mode
+  // for Loan/FD, and always-on for Fund Transfer via `handsFree`).
+  useEffect(() => {
+    if (!autoMicMode || !open) return;
+    if (running || micActive || ttsPlayingLocal) return;
+
+    let cancelled = false;
+    void (async () => {
+      // Wait for any in-flight TTS to finish (covers greetings, bot replies)
+      await waitUntilTtsIdle();
+      // Short grace so the user doesn't immediately hear their own voice echo
+      await new Promise((r) => setTimeout(r, 600));
+      // Re-check live TTS state (not just the possibly-stale React state) in
+      // case a reply started speaking during the grace window.
+      if (cancelled || runningRef.current || micActive || isTtsPlaying()) return;
+
+      stopAudio();
+      if (useEleven) {
+        elevenSpeech.start((text) => {
+          const t = String(text || '').trim();
+          if (t) void sendRef.current(t);
+          else setVoiceBanner('No speech detected — speak closer to the mic and try again.');
+        });
+      } else if (useBrowserStt) {
+        browserSpeech.start((text) => {
+          const t = String(text || '').trim();
+          if (t) void sendRef.current(t);
+        });
+      }
+    })();
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMicMode, open, running, micActive, ttsPlayingLocal, messages.length]);
 
   return (
     <AnimatePresence>
@@ -476,7 +595,7 @@ export default function LoanAguiPanel({
               <div className="flex items-center gap-1.5 leading-tight">
                 <span
                   className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                    micActive ? 'animate-pulse bg-bank-gold' : running ? 'bg-amber-400' : 'bg-emerald-400'
+                    showListening ? 'animate-pulse bg-bank-gold' : running ? 'bg-amber-400' : handsFreeActive ? 'bg-emerald-400' : 'bg-emerald-400'
                   }`}
                 />
                 <span className="truncate text-[12px] font-semibold text-black">{assistTitle}</span>
@@ -586,6 +705,32 @@ export default function LoanAguiPanel({
             </div>
           )}
 
+          {handsFreeActive && (
+            <p className="mx-2 shrink-0 rounded-lg border border-emerald-300/80 bg-emerald-50 px-2 py-1 text-center text-[10px] leading-snug text-emerald-900">
+              {showListening
+                ? 'Listening for your command…'
+                : liveTranscript
+                  ? `Heard: "${liveTranscript}"`
+                  : 'Hands-free mode — speak again in a moment after each action.'}
+            </p>
+          )}
+
+          {autoMicMode && !handsFreeActive && (
+            <p className={`mx-2 shrink-0 rounded-lg border px-2 py-1 text-center text-[10px] leading-snug ${
+              chatFullscreen
+                ? 'border-violet-400/40 bg-violet-500/15 text-violet-100'
+                : 'border-violet-300/80 bg-violet-50 text-violet-900'
+            }`}>
+              {micActive
+                ? 'Listening — speak your answer…'
+                : ttsPlayingLocal
+                  ? 'Aarav is speaking…'
+                  : running
+                    ? 'Processing…'
+                    : 'Hands-free — mic will auto-arm after each response'}
+            </p>
+          )}
+
           {voiceBanner ? (
             <p className={`mx-2 shrink-0 rounded-lg border px-2 py-1 text-center text-[10px] leading-snug ${
               chatFullscreen
@@ -596,7 +741,7 @@ export default function LoanAguiPanel({
             </p>
           ) : null}
 
-          {micActive ? (
+          {showListening ? (
             <div className="flex shrink-0 justify-center py-0.5">
               <Wave active />
             </div>
@@ -611,18 +756,34 @@ export default function LoanAguiPanel({
               <button
                 type="button"
                 onClick={() => void toggleMic()}
-                disabled={running}
+                disabled={running && !handsFreeActive}
                 className={`press flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
                   chatFullscreen
-                    ? micActive
+                    ? showListening
                       ? 'bg-bank-gold text-bank-purpleDeep ring-4 ring-bank-gold/30'
                       : 'bg-white/20 text-white hover:bg-white/30'
-                    : useBrowserStt
-                      ? 'bg-bank-gold text-black ring-4 ring-bank-gold/35'
-                      : 'bg-zinc-200 text-black ring-1 ring-zinc-300'
+                    : handsFreeActive
+                      ? showListening
+                        ? 'bg-emerald-500 text-white ring-4 ring-emerald-300/50'
+                        : 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300'
+                      : useBrowserStt
+                        ? 'bg-bank-gold text-black ring-4 ring-bank-gold/35'
+                        : 'bg-zinc-200 text-black ring-1 ring-zinc-300'
                 }`}
-                title={micActive ? 'Tap to finish' : 'Tap to speak'}
-                aria-label={micActive ? 'Stop recording' : 'Start recording'}
+                title={
+                  handsFreeActive
+                    ? 'End voice session'
+                    : showListening
+                      ? 'Tap to finish'
+                      : 'Tap to speak'
+                }
+                aria-label={
+                  handsFreeActive
+                    ? 'End voice session'
+                    : showListening
+                      ? 'Stop recording'
+                      : 'Start recording'
+                }
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                   <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3z" />

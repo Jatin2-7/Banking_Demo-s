@@ -16,6 +16,10 @@ const GLOBAL = {
     didnt_catch: "Sorry, I didn't catch that.",
     llm_unavailable:
       'The language model is not available (missing or invalid OPENAI_API_KEY). Add your key to the project root .env file, restart the server, then try again.',
+    llm_quota:
+      'OpenAI quota exceeded for this API key. Add billing credits at platform.openai.com or use a key with available quota, then restart the server.',
+    llm_auth:
+      'OpenAI rejected the API key (401). Set a valid OPENAI_API_KEY in the project root .env file, restart the server, then try again.',
     cancelled: 'No problem — cancelled. Nothing was deducted.',
     sayYesPrompt: 'Say "yes" to confirm or "no" to cancel.',
     network_error: 'Network glitch. Try again — nothing was deducted.',

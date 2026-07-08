@@ -19,6 +19,8 @@ import DemoPanel from './components/DemoPanel';
 import MpinSheet from './components/MpinSheet';
 import RMHelpPrompt from './components/RMHelpPrompt.jsx';
 import { useRageDetect } from './hooks/useRageDetect.js';
+import { useContinuousVoiceCommand } from './hooks/useContinuousVoiceCommand.js';
+import { useLiveTranscript } from './hooks/useLiveTranscript.js';
 import { useSpeech } from './hooks/useSpeech';
 import { useElevenSpeech } from './hooks/useElevenSpeech';
 import { ELEVENLABS_STT_ENABLED } from './config/voiceBackend.js';
@@ -28,7 +30,85 @@ import {
   speakViaCartesia,
   stopGlobalCartesiaTts,
   waitUntilTtsIdle,
+  setTtsEnabled,
 } from './lib/cartesiaTts.js';
+
+/* ─── Voice-to-Command listening bar ──────────────────────────────────────── */
+function VoiceCommandBar({ listening, liveTranscript, lastTranscript, onSend }) {
+  const displayText = liveTranscript || (listening ? '' : lastTranscript) || '';
+  return (
+    <div className="absolute bottom-4 left-3 right-3 z-[90] pointer-events-auto">
+      <div
+        className="overflow-hidden rounded-2xl shadow-2xl ring-1"
+        style={{
+          background: 'linear-gradient(135deg, rgba(0,30,70,0.97) 0%, rgba(10,10,46,0.97) 100%)',
+          ringColor: listening ? 'rgba(245,197,24,0.4)' : 'rgba(255,255,255,0.12)',
+          border: listening ? '1px solid rgba(245,197,24,0.35)' : '1px solid rgba(255,255,255,0.12)',
+        }}
+      >
+        {/* status bar */}
+        <div className="flex items-center gap-2 px-3 pt-2.5 pb-1">
+          <span
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm ${
+              listening
+                ? 'bg-bank-gold/20 text-bank-gold animate-pulse'
+                : 'bg-emerald-600/20 text-emerald-400'
+            }`}
+          >
+            {listening ? '🎙' : '✓'}
+          </span>
+          <span className="flex-1 min-w-0 text-[11px] font-semibold text-white/90">
+            {listening ? 'Listening — speak your command' : 'Voice session active'}
+          </span>
+          {/* wave bars */}
+          {listening && (
+            <div className="flex shrink-0 items-end gap-[2px]" aria-hidden>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="wave-bar"
+                  style={{ animationDelay: `${i * 0.12}s` }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* live transcript area */}
+        <div className="min-h-[36px] px-3 py-1">
+          {displayText ? (
+            <p className="text-sm font-medium leading-snug text-white">
+              {displayText}
+            </p>
+          ) : listening ? (
+            <p className="text-[12px] italic text-white/35">Say something…</p>
+          ) : (
+            <p className="text-[12px] italic text-white/35">Waiting for next command…</p>
+          )}
+        </div>
+
+        {/* action row */}
+        <div className="flex items-center gap-2 px-3 pb-3 pt-1">
+          <p className="flex-1 text-[10px] text-white/40">
+            {listening ? 'AI will auto-send after silence · or tap Send' : 'Speak anytime to issue a command'}
+          </p>
+          {listening && (
+            <button
+              type="button"
+              onClick={onSend}
+              className="flex items-center gap-1.5 rounded-xl bg-bank-gold px-4 py-1.5 text-[12px] font-bold text-bank-purpleDeep shadow-md press"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M4 12L20 4l-3 16-5-7-8-1z" />
+              </svg>
+              Send
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function defaultRoutingStatus(destination) {
   if (destination === 'upi_payment') return 'Within UPI limit. Redirecting to UPI payment.';
@@ -60,19 +140,22 @@ import {
 import { LANGUAGES, DEFAULT_LANG } from './i18n/strings.js';
 import { getAccounts, resetServerState } from './services/engineClient.js';
 import { routeVoiceCommand } from './lib/voiceCommandRouter.js';
+import {
+  formatPeriodLabel,
+  parseDateRangeFromUtterance,
+} from './lib/transactionDateFilter.js';
 
-// Quick per-language "yes" matcher. Mirrors the patterns in
-// server/engine/confirmParser.js so the client can intercept voice confirm and
-// route it through the MPIN sheet. Kept intentionally minimal — the server
-// remains the source of truth, this is just a UI-side gate.
-const YES_PATTERNS = {
-  en: /\b(yes|yeah|yep|yup|ok|okay|sure|confirm|do it|go ahead|pay|send)\b/i,
-  hi: /(हाँ|हां|जी|कर दो|करो|भेज|ठीक|ओके|ok)/i,
-  te: /(అవును|సరే|చేయి|పంపు|ఓకే|ok)/i,
-  ta: /(ஆம்|சரி|ஓகே|ok|செய்|அனுப்பு)/i,
+// Per-language "cancel/no" matcher — only these explicit negations bypass MPIN
+// during CONFIRM.  Everything else (ambiguous, affirmative, or unrecognised)
+// is treated as a tentative "yes" and routed through MPIN for safety.
+const NO_PATTERNS = {
+  en: /\b(no|nope|cancel|stop|abort|back|exit|quit|don'?t|not now)\b/i,
+  hi: /(नहीं|नही|रुको|बंद|रद्द|वापस|नहीं करो)/i,
+  te: /(వద్దు|ఆపు|రద్దు|వెనక్కు|వద్దు)/i,
+  ta: /(வேண்டாம்|நிறுத்து|ரத்து|பின்னால்|வேண்டாம்)/i,
 };
-function looksLikeYes(text, lang) {
-  const re = YES_PATTERNS[lang] || YES_PATTERNS.en;
+function looksLikeCancel(text, lang) {
+  const re = NO_PATTERNS[lang] || NO_PATTERNS.en;
   return re.test(String(text).trim());
 }
 
@@ -107,11 +190,23 @@ export default function App() {
   const [loanPrimer, setLoanPrimer] = useState('');
   const [depositPrimer, setDepositPrimer] = useState('');
   const [txnHistPrimer, setTxnHistPrimer] = useState('');
+  const [txnHistDateFrom, setTxnHistDateFrom] = useState(null);
+  const [txnHistDateTo, setTxnHistDateTo] = useState(null);
   const [ttsPlaying, setTtsPlaying] = useState(false);
   // When true, the AI RM is scoped to pure screen navigation (no conversation).
   // Toggled from the demo panel's Voice-to-Command mode. Kept fully separate
   // from the normal-mode conversational flows.
   const [voiceCommandMode, setVoiceCommandMode] = useState(false);
+  const [voiceAssistMode, setVoiceAssistMode] = useState(false);
+  const [voiceCmdFeedback, setVoiceCmdFeedback] = useState(null);
+  const [upiLimitBanner, setUpiLimitBanner] = useState(null); // { amount, redirecting }
+  const upiLimitTimerRef = useRef(null);
+
+  // Voice-to-Command mode is navigation-only — no spoken audio anywhere,
+  // on any screen it opens. TTS remains on for normal chat + Voice Assist mode.
+  useEffect(() => {
+    setTtsEnabled(!voiceCommandMode);
+  }, [voiceCommandMode]);
 
   const bcp47 = LANGUAGES.find((l) => l.code === lang)?.bcp47 || 'en-IN';
   const speech = useVoiceHook({ lang: bcp47 });
@@ -119,6 +214,12 @@ export default function App() {
   // Kept separate from `speech` so navigation commands never interfere with the
   // conversational flow's hands-free mic.
   const cmdSpeech = useVoiceHook({ lang: bcp47 });
+
+  // Live transcript for the voice-to-command overlay (Web Speech interim results,
+  // display-only — does not drive commands).
+  const cmdLiveTranscript = useLiveTranscript({ enabled: Boolean(cmdSpeech.listening), lang: bcp47 });
+  // Same for the UPI saga speech so VoiceModal can show interim text.
+  const sagaLiveTranscript = useLiveTranscript({ enabled: Boolean(speech.listening), lang: bcp47 });
 
   // Rage detection for UPI voice flow — fires only when the voice modal is already open
   // (HomeScreen has its own rage detection for the home AI assistant)
@@ -178,8 +279,20 @@ export default function App() {
     }
   }, [session]);
 
+  // `continuousVoice` (created below) needs `handleVoiceCommandCore` as its
+  // onCommand, but several handlers above it need to stop the hands-free loop
+  // when navigating into a screen that owns its own mic — hence the ref-forward
+  // to break the init cycle. Must be declared before any handler that calls it.
+  const continuousVoiceStopRef = useRef(() => {});
+
+  const stopHandsFreeForSoloVoiceScreen = useCallback(() => {
+    continuousVoiceStopRef.current?.();
+  }, []);
+
   const handleOpenWithAction = useCallback(
     async (actionName) => {
+      stopHandsFreeForSoloVoiceScreen();
+      setHomeAiCloseSignal((n) => n + 1);
       setOpen(true);
       setForceFail(session, forceFail);
       if (actionName) {
@@ -189,17 +302,32 @@ export default function App() {
       }
       refresh();
     },
-    [session, forceFail, refresh],
+    [session, forceFail, refresh, stopHandsFreeForSoloVoiceScreen],
   );
 
   const runUtterance = useCallback(
     async (text) => {
       if (!text) return;
-      // Voice "yes" during CONFIRM must route through MPIN, not straight to the
-      // backend. Voice "no" / cancel passes through normally so users can still
-      // abort by speaking. (Production: replace with a server-side mpin_check
-      // saga step + auth token.)
-      if (session.state === 'CONFIRM' && looksLikeYes(text, lang)) {
+      // During CONFIRM, MPIN is required before the payment executes.
+      // Only an explicit cancel/no passes directly to the engine (so the user
+      // can abort by speaking). Any other input — including affirmatives,
+      // ambiguous voice fragments, or unrecognised words — opens MPIN first.
+      // This prevents the server from processing a bare "yes" (or any voice
+      // mis-transcription) as a confirmation without the user ever seeing the
+      // PIN sheet.
+      if (session.state === 'CONFIRM') {
+        if (looksLikeCancel(text, lang)) {
+          // User explicitly said "no / cancel" — let the engine decline.
+          speech.abort();
+          await ensureFresh();
+          const p = handleConfirmTap(session, false);
+          refresh();
+          await p;
+          refresh();
+          return;
+        }
+        // Everything else (yes, go ahead, proceed, ambiguous, silence-broken noise…)
+        // must go through MPIN.
         speech.abort();
         setMpinOpen(true);
         return;
@@ -269,6 +397,8 @@ export default function App() {
   ]);
 
   const handleMicTap = useCallback(() => {
+    stopHandsFreeForSoloVoiceScreen();
+    setHomeAiCloseSignal((n) => n + 1);
     setOpen(true);
     if (speech.supported) {
       speech.start((finalText) => {
@@ -277,7 +407,7 @@ export default function App() {
       });
     }
     refresh();
-  }, [speech, refresh, runUtterance]);
+  }, [speech, refresh, runUtterance, stopHandsFreeForSoloVoiceScreen]);
 
   const handleVoiceMicTap = useCallback(() => {
     if (!speech.supported) return;
@@ -377,15 +507,25 @@ export default function App() {
 
   const handleDemoSpeak = useCallback(
     (text) => {
+      stopHandsFreeForSoloVoiceScreen();
+      setHomeAiCloseSignal((n) => n + 1);
       setOpen(true);
       runUtterance(text);
     },
-    [runUtterance],
+    [runUtterance, stopHandsFreeForSoloVoiceScreen],
   );
+
+  // Bumped every time we leave the home screen for another journey. HomeScreen
+  // watches this to force-close its own "Universal AI Assistant" panel — it
+  // otherwise has no way to know a hands-free voice command (driven from here,
+  // not from inside that panel) just navigated elsewhere, so it would stay
+  // open and visually overlay the destination screen.
+  const [homeAiCloseSignal, setHomeAiCloseSignal] = useState(0);
 
   // Close every open journey overlay + the conversational modal → back to Home.
   const goHome = useCallback(() => {
     speech.abort();
+    setHomeAiCloseSignal((n) => n + 1);
     setOpen(false);
     setImpsOpen(false);
     setFundTransferVoiceOpen(false);
@@ -405,7 +545,16 @@ export default function App() {
     setLoanPrimer('');
     setDepositPrimer('');
     setTxnHistPrimer('');
+    setTxnHistDateFrom(null);
+    setTxnHistDateTo(null);
   }, [speech]);
+
+  const openTxnHistory = useCallback(({ primer = '', dateFrom = null, dateTo = null } = {}) => {
+    setTxnHistPrimer(primer);
+    setTxnHistDateFrom(dateFrom);
+    setTxnHistDateTo(dateTo);
+    setTxnHistOpen(true);
+  }, []);
 
   const handleForceFail = useCallback(
     (mode) => {
@@ -425,13 +574,35 @@ export default function App() {
     refresh();
   }, [session, refresh, refreshAccounts]);
 
-  // Called by HomeScreen's AI assistant when navigate_to tool fires
+  // Called by HomeScreen's AI assistant when navigate_to tool fires.
+  // Pass { silent: true } when called from voice-to-command mode so TTS is skipped.
   const handleNavigate = useCallback(
-    async (destination, context, routingStatus) => {
+    async (destination, context, routingStatus, { silent = false } = {}) => {
       stopGlobalCartesiaTts();
 
+      // Intercept over-limit UPI amounts BEFORE speaking anything — context
+      // may carry the original utterance (LLM is asked to always restate the
+      // amount as digits). Shows a banner and redirects to Fund Transfer
+      // instead of announcing "Opening UPI payment" first.
+      if (destination === 'upi_payment') {
+        const UPI_LIMIT = 100000;
+        const mentionedAmount = context ? parseAmountFromUtterance(context) : null;
+        if (mentionedAmount !== null && mentionedAmount > UPI_LIMIT) {
+          clearTimeout(upiLimitTimerRef.current);
+          setUpiLimitBanner({ amount: mentionedAmount, redirecting: true });
+          upiLimitTimerRef.current = setTimeout(() => {
+            setUpiLimitBanner(null);
+            setImpsPrimer(
+              `Customer wanted to send ₹${mentionedAmount.toLocaleString('en-IN')} but was redirected from UPI (limit ₹1,00,000) to Fund Transfer. Reuse the amount and any recipient already mentioned.`,
+            );
+            setImpsOpen(true);
+          }, 3000);
+          return;
+        }
+      }
+
       const statusLine = (routingStatus || defaultRoutingStatus(destination)).trim();
-      if (statusLine) {
+      if (statusLine && !silent) {
         await speakViaCartesia(statusLine);
         await waitUntilTtsIdle();
         await new Promise((r) => setTimeout(r, 350));
@@ -452,8 +623,7 @@ export default function App() {
         setDepositPrimer(context || '');
         setDepositOpen(true);
       } else if (destination === 'transaction_history') {
-        setTxnHistPrimer(context || '');
-        setTxnHistOpen(true);
+        openTxnHistory({ primer: context || '', dateFrom: null, dateTo: null });
       } else if (destination === 'hotel_booking') {
         setHotelBookingOpen(true);
       } else if (destination === 'flight_booking') {
@@ -466,17 +636,113 @@ export default function App() {
         setCreditCardOpen(true);
       }
     },
-    [ensureFresh, session, refresh],
+    [ensureFresh, session, refresh, openTxnHistory],
   );
+
+  // Word-number vocabulary — STT engines sometimes transcribe spoken numbers
+  // as words ("two lakh") rather than digits ("2 lakh"), so we need both.
+  const _NUM_WORDS = {
+    zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+    ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
+    sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+    twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+  };
+  const _NUM_WORD_PATTERN = Object.keys(_NUM_WORDS).concat('hundred').join('|');
+
+  function wordsToNumber(str) {
+    const words = str.trim().toLowerCase().split(/[\s-]+/).filter(Boolean);
+    if (!words.length) return null;
+    let total = 0;
+    let current = 0;
+    for (const w of words) {
+      if (w === 'hundred') {
+        current = (current || 1) * 100;
+      } else if (w in _NUM_WORDS) {
+        current += _NUM_WORDS[w];
+      } else {
+        return null;
+      }
+    }
+    total += current;
+    return total || null;
+  }
+
+  // Extract a numeric rupee amount from a natural-language utterance.
+  // Understands digits ("50000", "1,00,000", "1 lakh", "2.5 lakh") AND
+  // spoken word-numbers ("two lakh", "fifty thousand") since STT output varies.
+  function parseAmountFromUtterance(text) {
+    const t = text.toLowerCase();
+    const wordUnit = `(?:${_NUM_WORD_PATTERN})(?:[\\s-]+(?:${_NUM_WORD_PATTERN}))*`;
+
+    // "X lakh" / "X.Y lakh" (digits) — checked first as it's unambiguous
+    const lakhDigit = t.match(/(\d+(?:\.\d+)?)\s*lakh/);
+    if (lakhDigit) return Math.round(parseFloat(lakhDigit[1]) * 100000);
+    // "two lakh" / "twenty five lakh" (words)
+    const lakhWord = t.match(new RegExp(`\\b(${wordUnit})\\s*lakh`));
+    if (lakhWord) {
+      const n = wordsToNumber(lakhWord[1]);
+      if (n) return Math.round(n * 100000);
+    }
+
+    // "X crore" (digits) / word form
+    const croreDigit = t.match(/(\d+(?:\.\d+)?)\s*crore/);
+    if (croreDigit) return Math.round(parseFloat(croreDigit[1]) * 10000000);
+    const croreWord = t.match(new RegExp(`\\b(${wordUnit})\\s*crore`));
+    if (croreWord) {
+      const n = wordsToNumber(croreWord[1]);
+      if (n) return Math.round(n * 10000000);
+    }
+
+    // "X thousand" (digits) / word form
+    const thousandDigit = t.match(/(\d+(?:\.\d+)?)\s*thousand/);
+    if (thousandDigit) return Math.round(parseFloat(thousandDigit[1]) * 1000);
+    const thousandWord = t.match(new RegExp(`\\b(${wordUnit})\\s*thousand`));
+    if (thousandWord) {
+      const n = wordsToNumber(thousandWord[1]);
+      if (n) return Math.round(n * 1000);
+    }
+
+    // plain digits possibly with commas/spaces: "1,00,000" or "100000"
+    const numMatch = t.match(/\b(\d[\d,\s]{2,}|\d{5,})\b/);
+    if (numMatch) {
+      const n = parseInt(numMatch[1].replace(/[,\s]/g, ''), 10);
+      if (!isNaN(n)) return n;
+    }
+    return null;
+  }
 
   // Voice-to-Command: map an utterance straight to a screen and navigate, with
   // no dialogue. Returns the match (or null) so the demo panel can show feedback.
-  const handleVoiceCommand = useCallback(
+  const handleVoiceCommandCore = useCallback(
     async (text) => {
       const match = routeVoiceCommand(text);
-      if (!match) return { text, match: null };
+      const range = parseDateRangeFromUtterance(text);
+
+      // Already on account statement — apply date filter in place (demo mic or assistant).
+      if (txnHistOpen && range?.dateFrom && range?.dateTo) {
+        stopGlobalCartesiaTts();
+        setTxnHistDateFrom(range.dateFrom);
+        setTxnHistDateTo(range.dateTo);
+        const period = formatPeriodLabel(range.dateFrom, range.dateTo);
+        const statusLine = `Showing transactions for ${period}.`;
+        return {
+          text,
+          match: match || {
+            destination: 'transaction_history',
+            label: `Transaction history (${period})`,
+            routingStatus: statusLine,
+            dateFrom: range.dateFrom,
+            dateTo: range.dateTo,
+          },
+        };
+      }
+
+      if (!match) {
+        return { text, match: null };
+      }
 
       if (match.destination === 'home') {
+        stopGlobalCartesiaTts();
         goHome();
         return { text, match };
       }
@@ -485,58 +751,133 @@ export default function App() {
       goHome();
 
       if (match.destination === 'fund_transfer') {
+        stopHandsFreeForSoloVoiceScreen();
         stopGlobalCartesiaTts();
-        const statusLine = (match.routingStatus || 'Opening fund transfer.').trim();
-        if (statusLine) {
-          await speakViaCartesia(statusLine);
-          await waitUntilTtsIdle();
-          await new Promise((r) => setTimeout(r, 350));
-        }
         setFundTransferVoicePrimer(
           match.subFlow ||
-            'Customer opened fund transfer via voice navigation. Ask whether the payee is within Indian Bank or another bank, then collect account or mobile details.',
+            `Customer opened fund transfer via voice navigation, saying: "${text}". Reuse any amount, payee, account, or bank details already mentioned instead of asking again — only ask for what's still missing (e.g. whether the payee is within Indian Bank or another bank, then account/mobile details).`,
         );
         setFundTransferVoiceOpen(true);
         return { text, match };
       }
 
       if (match.destination === 'create_deposit') {
+        stopHandsFreeForSoloVoiceScreen();
         stopGlobalCartesiaTts();
-        const statusLine = (match.routingStatus || 'Opening create deposit.').trim();
-        if (statusLine) {
-          await speakViaCartesia(statusLine);
-          await waitUntilTtsIdle();
-          await new Promise((r) => setTimeout(r, 350));
-        }
         setDepositVoicePrimer(
           match.subFlow ||
-            'Customer opened create deposit via voice navigation. Help them choose FD, MMD, or RD, then collect amount and tenure.',
+            `Customer opened create deposit via voice navigation, saying: "${text}". Reuse any deposit type, amount, or tenure already mentioned instead of asking again — only ask for what's still missing.`,
         );
         setDepositVoiceOpen(true);
         return { text, match };
       }
 
-      await handleNavigate(match.destination, match.subFlow || '', match.routingStatus);
+      if (match.destination === 'upi_payment') {
+        // If the utterance mentions an amount over the UPI limit (₹1 lakh),
+        // show an inline banner and redirect to Fund Transfer instead.
+        const UPI_LIMIT = 100000;
+        const mentionedAmount = parseAmountFromUtterance(text);
+        if (mentionedAmount !== null && mentionedAmount > UPI_LIMIT) {
+          stopHandsFreeForSoloVoiceScreen();
+          stopGlobalCartesiaTts();
+          clearTimeout(upiLimitTimerRef.current);
+          setUpiLimitBanner({ amount: mentionedAmount, redirecting: true });
+          upiLimitTimerRef.current = setTimeout(() => {
+            setUpiLimitBanner(null);
+            goHome();
+            setFundTransferVoicePrimer(
+              `Customer wanted to send ₹${mentionedAmount.toLocaleString('en-IN')} but was redirected from UPI (limit ₹1,00,000) to Fund Transfer. Reuse the amount and any recipient already mentioned.`,
+            );
+            setFundTransferVoiceOpen(true);
+          }, 3000);
+          return { text, match: { ...match, destination: 'fund_transfer', label: 'Fund Transfer (UPI limit exceeded)' } };
+        }
+
+        stopHandsFreeForSoloVoiceScreen();
+        stopGlobalCartesiaTts();
+        setHomeAiCloseSignal((n) => n + 1);
+        setOpen(true);
+        await ensureFresh();
+        await startAction(session, 'send_money');
+        // Only re-feed the utterance if it actually carries payment details
+        // beyond the bare trigger phrase (an amount, or "to <someone>") —
+        // otherwise a generic "make a upi payment" would get re-parsed by
+        // the LLM as unrecognised follow-up chatter and produce a confusing
+        // reply instead of the normal "who do you want to send to?" prompt.
+        const hasPaymentDetails = /\d/.test(text) || /\bto\s+\w+/i.test(text);
+        if (hasPaymentDetails) {
+          // Deliberately no refresh() here yet — we don't want VoiceModal to
+          // speak the blank "who do you want to send to?" prompt only to
+          // immediately cut it off with the real answer below. Going through
+          // handleUtterance directly (not runUtterance) is deliberate: we've
+          // just guaranteed a fresh FILL state, so there's no risk of the
+          // CONFIRM/"yes" voice-shortcut misfiring on words like "send".
+          await handleUtterance(session, text);
+        }
+        refresh();
+        return { text, match };
+      }
+
+      if (match.destination === 'transaction_history') {
+        stopGlobalCartesiaTts();
+        openTxnHistory({
+          dateFrom: match.dateFrom || null,
+          dateTo: match.dateTo || null,
+        });
+        return { text, match };
+      }
+
+      // Every remaining destination (loan application, hotel/flight booking,
+      // debit/credit card) opens its own screen — hand off the mic to it (if
+      // it has one) and stop the hands-free navigation loop.
+      stopHandsFreeForSoloVoiceScreen();
+      await handleNavigate(match.destination, match.subFlow || '', match.routingStatus, { silent: true });
       return { text, match };
     },
-    [goHome, handleNavigate],
+    [
+      goHome,
+      handleNavigate,
+      openTxnHistory,
+      txnHistOpen,
+      stopHandsFreeForSoloVoiceScreen,
+      ensureFresh,
+      session,
+      refresh,
+    ],
   );
 
-  const handleVoiceCommandMic = useCallback(
-    (onResult) => {
-      if (!cmdSpeech.supported) return;
-      if (cmdSpeech.listening) {
-        cmdSpeech.stop();
-        return;
-      }
-      cmdSpeech.start(async (finalText) => {
-        if (!finalText) return;
-        const result = await handleVoiceCommand(finalText);
-        onResult?.(result);
-      });
-    },
-    [cmdSpeech, handleVoiceCommand],
-  );
+  // When the UPI VoiceModal is in an active conversation state (collecting
+  // recipient / amount / confirmation) the modal owns the mic via its own
+  // `speech` hook.  We must pause the voice-to-command loop so `cmdSpeech`
+  // doesn't simultaneously record and swallow the user's answers — including
+  // the "yes" that should route through MPIN before executing a payment.
+  const upiModalOwningMic = open && VOICE_INPUT_STATES.has(session?.state);
+
+  const continuousVoice = useContinuousVoiceCommand({
+    enabled: voiceCommandMode && !upiModalOwningMic,
+    speech: cmdSpeech,
+    onCommand: handleVoiceCommandCore,
+    onResult: setVoiceCmdFeedback,
+  });
+
+  useEffect(() => {
+    continuousVoiceStopRef.current = continuousVoice.stop;
+  }, [continuousVoice.stop]);
+
+  const handleVoiceCommand = continuousVoice.runCommand;
+
+  const startVoiceCommandSession = useCallback(async () => {
+    stopGlobalCartesiaTts();
+    continuousVoice.start();
+  }, [continuousVoice]);
+
+  const handleVoiceCommandMic = useCallback(() => {
+    if (continuousVoice.active) {
+      continuousVoice.stop();
+      return;
+    }
+    void startVoiceCommandSession();
+  }, [continuousVoice, startVoiceCommandSession]);
 
   const inlineExtra = (
     <>
@@ -561,6 +902,18 @@ export default function App() {
       <PhoneFrame
         overlay={
           <>
+            {/* VoiceCommandBar only on non-home screens — the home screen's
+                LoanAguiPanel handles voice feedback when the user is there. */}
+            {voiceCommandMode && continuousVoice.active &&
+              (open || impsOpen || loanLosOpen || depositOpen || txnHistOpen ||
+               hotelBookingOpen || flightBookingOpen || debitCardOpen || creditCardOpen) && (
+              <VoiceCommandBar
+                listening={continuousVoice.listening}
+                liveTranscript={cmdLiveTranscript}
+                lastTranscript={continuousVoice.transcript}
+                onSend={() => { try { cmdSpeech.stop(); } catch { /* ignore */ } }}
+              />
+            )}
             <RMHelpPrompt
               open={rmUpiPromptOpen}
               onHelp={() => {
@@ -583,6 +936,7 @@ export default function App() {
                   }}
                   lang={lang}
                   aiPrimer={depositVoicePrimer}
+                  voiceAssist={voiceAssistMode}
                 />
               )}
             </AnimatePresence>
@@ -617,6 +971,7 @@ export default function App() {
                   onClose={() => { setLoanLosOpen(false); setLoanPrimer(''); }}
                   lang={lang}
                   aiPrimer={loanPrimer}
+                  voiceAssist={voiceAssistMode}
                 />
               )}
             </AnimatePresence>
@@ -624,14 +979,28 @@ export default function App() {
               {txnHistOpen && (
                 <TransactionHistoryScreen
                   key="txn-history"
-                  onClose={() => { setTxnHistOpen(false); setTxnHistPrimer(''); }}
+                  onClose={() => {
+                    setTxnHistOpen(false);
+                    setTxnHistPrimer('');
+                    setTxnHistDateFrom(null);
+                    setTxnHistDateTo(null);
+                  }}
                   onNavigate={async (dest, ctx, routingStatus) => {
                     setTxnHistOpen(false);
                     setTxnHistPrimer('');
+                    setTxnHistDateFrom(null);
+                    setTxnHistDateTo(null);
                     await handleNavigate(dest, ctx, routingStatus);
+                  }}
+                  onDateRangeChange={(from, to) => {
+                    setTxnHistDateFrom(from || null);
+                    setTxnHistDateTo(to || null);
                   }}
                   lang={lang}
                   aiPrimer={txnHistPrimer}
+                  initialDateFrom={txnHistDateFrom}
+                  initialDateTo={txnHistDateTo}
+                  voiceCommandMode={voiceCommandMode}
                 />
               )}
             </AnimatePresence>
@@ -646,6 +1015,7 @@ export default function App() {
                   }}
                   lang={lang}
                   aiPrimer={depositPrimer}
+                  voiceAssist={voiceAssistMode}
                 />
               )}
             </AnimatePresence>
@@ -693,7 +1063,8 @@ export default function App() {
               open={open}
               session={session}
               isListening={speech.listening}
-              liveTranscript={speech.transcript}
+              liveTranscript={sagaLiveTranscript || speech.transcript}
+              onSendVoice={() => { try { speech.stop(); } catch { /* ignore */ } }}
               speechSupported={speech.supported}
               onClose={handleClose}
               onSubmitText={handleSubmitText}
@@ -716,13 +1087,35 @@ export default function App() {
           lang={lang}
           onMicTap={handleMicTap}
           onQuickAction={handleOpenWithAction}
-          onFundTransferImps={() => setImpsOpen(true)}
-          onApplyNewLoan={() => setLoanLosOpen(true)}
-          onOpenDeposit={() => setDepositOpen(true)}
-          onOpenTxnHistory={() => setTxnHistOpen(true)}
+          onFundTransferImps={() => {
+            stopHandsFreeForSoloVoiceScreen();
+            setHomeAiCloseSignal((n) => n + 1);
+            setImpsOpen(true);
+          }}
+          onApplyNewLoan={() => {
+            stopHandsFreeForSoloVoiceScreen();
+            setHomeAiCloseSignal((n) => n + 1);
+            setLoanLosOpen(true);
+          }}
+          onOpenDeposit={() => {
+            stopHandsFreeForSoloVoiceScreen();
+            setHomeAiCloseSignal((n) => n + 1);
+            setDepositOpen(true);
+          }}
+          onOpenTxnHistory={() => {
+            setHomeAiCloseSignal((n) => n + 1);
+            openTxnHistory();
+          }}
           onNavigate={handleNavigate}
           navMode={voiceCommandMode}
           onVoiceCommand={handleVoiceCommand}
+          voiceCommandSessionActive={continuousVoice.active}
+          voiceCommandListening={continuousVoice.listening}
+          voiceCommandTranscript={continuousVoice.transcript}
+          voiceCommandLiveTranscript={cmdLiveTranscript}
+          onStartVoiceCommandSession={startVoiceCommandSession}
+          onStopVoiceCommandSession={continuousVoice.stop}
+          aiPanelCloseSignal={homeAiCloseSignal}
           accounts={accounts}
         />
       </PhoneFrame>
@@ -735,12 +1128,49 @@ export default function App() {
         onChangeLang={handleChangeLang}
         onVoiceCommand={handleVoiceCommand}
         onVoiceCommandMic={handleVoiceCommandMic}
-        voiceCommandSupported={cmdSpeech.supported}
-        voiceCommandListening={cmdSpeech.listening}
-        voiceCommandTranscript={cmdSpeech.transcript}
+        voiceCommandSupported={continuousVoice.supported}
+        voiceCommandListening={continuousVoice.listening}
+        voiceCommandTranscript={continuousVoice.transcript}
         voiceCommandMode={voiceCommandMode}
+        voiceCommandSessionActive={continuousVoice.active}
+        voiceCommandFeedback={voiceCmdFeedback}
         onVoiceCommandModeChange={setVoiceCommandMode}
+        onStopVoiceCommandSession={continuousVoice.stop}
+        voiceAssistMode={voiceAssistMode}
+        onVoiceAssistModeChange={setVoiceAssistMode}
       />
+
+      {/* UPI limit exceeded banner */}
+      {upiLimitBanner && (
+        <div className="fixed inset-x-0 bottom-24 z-[90] flex justify-center px-4 pointer-events-none">
+          <div className="pointer-events-auto w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-amber-500 px-4 py-3 flex items-start gap-3">
+              <span className="text-2xl shrink-0">⚠️</span>
+              <div>
+                <p className="text-[13px] font-bold text-white leading-snug">
+                  UPI limit is ₹1,00,000
+                </p>
+                <p className="text-[11px] text-amber-100 mt-0.5 leading-snug">
+                  ₹{upiLimitBanner.amount.toLocaleString('en-IN')} exceeds the UPI per-transaction limit.
+                </p>
+              </div>
+            </div>
+            {upiLimitBanner.redirecting && (
+              <div className="bg-white px-4 py-2.5 flex items-center gap-2">
+                <span className="flex gap-[3px]">
+                  {[0,1,2].map(i => (
+                    <span key={i} className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500"
+                      style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </span>
+                <p className="text-[12px] font-semibold text-ink">
+                  Redirecting you to Fund Transfer…
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -101,7 +101,7 @@ const PRODUCTS = [
 ];
 
 /* ─── Main component ─── */
-export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrimer }) {
+export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrimer, voiceAssist = false }) {
   /* form state */
   const [selectedProduct, setSelectedProduct] = useState(null); // 'fd' | 'mmd' | 'rd'
   const [phase, setPhase] = useState('select'); // 'select' | 'form' | 'review' | 'mpin' | 'success'
@@ -159,6 +159,10 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
     } else if (toolName === 'submit_deposit') {
       setAgreedTnc(true);
       setPhase('review');
+      // Agent already confirmed the details conversationally before calling
+      // this tool — skip the redundant manual "Confirm" tap and go straight
+      // to MPIN, matching the loan application flow's behaviour.
+      setMpinOpen(true);
     } else if (toolName === 'navigate_to') {
       const { destination, context, routingStatus } = args;
       onNavigate?.(destination, context || '', routingStatus || '');
@@ -553,9 +557,11 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
           }
           assistTitle="Deposit Assistant"
           assistHint="Voice or text — I'll fill it for you"
+          primer={aiPrimer || null}
           formValues={formStateRef.current}
           onToolCall={handleToolCall}
           lang={lang}
+          voiceAssist={voiceAssist}
         />
       )}
     </motion.div>

@@ -1,7 +1,7 @@
-import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
 import { DEPOSIT_AGENT_ID, DEPOSIT_AGENT_SYSTEM } from './depositAguiConfig.js';
 import { module_ } from '../lib/log.js';
+import { getOpenAIClient, getChatModel, hasLlmConfigured } from '../lib/openaiClient.js';
 
 const log = module_('agui-deposit');
 
@@ -122,16 +122,15 @@ export async function streamDepositAguiRun(res, agentId, inputData, { signal } =
     return;
   }
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey || apiKey.startsWith('your_')) {
+  if (!hasLlmConfigured()) {
     res.status(503).setHeader('Content-Type', 'text/event-stream');
-    res.write(sseEncode({ type: 'RUN_ERROR', message: 'OpenAI API key not configured.' }));
+    res.write(sseEncode({ type: 'RUN_ERROR', message: 'LLM not configured.' }));
     res.end();
     return;
   }
 
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  const client = new OpenAI({ apiKey });
+  const model = getChatModel();
+  const client = getOpenAIClient();
 
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());

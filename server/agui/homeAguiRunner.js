@@ -1,7 +1,7 @@
-import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
 import { HOME_AGENT_ID, HOME_AGENT_SYSTEM } from './homeAguiConfig.js';
 import { module_ } from '../lib/log.js';
+import { getOpenAIClient, getChatModel, hasLlmConfigured } from '../lib/openaiClient.js';
 
 const log = module_('home-agui');
 
@@ -79,8 +79,7 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
     return;
   }
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey || apiKey.startsWith('your_')) {
+  if (!hasLlmConfigured()) {
     res.status(503);
     res.setHeader('Content-Type', 'text/event-stream');
     res.write(sseEncode({ type: 'RUN_ERROR', message: 'OpenAI API key not configured.' }));
@@ -88,8 +87,8 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
     return;
   }
 
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  const client = new OpenAI({ apiKey });
+  const model = getChatModel();
+  const client = getOpenAIClient();
 
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());

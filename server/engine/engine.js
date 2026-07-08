@@ -162,8 +162,8 @@ async function doTranscript(session, text) {
     session.lang = intent.language;
   }
 
-  if (intent?.error === 'llm_unavailable') {
-    speak(session, tm(currentManifest(session), session.lang, 'llm_unavailable'));
+  if (intent?.error === 'llm_unavailable' || intent?.error === 'llm_quota' || intent?.error === 'llm_auth') {
+    speak(session, tm(currentManifest(session), session.lang, intent.error));
     return session;
   }
 
@@ -420,12 +420,11 @@ function mergeSlots(session, slots, manifest) {
       v = String(v).trim();
     }
 
-    // Constraints (soft — saga `validate` step is the authoritative one)
-    const c = def.constraints || {};
-    if (typeof v === 'number') {
-      if (c.min != null && v < c.min) continue;
-      if (c.max != null && v > c.max) continue;
-    }
+    // Intentionally no constraint check here — the saga's `validate` step is
+    // the authoritative validator and produces proper user-facing error messages.
+    // Silently dropping a slot value here causes the engine to re-ask the same
+    // question with no feedback, which is confusing (e.g. user says "50000" and
+    // gets "I didn't catch the amount" instead of "that exceeds the limit").
     if (def.extraction?.regex && !new RegExp(def.extraction.regex).test(String(v))) continue;
     if (def.enum && def.type !== 'enum' && !def.enum.includes(v)) continue;
 

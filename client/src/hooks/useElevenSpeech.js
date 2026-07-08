@@ -8,22 +8,32 @@
 //   1. start(onFinal) → request mic, spin up MediaRecorder + an AnalyserNode
 //      that watches the input RMS.
 //   2. As soon as we detect speech (RMS over a small threshold for a few
-//      frames) we arm a 1.5 s silence timer that auto-stops recording when
+//      frames) we arm a 2.2 s silence timer that auto-stops recording when
 //      the user pauses — gives the hands-free feel users expect.
 //   3. On stop, the captured Blob is POSTed to /api/stt (server proxy that
 //      forwards to ElevenLabs scribe_v2) and the returned transcript is
 //      handed back via onFinal(text).
 //
 // Manual stop() / abort() also work for tap-to-stop or cancel-on-close.
+//
+// Mic warm-keeping: `getUserMedia` + building the AudioContext/AnalyserNode
+// is not instant — re-requesting it on every single turn (as this hook used
+// to) added a real, user-visible delay between "assistant stops talking"
+// and "recorder is actually capturing audio", during which the first word
+// or two the user speaks is silently lost ("gives no time to speak"). We now
+// keep the mic stream + audio graph alive across stop()/start() cycles
+// (only releasing on unmount or `abort()`), so every turn after the first in
+// a conversation starts capturing essentially instantly.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { resolveApiBase } from '../lib/aguiClient.js';
 
-const SILENCE_MS = 2200; // pause length that ends an utterance
-const MIN_SPEECH_MS = 400; // ignore very short blips before arming silence
+const SILENCE_MS = 2200;       // pause length that ends an utterance
+const MIN_SPEECH_MS = 400;     // ignore very short blips before arming silence
 const MAX_DURATION_MS = 15000; // hard cap so a stuck recorder can't run forever
-const SILENCE_THRESHOLD = 0.012; // RMS — calibrated empirically against laptop mics
-const LOUD_FRAMES_NEEDED = 4; // require sustained audio before treating as "speech started"
+const SILENCE_THRESHOLD = 0.025; // RMS — raised so typical ambient/room noise doesn't trigger
+const VAD_STARTUP_MS = 300;    // ignore the first N ms after mic start (mic settle + echo tail)
+const SPEECH_ONSET_MS = 200;   // require this many ms of continuous loud audio to confirm speech
 
 function pickMime() {
   if (typeof MediaRecorder === 'undefined') return null;
@@ -58,7 +68,8 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
   const silenceTimerRef = useRef(null);
   const hardTimerRef = useRef(null);
   const speechStartedAtRef = useRef(0);
-  const loudStreakRef = useRef(0);
+  const loudSinceRef = useRef(0);   // timestamp when current loud streak began (0 = quiet)
+  const vadStartTimeRef = useRef(0); // timestamp when the current VAD session started
   const onFinalRef = useRef(null);
   const abortedRef = useRef(false);
   const langRef = useRef(lang);
@@ -67,13 +78,25 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
     langRef.current = lang;
   }, [lang]);
 
-  const cleanupAudio = useCallback(() => {
+  // Stops the per-utterance VAD loop / timers only — leaves the mic stream
+  // and AudioContext alive so the next start() can begin capturing instantly
+  // instead of re-requesting getUserMedia from scratch.
+  const cleanupTurn = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     silenceTimerRef.current = null;
     if (hardTimerRef.current) clearTimeout(hardTimerRef.current);
     hardTimerRef.current = null;
+    speechStartedAtRef.current = 0;
+    loudSinceRef.current = 0;
+    vadStartTimeRef.current = 0;
+  }, []);
+
+  // Fully releases the mic stream + audio graph. Only called on unmount or
+  // an explicit abort — normal per-utterance stop() keeps the mic warm.
+  const releaseAudio = useCallback(() => {
+    cleanupTurn();
     if (analyserRef.current) {
       try {
         analyserRef.current.disconnect();
@@ -100,12 +123,10 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
       });
       streamRef.current = null;
     }
-    speechStartedAtRef.current = 0;
-    loudStreakRef.current = 0;
-  }, []);
+  }, [cleanupTurn]);
 
   // Tear everything down on unmount so a route change can't leak the mic.
-  useEffect(() => () => cleanupAudio(), [cleanupAudio]);
+  useEffect(() => () => releaseAudio(), [releaseAudio]);
 
   const stopRecorder = useCallback(() => {
     const rec = recorderRef.current;
@@ -131,20 +152,27 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
       setTranscript('');
       setError(null);
 
-      let stream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        });
-      } catch (e) {
-        setError(e?.name === 'NotAllowedError' ? 'not-allowed' : e?.message || 'mic_failed');
-        return;
+      // Reuse an already-live mic stream from a previous turn if we have
+      // one — skips the getUserMedia round-trip entirely so capture begins
+      // right away instead of leaving a gap where the user's first words
+      // are spoken before the recorder is actually listening.
+      let stream = streamRef.current;
+      const streamIsLive = stream && stream.getTracks().every((t) => t.readyState === 'live');
+      if (!streamIsLive) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          });
+        } catch (e) {
+          setError(e?.name === 'NotAllowedError' ? 'not-allowed' : e?.message || 'mic_failed');
+          return;
+        }
+        streamRef.current = stream;
       }
-      streamRef.current = stream;
 
       const mime = pickMime() || '';
       const chunks = [];
@@ -153,7 +181,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
       try {
         rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
       } catch (e) {
-        cleanupAudio();
+        cleanupTurn();
         setError(e?.message || 'recorder_failed');
         return;
       }
@@ -164,7 +192,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
       };
 
       rec.onstop = async () => {
-        cleanupAudio();
+        cleanupTurn();
         recorderRef.current = null;
         setListening(false);
 
@@ -204,9 +232,25 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
 
       // ── VAD: stop after silence once real speech has started ──
       try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new Ctx();
-        audioCtxRef.current = ctx;
+        if (analyserRef.current) {
+          try {
+            analyserRef.current.disconnect();
+          } catch {
+            /* noop */
+          }
+          analyserRef.current = null;
+        }
+        // Reuse the AudioContext across turns too — creating one is not
+        // free, and browsers can auto-suspend a freshly-created context
+        // until the next user gesture.
+        let ctx = audioCtxRef.current;
+        if (!ctx || ctx.state === 'closed') {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          ctx = new Ctx();
+          audioCtxRef.current = ctx;
+        } else if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
         const src = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 1024;
@@ -220,22 +264,46 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
           silenceTimerRef.current = setTimeout(stopRecorder, SILENCE_MS);
         };
 
+        // Mark when this VAD session began so the startup quiet period works.
+        vadStartTimeRef.current = performance.now();
+        loudSinceRef.current = 0;
+
         const tick = () => {
           if (!analyserRef.current) return;
+
+          const now = performance.now();
+
+          // ── Startup quiet period ──────────────────────────────────────────────
+          // Skip VAD decisions for the first VAD_STARTUP_MS ms after the mic
+          // opens.  This prevents mic-hardware self-noise, residual TTS echo, and
+          // AudioContext warm-up artefacts from being mistaken for speech.
+          if (now - vadStartTimeRef.current < VAD_STARTUP_MS) {
+            rafRef.current = requestAnimationFrame(tick);
+            return;
+          }
+
           analyser.getFloatTimeDomainData(buf);
           let sum = 0;
           for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
           const rms = Math.sqrt(sum / buf.length);
 
-          const now = performance.now();
           if (rms > SILENCE_THRESHOLD) {
-            loudStreakRef.current += 1;
-            if (loudStreakRef.current >= LOUD_FRAMES_NEEDED) {
+            // Track when this continuous loud streak began.
+            if (!loudSinceRef.current) loudSinceRef.current = now;
+            const onsetMs = now - loudSinceRef.current;
+
+            // Only confirm "speech started" once we've had SPEECH_ONSET_MS of
+            // continuous audio above the threshold.  Brief noise bursts (door
+            // slam, mic thump, single-frame spike) won't reach this gate.
+            if (onsetMs >= SPEECH_ONSET_MS) {
               if (!speechStartedAtRef.current) speechStartedAtRef.current = now;
-              armSilence();
+              armSilence(); // reset/extend the silence countdown while speaking
             }
           } else {
-            loudStreakRef.current = 0;
+            // Any quiet frame resets the loud-streak clock — a fresh burst of
+            // speech must again sustain for SPEECH_ONSET_MS before being counted.
+            loudSinceRef.current = 0;
+
             if (
               speechStartedAtRef.current &&
               now - speechStartedAtRef.current > MIN_SPEECH_MS &&
@@ -259,14 +327,14 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
       try {
         rec.start(250); // emit chunks every 250 ms
       } catch (e) {
-        cleanupAudio();
+        cleanupTurn();
         recorderRef.current = null;
         setError(e?.message || 'recorder_start_failed');
         return;
       }
       setListening(true);
     },
-    [supported, cleanupAudio, stopRecorder],
+    [supported, cleanupTurn, stopRecorder],
   );
 
   const stop = useCallback(() => {
@@ -277,11 +345,14 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
     abortedRef.current = true;
     onFinalRef.current = null;
     stopRecorder();
-    cleanupAudio();
+    // Keep the mic stream warm (see cleanupTurn) — abort() is used for
+    // mid-conversation interruptions (MPIN sheet, language change, etc.),
+    // not just "leave for good". Only unmount does a full releaseAudio().
+    cleanupTurn();
     recorderRef.current = null;
     setListening(false);
     setTranscript('');
-  }, [stopRecorder, cleanupAudio]);
+  }, [stopRecorder, cleanupTurn]);
 
   return { supported, listening, transcript, error, start, stop, abort };
 }

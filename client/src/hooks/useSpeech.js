@@ -3,7 +3,17 @@
 // silence timer to auto-stop after a pause (similar to push-to-talk ending).
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const SILENCE_BEFORE_STOP_MS = 2600;
+// How long the user has to START speaking after the mic arms, before we give
+// up and auto-stop. This used to be the same short window as the post-speech
+// gap below (2.6s total from mic-on to forced stop) — nowhere near enough
+// time to notice the mic is live, formulate a sentence like "send 5000 to
+// Rahul Sharma", and say it. A real pause-to-think grace period fixes that.
+const INITIAL_LISTEN_GRACE_MS = 7000;
+
+// Once the user has actually started speaking (first interim/final result),
+// switch to this much shorter "they've paused, probably done" gap — long
+// enough for natural mid-sentence pauses, short enough to feel responsive.
+const SILENCE_AFTER_SPEECH_MS = 2200;
 
 export function useSpeech({ lang = 'en-IN' } = {}) {
   const SR =
@@ -17,6 +27,8 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
   const latestLineRef = useRef('');
   const abortedRef = useRef(false);
   const silenceTimerRef = useRef(null);
+  /** True once at least one result (interim or final) has arrived this session. */
+  const heardSpeechRef = useRef(false);
   /** True while a capture session is active — avoids overlapping start() calls. */
   const captureActiveRef = useRef(false);
   const [listening, setListening] = useState(false);
@@ -30,7 +42,7 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
     }
   }, []);
 
-  const scheduleSilenceStop = useCallback(() => {
+  const armStopTimer = useCallback((ms) => {
     clearSilenceTimer();
     silenceTimerRef.current = setTimeout(() => {
       silenceTimerRef.current = null;
@@ -39,7 +51,7 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
       } catch {
         /* noop */
       }
-    }, SILENCE_BEFORE_STOP_MS);
+    }, ms);
   }, [clearSilenceTimer]);
 
   // (Re)build the recogniser whenever language changes.
@@ -51,7 +63,11 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
     r.lang = lang;
 
     r.onresult = (e) => {
-      scheduleSilenceStop();
+      // First result of this session → we know the user has started speaking.
+      // Switch from the long "waiting for them to start" grace period to the
+      // short "they just paused" gap.
+      heardSpeechRef.current = true;
+      armStopTimer(SILENCE_AFTER_SPEECH_MS);
       let chunkFinal = '';
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -73,6 +89,21 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
       captureActiveRef.current = false;
       if (err === 'aborted') {
         setListening(false);
+        return;
+      }
+      // `no-speech` fired by the browser itself (not our timer) before the
+      // grace window elapsed — still surface whatever we heard, same as a
+      // normal end, instead of silently dropping it as an error.
+      if (err === 'no-speech' && onFinalRef.current) {
+        const fromFinals = accumulatedFinalRef.current.trim();
+        const fallback = latestLineRef.current.trim();
+        const text = fromFinals || fallback;
+        accumulatedFinalRef.current = '';
+        latestLineRef.current = '';
+        const cb = onFinalRef.current;
+        onFinalRef.current = null;
+        setListening(false);
+        if (text) cb(text);
         return;
       }
       setError(err);
@@ -111,13 +142,14 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
       }
       recRef.current = null;
     };
-  }, [SR, supported, lang, clearSilenceTimer, scheduleSilenceStop]);
+  }, [SR, supported, lang, clearSilenceTimer, armStopTimer]);
 
   const start = useCallback(
     (onFinal) => {
       if (!recRef.current || captureActiveRef.current) return;
       try {
         abortedRef.current = false;
+        heardSpeechRef.current = false;
         onFinalRef.current = onFinal;
         accumulatedFinalRef.current = '';
         latestLineRef.current = '';
@@ -127,13 +159,15 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
         recRef.current.start();
         captureActiveRef.current = true;
         setListening(true);
-        scheduleSilenceStop();
+        // Long grace period for the user to START speaking — not the short
+        // post-speech gap. Once `onresult` fires, we switch to the short one.
+        armStopTimer(INITIAL_LISTEN_GRACE_MS);
       } catch {
         captureActiveRef.current = false;
         // Already started — ignore
       }
     },
-    [clearSilenceTimer, scheduleSilenceStop],
+    [clearSilenceTimer, armStopTimer],
   );
 
   const stop = useCallback(() => {

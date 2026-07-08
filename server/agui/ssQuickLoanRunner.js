@@ -1,8 +1,8 @@
-import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
 import { SS_QUICKLOAN_AGENT_ID, SS_QUICKLOAN_AGENT_SYSTEM } from './ssQuickLoanConfig.js';
 import { executeSSQuickLoanTool, runValidateForm, ssQuickLoanOpenAiTools } from './ssQuickLoanTools.js';
 import { module_ } from '../lib/log.js';
+import { getOpenAIClient, getChatModel, hasLlmConfigured } from '../lib/openaiClient.js';
 
 const log = module_('agui:ss_quickloan');
 
@@ -49,23 +49,22 @@ export async function streamSSQuickLoanRun(res, agentId, inputData, { signal } =
     return;
   }
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey || apiKey.startsWith('your_')) {
+  if (!hasLlmConfigured()) {
     res.status(503);
     res.setHeader('Content-Type', 'text/event-stream');
     res.write(
       sseEncode({
         type: 'RUN_ERROR',
         message:
-          'OpenAI API key not configured. Add OPENAI_API_KEY to the server .env file and restart.',
+          'LLM not configured. Add Azure OpenAI or OPENAI_API_KEY to the server .env file and restart.',
       }),
     );
     res.end();
     return;
   }
 
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  const client = new OpenAI({ apiKey });
+  const model = getChatModel();
+  const client = getOpenAIClient();
 
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());

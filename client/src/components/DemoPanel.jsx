@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { VOICE_COMMAND_EXAMPLES } from '../lib/voiceCommandRouter.js';
 
-// Special tab key for the Voice-to-Command navigation demo. Kept distinct from
-// the conversational SCRIPTS tabs so the two demo modes never blur together.
+// Special tab keys for the two voice demo modes.
 const VOICE_TO_COMMAND = 'Voice-to-Command';
+const VOICE_ASSIST     = 'Voice Assist';
 
 // Categorised, scripted utterances designed to showcase every flow + edge case.
 // Clicking a script "speaks" it into the engine. Lets you demo without typing.
@@ -85,16 +85,23 @@ export default function DemoPanel({
   voiceCommandTranscript = '',
   voiceCommandMode = false,
   onVoiceCommandModeChange,
+  voiceCommandSessionActive = false,
+  voiceCommandFeedback = null,
+  onStopVoiceCommandSession,
+  voiceAssistMode = false,
+  onVoiceAssistModeChange,
 }) {
   const [open, setOpen] = useState(true);
   const [tab, setTab] = useState(Object.keys(SCRIPTS)[0]);
   const [cmdFeedback, setCmdFeedback] = useState(null);
 
-  // Selecting the Voice-to-Command tab flips the whole app into navigation mode;
-  // switching to any conversational tab returns to normal mode.
+  const feedback = voiceCommandFeedback ?? cmdFeedback;
+
+  // Tab selection drives the two exclusive voice modes.
   useEffect(() => {
     onVoiceCommandModeChange?.(tab === VOICE_TO_COMMAND);
-  }, [tab, onVoiceCommandModeChange]);
+    onVoiceAssistModeChange?.(tab === VOICE_ASSIST);
+  }, [tab, onVoiceCommandModeChange, onVoiceAssistModeChange]);
 
   const runCommand = async (text) => {
     if (!onVoiceCommand) return;
@@ -102,7 +109,7 @@ export default function DemoPanel({
     setCmdFeedback(result || { text, match: null });
   };
 
-  const TAB_KEYS = [VOICE_TO_COMMAND, ...Object.keys(SCRIPTS)];
+  const TAB_KEYS = [VOICE_TO_COMMAND, VOICE_ASSIST, ...Object.keys(SCRIPTS)];
 
   if (!open) {
     return (
@@ -175,25 +182,33 @@ export default function DemoPanel({
               tab === k
                 ? k === VOICE_TO_COMMAND
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-brand text-white'
+                  : k === VOICE_ASSIST
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-brand text-white'
                 : k === VOICE_TO_COMMAND
                   ? 'bg-emerald-50 border border-emerald-300 text-emerald-700 font-semibold'
-                  : 'bg-white border border-divider text-muted'
+                  : k === VOICE_ASSIST
+                    ? 'bg-violet-50 border border-violet-300 text-violet-700 font-semibold'
+                    : 'bg-white border border-divider text-muted'
             }`}
           >
-            {k === VOICE_TO_COMMAND ? '🎙 Voice-to-Command' : k}
+            {k === VOICE_TO_COMMAND ? '🎙 Voice-to-Command' : k === VOICE_ASSIST ? '🤖 Voice Assist' : k}
           </button>
         ))}
       </div>
 
-      {tab === VOICE_TO_COMMAND ? (
+      {tab === VOICE_ASSIST ? (
+        <VoiceAssistPanel modeActive={voiceAssistMode} />
+      ) : tab === VOICE_TO_COMMAND ? (
         <VoiceCommandPanel
           supported={voiceCommandSupported}
           listening={voiceCommandListening}
           transcript={voiceCommandTranscript}
-          feedback={cmdFeedback}
+          feedback={feedback}
           modeActive={voiceCommandMode}
-          onMic={() => onVoiceCommandMic?.((result) => setCmdFeedback(result))}
+          sessionActive={voiceCommandSessionActive}
+          onMic={() => onVoiceCommandMic?.()}
+          onStopSession={() => onStopVoiceCommandSession?.()}
           onRunExample={runCommand}
         />
       ) : (
@@ -224,7 +239,17 @@ export default function DemoPanel({
   );
 }
 
-function VoiceCommandPanel({ supported, listening, transcript, feedback, modeActive, onMic, onRunExample }) {
+function VoiceCommandPanel({
+  supported,
+  listening,
+  transcript,
+  feedback,
+  modeActive,
+  sessionActive,
+  onMic,
+  onStopSession,
+  onRunExample,
+}) {
   return (
     <div className="overflow-y-auto px-2 py-2 flex flex-col gap-2 no-scrollbar">
       {/* App-wide mode banner */}
@@ -237,38 +262,52 @@ function VoiceCommandPanel({ supported, listening, transcript, feedback, modeAct
       >
         <span className="font-bold">{modeActive ? '● Mode active' : '○ Mode inactive'}</span>
         <span className="ml-1">
-          The AI RM (🧑‍💼 button) now <b>navigates only</b> — no full conversation.
+          {sessionActive
+            ? 'Hands-free session on — mic re-opens ~2.5s after each command.'
+            : 'Tap AI RM or Start session — mic stays on between commands.'}
         </span>
       </div>
 
       <div className="px-1">
         <div className="text-[11px] font-bold text-ink">Voice navigation</div>
         <div className="text-[9px] text-muted leading-snug mt-0.5">
-          Open the AI RM and speak — or use the quick mic below. Either way the
-          app jumps straight to the requested screen.
+          Open the AI RM (🧑‍💼) or rage-tap for help — speak once and keep giving commands
+          without tapping the mic again.
         </div>
       </div>
 
-      {/* Mic — push to talk */}
+      {/* Session control */}
       <button
-        onClick={onMic}
+        onClick={sessionActive ? onStopSession : onMic}
         disabled={!supported}
         className={`press w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[12px] ${
           !supported
             ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-            : listening
-              ? 'bg-rose-500 text-white animate-pulse'
+            : sessionActive
+              ? listening
+                ? 'bg-emerald-600 text-white animate-pulse'
+                : 'bg-amber-500 text-white'
               : 'bg-emerald-600 text-white'
         }`}
       >
         <span className="text-base">🎙</span>
-        {!supported ? 'Mic not supported' : listening ? 'Listening… tap to stop' : 'Tap & speak a command'}
+        {!supported
+          ? 'Mic not supported'
+          : sessionActive
+            ? listening
+              ? 'Listening… tap to end session'
+              : 'Session active — tap to end'
+            : 'Start hands-free session'}
       </button>
 
       {/* Live transcript */}
-      {listening && (
+      {sessionActive && (
         <div className="px-2 py-1.5 rounded-lg bg-page border border-divider/60 text-[10px] text-muted min-h-[1.75rem]">
-          {transcript ? `"${transcript}"` : 'Listening…'}
+          {listening
+            ? transcript
+              ? `"${transcript}"`
+              : 'Listening…'
+            : 'Waiting — speak your next command…'}
         </div>
       )}
 
@@ -303,7 +342,61 @@ function VoiceCommandPanel({ supported, listening, transcript, feedback, modeAct
       ))}
 
       <div className="border-t border-divider mt-1 pt-1.5 text-[9px] text-muted text-center">
-        Tap an example or use the mic · Navigates instantly
+        Example commands also work mid-session · End session via mic button or close AI RM
+      </div>
+    </div>
+  );
+}
+
+function VoiceAssistPanel({ modeActive }) {
+  const steps = [
+    { icon: '🗣️', text: 'Aarav speaks every question & response (TTS)' },
+    { icon: '🎙', text: 'Mic auto-arms after Aarav finishes speaking' },
+    { icon: '💬', text: 'Answer by speaking — hands-free conversation' },
+    { icon: '🔢', text: 'Numbers read naturally: "one lakh" not "one zero zero zero zero zero"' },
+  ];
+  return (
+    <div className="overflow-y-auto px-2 py-2 flex flex-col gap-2 no-scrollbar">
+      <div
+        className={`px-2 py-1.5 rounded-lg text-[10px] border ${
+          modeActive
+            ? 'bg-violet-50 border-violet-300 text-violet-800'
+            : 'bg-slate-50 border-divider text-muted'
+        }`}
+      >
+        <span className="font-bold">{modeActive ? '● Mode active' : '○ Mode inactive'}</span>
+        <span className="ml-1">
+          {modeActive
+            ? 'Voice Assist is on — open Loan Application or FD Deposit to start.'
+            : 'Select this tab to enable Voice Assist mode.'}
+        </span>
+      </div>
+
+      <div className="px-1">
+        <div className="text-[11px] font-bold text-ink">Voice Assistance mode</div>
+        <div className="text-[9px] text-muted leading-snug mt-0.5">
+          Full hands-free conversation for Loan Application and Fixed Deposit flows.
+          Aarav guides you step-by-step using voice — no typing needed.
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5 px-1">
+        {steps.map((s, i) => (
+          <div key={i} className="flex items-start gap-2 text-[10px] text-ink">
+            <span className="shrink-0 text-sm">{s.icon}</span>
+            <span className="leading-snug">{s.text}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-lg border border-violet-200 bg-violet-50 px-2 py-2 text-[9px] text-violet-800 leading-snug">
+        <span className="font-bold">How to use:</span> Switch to this tab → open Loan Application
+        (say "apply for a loan" in Voice-to-Command mode, or tap it on the home screen) →
+        Aarav starts the guided voice conversation.
+      </div>
+
+      <div className="border-t border-divider pt-1.5 text-[9px] text-muted text-center">
+        Switch to another tab to turn off Voice Assist mode
       </div>
     </div>
   );

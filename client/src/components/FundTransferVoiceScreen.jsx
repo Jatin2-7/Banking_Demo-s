@@ -331,6 +331,7 @@ export default function FundTransferVoiceScreen({ onClose, lang, aiPrimer }) {
           primer={aiPrimer || 'Customer opened fund transfer via voice navigation.'}
           assistHint="Say Indian Bank for within-bank, or name the other bank · account or mobile for payee"
           lang={lang || 'en'}
+          handsFree
         />
 
         {phase === 'review' && (

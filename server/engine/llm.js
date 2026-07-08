@@ -2,17 +2,11 @@
 // The system prompt is built dynamically from the loaded manifests
 // (registry.systemPrompt()), so a new action only needs a new manifest.
 
-import OpenAI from 'openai';
 import { registry } from '../manifestRegistry.js';
 import { module_ } from '../lib/log.js';
+import { getOpenAIClient, getChatModel } from '../lib/openaiClient.js';
 
 const log = module_('llm');
-
-let _openai = null;
-function client() {
-  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY?.trim() });
-  return _openai;
-}
 
 export async function extract({ utterance, state, history }) {
   // Test/dev hook: tests inject a deterministic stub via globalThis to avoid
@@ -20,7 +14,7 @@ export async function extract({ utterance, state, history }) {
   if (typeof globalThis.__LLM_EXTRACT_STUB__ === 'function') {
     return globalThis.__LLM_EXTRACT_STUB__({ utterance, state, history });
   }
-  const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const MODEL = getChatModel();
   const messages = [{ role: 'system', content: registry.systemPrompt() }];
   if (Array.isArray(history)) {
     for (const h of history.slice(-6)) {
@@ -41,7 +35,7 @@ export async function extract({ utterance, state, history }) {
 
   const t0 = Date.now();
   try {
-    const r = await client().chat.completions.create({
+    const r = await getOpenAIClient().chat.completions.create({
       model: MODEL,
       response_format: { type: 'json_object' },
       temperature: 0,
@@ -70,13 +64,18 @@ export async function extract({ utterance, state, history }) {
     );
     return parsed;
   } catch (e) {
-    log.error({ err: e?.message || String(e) }, 'extract failed');
+    const status = e?.status ?? e?.response?.status;
+    const code = e?.code ?? e?.error?.code;
+    log.error({ err: e?.message || String(e), status, code }, 'extract failed');
+    let error = 'llm_unavailable';
+    if (status === 429 || code === 'insufficient_quota') error = 'llm_quota';
+    else if (status === 401) error = 'llm_auth';
     return {
       intent: 'unknown',
       action: 'unknown',
       slots: {},
       confidence: 0,
-      error: 'llm_unavailable',
+      error,
     };
   }
 }

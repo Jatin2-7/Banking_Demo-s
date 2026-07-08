@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion';
 import { STRINGS, LANGUAGES } from '../i18n/strings.js';
 import LoanAguiPanel from './LoanAguiPanel.jsx';
+import MpinSheet from './MpinSheet.jsx';
 import RMHelpPrompt from './RMHelpPrompt.jsx';
 import { useRageDetect } from '../hooks/useRageDetect.js';
 
@@ -217,7 +218,7 @@ const MODAL_FIELD = {
   proposal: 'proposal',
 };
 
-export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrimerProp }) {
+export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrimerProp, voiceAssist = false }) {
   const L = STRINGS[lang] || STRINGS.en;
   const J = STRINGS.en.loanLos;
 
@@ -238,6 +239,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
   const proposalOpts = useMemo(() => selectOptions(J, ['optNew', 'optTopUp', 'optTakeover']), [J]);
 
   const [step, setStep] = useState(0);
+  const [showMpin, setShowMpin] = useState(false);
   const [fv, setFv] = useState(() => emptyForm());
   const fvRef = useRef(fv);
   useEffect(() => {
@@ -247,7 +249,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
   const [modalKind, setModalKind] = useState(null);
   const [productOpen, setProductOpen] = useState(false);
   const [appRef, setAppRef] = useState('');
-  const [aiOpen, setAiOpen] = useState(() => !!aiPrimerProp);
+  const [aiOpen, setAiOpen] = useState(() => !!aiPrimerProp || voiceAssist);
   const [aiPrimer, setAiPrimer] = useState(() => aiPrimerProp || null);
   const [highlightField, setHighlightField] = useState(null);
   const [rmPromptOpen, setRmPromptOpen] = useState(false);
@@ -344,6 +346,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
 
   const resetAll = () => {
     setStep(0);
+    setShowMpin(false);
     setFv(emptyForm());
     setModalKind(null);
     setProductOpen(false);
@@ -373,9 +376,14 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
       return;
     }
     if (step === 1) {
-      setAppRef(`LOS${Date.now().toString(36).toUpperCase().slice(-10)}`);
-      setStep(2);
+      setShowMpin(true);
     }
+  };
+
+  const onMpinSuccess = () => {
+    setShowMpin(false);
+    setAppRef(`LOS${Date.now().toString(36).toUpperCase().slice(-10)}`);
+    setStep(2);
   };
 
   const openModal = (kind) => setModalKind(kind);
@@ -410,13 +418,13 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
     if (name === 'click_button' && args.ok === true && args.button === 'submit') {
       setHighlightField(null);
       setStep((s) => {
-        if (s === 1) {
-          setAppRef(`LOS${Date.now().toString(36).toUpperCase().slice(-10)}`);
-          return 2;
-        }
         if (s === 0 && formValidFromFv(fvRef.current)) return 1;
         return s;
       });
+      // If already on review step, open MPIN to authenticate before submission.
+      if (stepRef.current === 1) {
+        setShowMpin(true);
+      }
     }
     if (name === 'click_button' && args.button === 'cancel') setAiOpen(false);
   }, []);
@@ -674,7 +682,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
             disabled={step === 0 && !formValid}
             className="rounded bg-[#0a3d62] px-8 py-2 text-[12px] font-bold text-white press disabled:cursor-not-allowed disabled:opacity-45"
           >
-            {step === 0 ? J.next : J.submitApplication}
+            {step === 0 ? J.next : 'Submit & Verify'}
           </button>
         </div>
       )}
@@ -694,6 +702,13 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
         title={J.productModalTitle}
         rows={productRows}
         okLabel={J.guidelinesOk}
+      />
+
+      <MpinSheet
+        open={showMpin}
+        lang={lang || 'en'}
+        onCancel={() => setShowMpin(false)}
+        onSuccess={onMpinSuccess}
       />
 
       <RMHelpPrompt
@@ -726,6 +741,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
         assistHint={J.aiAssistHint}
         primer={aiPrimer}
         lang={LANGUAGES.find((x) => x.code === lang)?.bcp47 || 'en-IN'}
+        voiceAssist={voiceAssist}
       />
     </motion.div>
   );

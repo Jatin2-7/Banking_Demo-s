@@ -103,11 +103,42 @@ function BottomNavItem({ icon, label, onClick }) {
   );
 }
 
-export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransferImps, onApplyNewLoan, onOpenDeposit, onOpenTxnHistory, onNavigate, navMode = false, onVoiceCommand, accounts }) {
+export default function HomeScreen({
+  lang,
+  onMicTap,
+  onQuickAction,
+  onFundTransferImps,
+  onApplyNewLoan,
+  onOpenDeposit,
+  onOpenTxnHistory,
+  onNavigate,
+  navMode = false,
+  onVoiceCommand,
+  voiceCommandSessionActive = false,
+  voiceCommandListening = false,
+  voiceCommandTranscript = '',
+  voiceCommandLiveTranscript = '',
+  onStartVoiceCommandSession,
+  onStopVoiceCommandSession,
+  aiPanelCloseSignal = 0,
+  accounts,
+}) {
   const L = STRINGS[lang] || STRINGS.en;
   const [balancesVisible, setBalancesVisible] = useState(false);
   const [homeAiOpen, setHomeAiOpen] = useState(false);
   const [rmHomePromptOpen, setRmHomePromptOpen] = useState(false);
+
+  // A hands-free voice command can navigate away from Home without ever going
+  // through this panel's own close/auto-hide paths (it's driven from App-level
+  // state). Force the panel shut whenever the parent signals we've left Home,
+  // so it never lingers on top of the screen we just opened.
+  const prevCloseSignalRef = React.useRef(aiPanelCloseSignal);
+  React.useEffect(() => {
+    if (aiPanelCloseSignal !== prevCloseSignalRef.current) {
+      prevCloseSignalRef.current = aiPanelCloseSignal;
+      setHomeAiOpen(false);
+    }
+  }, [aiPanelCloseSignal]);
 
   const { containerProps: homeRageProps, dismiss: dismissHomeRage } = useRageDetect({
     onFrustrated: () => { if (!homeAiOpen) setRmHomePromptOpen(true); },
@@ -556,6 +587,7 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
           setRmHomePromptOpen(false);
           dismissHomeRage();
           setHomeAiOpen(true);
+          if (navMode) onStartVoiceCommandSession?.();
         }}
         onDismiss={() => {
           setRmHomePromptOpen(false);
@@ -566,7 +598,10 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
       {/* Universal AI Assistant FAB */}
       <button
         type="button"
-        onClick={() => setHomeAiOpen(true)}
+        onClick={() => {
+          setHomeAiOpen(true);
+          if (navMode) onStartVoiceCommandSession?.();
+        }}
         data-ai-fab
         className="press-bright absolute bottom-[5.75rem] right-3 z-30 flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-200/80 bg-white text-xl shadow-lg"
         aria-label="Open AI Assistant"
@@ -579,11 +614,21 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
       <LoanAguiPanel
         agentId={HOME_AGUI_AGENT_ID}
         open={homeAiOpen}
-        onClose={() => setHomeAiOpen(false)}
+        onClose={() => {
+          setHomeAiOpen(false);
+          if (navMode) onStopVoiceCommandSession?.();
+        }}
+        onAutoHide={() => setHomeAiOpen(false)}
         formValues={{}}
         onFormChange={() => {}}
         navOnly={navMode}
         onVoiceCommand={onVoiceCommand}
+        continuousVoiceActive={navMode && voiceCommandSessionActive}
+        continuousListening={voiceCommandListening}
+        continuousTranscript={voiceCommandTranscript}
+        continuousLiveTranscript={voiceCommandLiveTranscript}
+        onStopContinuousVoice={onStopVoiceCommandSession}
+        suppressGreeting={navMode}
         onToolCall={(name, args) => {
           if (name === 'navigate_to' && args?.destination) {
             setHomeAiOpen(false);
@@ -592,12 +637,16 @@ export default function HomeScreen({ lang, onMicTap, onQuickAction, onFundTransf
         }}
         greeting={
           navMode
-            ? 'Sure. Tell me the screen you want to open, and I will take you there.'
+            ? voiceCommandSessionActive
+              ? 'Voice session active — speak your command. I will keep listening after each action.'
+              : 'Sure. Tell me the screen you want to open, and I will take you there.'
             : "Namaste! I'm your Indian Bank AI assistant. Tell me what you'd like to do — pay someone, transfer funds, apply for a loan, or anything else."
         }
         assistHint={
           navMode
-            ? 'Try: account statement, fund transfer, loan, deposit, UPI, hotel, flight, debit card, or credit card statement.'
+            ? voiceCommandSessionActive
+              ? 'Mic stays on after each command — just speak again in 2–3 seconds.'
+              : 'Try: account statement, fund transfer, loan, deposit, UPI, hotel, flight, debit card, or credit card statement.'
             : undefined
         }
         assistTitle={navMode ? 'AI RM · Voice Navigation' : 'AI Banking Assistant'}
