@@ -31,6 +31,14 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
   const heardSpeechRef = useRef(false);
   /** True while a capture session is active — avoids overlapping start() calls. */
   const captureActiveRef = useRef(false);
+  /**
+   * Chrome cannot start() until the previous recognition's onend has fired.
+   * If start() is called while still active, we abort and queue the callback
+   * here so onend can begin the new listen (still counts as the user gesture
+   * for the first FAB click in practice via the abort→onend→start chain).
+   */
+  const pendingStartRef = useRef(null);
+  const beginCaptureRef = useRef(null);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState(null);
@@ -54,6 +62,39 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
     }, ms);
   }, [clearSilenceTimer]);
 
+  const beginCapture = useCallback(
+    (onFinal) => {
+      if (!recRef.current) return;
+      try {
+        abortedRef.current = false;
+        heardSpeechRef.current = false;
+        onFinalRef.current = onFinal;
+        accumulatedFinalRef.current = '';
+        latestLineRef.current = '';
+        setTranscript('');
+        setError(null);
+        clearSilenceTimer();
+        recRef.current.start();
+        captureActiveRef.current = true;
+        setListening(true);
+        armStopTimer(INITIAL_LISTEN_GRACE_MS);
+      } catch {
+        captureActiveRef.current = false;
+        setListening(false);
+        // Engine still busy — retry once shortly after onend should have settled.
+        pendingStartRef.current = onFinal;
+        setTimeout(() => {
+          const cb = pendingStartRef.current;
+          if (!cb || captureActiveRef.current) return;
+          pendingStartRef.current = null;
+          beginCaptureRef.current?.(cb);
+        }, 80);
+      }
+    },
+    [clearSilenceTimer, armStopTimer],
+  );
+  beginCaptureRef.current = beginCapture;
+
   // (Re)build the recogniser whenever language changes.
   useEffect(() => {
     if (!supported) return;
@@ -63,9 +104,6 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
     r.lang = lang;
 
     r.onresult = (e) => {
-      // First result of this session → we know the user has started speaking.
-      // Switch from the long "waiting for them to start" grace period to the
-      // short "they just paused" gap.
       heardSpeechRef.current = true;
       armStopTimer(SILENCE_AFTER_SPEECH_MS);
       let chunkFinal = '';
@@ -91,9 +129,6 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
         setListening(false);
         return;
       }
-      // `no-speech` fired by the browser itself (not our timer) before the
-      // grace window elapsed — still surface whatever we heard, same as a
-      // normal end, instead of silently dropping it as an error.
       if (err === 'no-speech' && onFinalRef.current) {
         const fromFinals = accumulatedFinalRef.current.trim();
         const fallback = latestLineRef.current.trim();
@@ -114,6 +149,19 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
       clearSilenceTimer();
       captureActiveRef.current = false;
       setListening(false);
+
+      const pending = pendingStartRef.current;
+      if (pending) {
+        pendingStartRef.current = null;
+        abortedRef.current = false;
+        accumulatedFinalRef.current = '';
+        latestLineRef.current = '';
+        onFinalRef.current = null;
+        // Defer one tick — Chrome needs the engine fully idle after onend.
+        setTimeout(() => beginCaptureRef.current?.(pending), 0);
+        return;
+      }
+
       if (abortedRef.current) {
         abortedRef.current = false;
         accumulatedFinalRef.current = '';
@@ -135,6 +183,7 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
     return () => {
       clearSilenceTimer();
       captureActiveRef.current = false;
+      pendingStartRef.current = null;
       try {
         r.abort();
       } catch {
@@ -146,32 +195,29 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
 
   const start = useCallback(
     (onFinal) => {
-      if (!recRef.current || captureActiveRef.current) return;
-      try {
-        abortedRef.current = false;
-        heardSpeechRef.current = false;
-        onFinalRef.current = onFinal;
-        accumulatedFinalRef.current = '';
-        latestLineRef.current = '';
-        setTranscript('');
-        setError(null);
+      if (!recRef.current) return;
+
+      // Already capturing — queue a restart after abort/onend (Chrome rule).
+      if (captureActiveRef.current) {
+        pendingStartRef.current = onFinal;
+        abortedRef.current = true;
         clearSilenceTimer();
-        recRef.current.start();
-        captureActiveRef.current = true;
-        setListening(true);
-        // Long grace period for the user to START speaking — not the short
-        // post-speech gap. Once `onresult` fires, we switch to the short one.
-        armStopTimer(INITIAL_LISTEN_GRACE_MS);
-      } catch {
-        captureActiveRef.current = false;
-        // Already started — ignore
+        try {
+          recRef.current.abort();
+        } catch {
+          /* noop */
+        }
+        return;
       }
+
+      beginCapture(onFinal);
     },
-    [clearSilenceTimer, armStopTimer],
+    [beginCapture, clearSilenceTimer],
   );
 
   const stop = useCallback(() => {
     clearSilenceTimer();
+    pendingStartRef.current = null;
     try {
       recRef.current?.stop();
     } catch {
@@ -182,6 +228,7 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
   const abort = useCallback(() => {
     abortedRef.current = true;
     captureActiveRef.current = false;
+    pendingStartRef.current = null;
     clearSilenceTimer();
     try {
       recRef.current?.abort();

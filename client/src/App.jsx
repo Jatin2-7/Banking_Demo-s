@@ -196,7 +196,9 @@ export default function App() {
   // When true, the AI RM is scoped to pure screen navigation (no conversation).
   // Toggled from the demo panel's Voice-to-Command mode. Kept fully separate
   // from the normal-mode conversational flows.
-  const [voiceCommandMode, setVoiceCommandMode] = useState(false);
+  // Default on to match DemoPanel's Voice-to-Command tab — otherwise the first
+  // bot tap can race the panel's mount effect and fail to arm the mic.
+  const [voiceCommandMode, setVoiceCommandMode] = useState(true);
   const [voiceAssistMode, setVoiceAssistMode] = useState(false);
   const [voiceCmdFeedback, setVoiceCmdFeedback] = useState(null);
   const [upiLimitBanner, setUpiLimitBanner] = useState(null); // { amount, redirecting }
@@ -215,11 +217,24 @@ export default function App() {
   // conversational flow's hands-free mic.
   const cmdSpeech = useVoiceHook({ lang: bcp47 });
 
-  // Live transcript for the voice-to-command overlay (Web Speech interim results,
-  // display-only — does not drive commands).
-  const cmdLiveTranscript = useLiveTranscript({ enabled: Boolean(cmdSpeech.listening), lang: bcp47 });
+  // Live transcript overlay — ONLY when ElevenLabs owns STT. Starting a second
+  // Web Speech recogniser alongside `useSpeech` aborts the command mic in Chrome
+  // (one SpeechRecognition at a time), which looked like "tap mic twice".
+  const cmdLiveTranscriptEleven = useLiveTranscript({
+    enabled: ELEVENLABS_STT_ENABLED && Boolean(cmdSpeech.listening),
+    lang: bcp47,
+  });
+  const cmdLiveTranscript = ELEVENLABS_STT_ENABLED
+    ? cmdLiveTranscriptEleven
+    : (cmdSpeech.transcript || '');
   // Same for the UPI saga speech so VoiceModal can show interim text.
-  const sagaLiveTranscript = useLiveTranscript({ enabled: Boolean(speech.listening), lang: bcp47 });
+  const sagaLiveTranscriptEleven = useLiveTranscript({
+    enabled: ELEVENLABS_STT_ENABLED && Boolean(speech.listening),
+    lang: bcp47,
+  });
+  const sagaLiveTranscript = ELEVENLABS_STT_ENABLED
+    ? sagaLiveTranscriptEleven
+    : (speech.transcript || '');
 
   // Rage detection for UPI voice flow — fires only when the voice modal is already open
   // (HomeScreen has its own rage detection for the home AI assistant)
@@ -620,7 +635,21 @@ export default function App() {
         setLoanPrimer(context || '');
         setLoanLosOpen(true);
       } else if (destination === 'create_deposit') {
-        setDepositPrimer(context || '');
+        // Always land on the Term Deposit menu and force FD vs RD choice first.
+        // Do not forward utterance product hints (e.g. "fixed deposit") — that made the
+        // deposit agent skip the menu and jump straight into one form.
+        const amountHint = String(context || '').match(/₹\s*([\d]+)/)?.[1];
+        const tenureHint = String(context || '').match(
+          /(\d+)\s*(year|years|yr|yrs|month|months|mo)\b/i,
+        );
+        let depositPrimerText =
+          'Customer opened the DCB Term Deposit menu via Voice Assist. There are two products on screen: DCB Fixed Deposit and DCB Pragati Recurring Deposit. You MUST ask which one they want before calling set_field(depositType). Do not assume Fixed Deposit even if they said "fixed deposit" earlier — wait for their choice from the on-screen menu. After they choose, help fill the deposit form step by step.';
+        if (amountHint || tenureHint) {
+          depositPrimerText += ' After product selection, reuse any amount/tenure already mentioned instead of re-asking.';
+          if (amountHint) depositPrimerText += ` Amount mentioned: ₹${amountHint}.`;
+          if (tenureHint) depositPrimerText += ` Tenure mentioned: ${tenureHint[0]}.`;
+        }
+        setDepositPrimer(depositPrimerText);
         setDepositOpen(true);
       } else if (destination === 'transaction_history') {
         openTxnHistory({ primer: context || '', dateFrom: null, dateTo: null });
@@ -632,7 +661,16 @@ export default function App() {
         setDebitCardSubFlow(context || null);
         setDebitCardOpen(true);
       } else if (destination === 'credit_card') {
-        setCreditCardSubFlow(context || null);
+        const ctx = String(context || '').toLowerCase();
+        let subFlow = null;
+        if (ctx.includes('change_pin') || /\b(change|reset|update)\b.*\bpin\b/.test(ctx) || /\bpin\b.*\b(change|reset|update)\b/.test(ctx)) {
+          subFlow = 'change_pin';
+        } else if (ctx.includes('card_statement') || ctx.includes('statement')) {
+          subFlow = 'card_statement';
+        } else if (context === 'change_pin' || context === 'card_statement') {
+          subFlow = context;
+        }
+        setCreditCardSubFlow(subFlow);
         setCreditCardOpen(true);
       }
     },
@@ -747,12 +785,36 @@ export default function App() {
         return { text, match };
       }
 
-      // Leave whatever flow we're in before opening the requested screen.
-      goHome();
+      // Close other journeys, but do NOT wipe the destination we're about to open.
+      // (goHome() used to setTxnHistOpen(false) and race with openTxnHistory.)
+      stopGlobalCartesiaTts();
+      setHomeAiCloseSignal((n) => n + 1);
+      setOpen(false);
+      setImpsOpen(false);
+      setFundTransferVoiceOpen(false);
+      setFundTransferVoicePrimer('');
+      setDepositVoiceOpen(false);
+      setDepositVoicePrimer('');
+      setLoanLosOpen(false);
+      setDepositOpen(false);
+      setHotelBookingOpen(false);
+      setFlightBookingOpen(false);
+      setDebitCardOpen(false);
+      setDebitCardSubFlow(null);
+      setCreditCardOpen(false);
+      setCreditCardSubFlow(null);
+      setImpsPrimer('');
+      setLoanPrimer('');
+      setDepositPrimer('');
+      if (match.destination !== 'transaction_history') {
+        setTxnHistOpen(false);
+        setTxnHistPrimer('');
+        setTxnHistDateFrom(null);
+        setTxnHistDateTo(null);
+      }
 
       if (match.destination === 'fund_transfer') {
         stopHandsFreeForSoloVoiceScreen();
-        stopGlobalCartesiaTts();
         setFundTransferVoicePrimer(
           match.subFlow ||
             `Customer opened fund transfer via voice navigation, saying: "${text}". Reuse any amount, payee, account, or bank details already mentioned instead of asking again — only ask for what's still missing (e.g. whether the payee is within Indian Bank or another bank, then account/mobile details).`,
@@ -763,7 +825,6 @@ export default function App() {
 
       if (match.destination === 'create_deposit') {
         stopHandsFreeForSoloVoiceScreen();
-        stopGlobalCartesiaTts();
         setDepositVoicePrimer(
           match.subFlow ||
             `Customer opened create deposit via voice navigation, saying: "${text}". Reuse any deposit type, amount, or tenure already mentioned instead of asking again — only ask for what's still missing.`,
@@ -779,12 +840,10 @@ export default function App() {
         const mentionedAmount = parseAmountFromUtterance(text);
         if (mentionedAmount !== null && mentionedAmount > UPI_LIMIT) {
           stopHandsFreeForSoloVoiceScreen();
-          stopGlobalCartesiaTts();
           clearTimeout(upiLimitTimerRef.current);
           setUpiLimitBanner({ amount: mentionedAmount, redirecting: true });
           upiLimitTimerRef.current = setTimeout(() => {
             setUpiLimitBanner(null);
-            goHome();
             setFundTransferVoicePrimer(
               `Customer wanted to send ₹${mentionedAmount.toLocaleString('en-IN')} but was redirected from UPI (limit ₹1,00,000) to Fund Transfer. Reuse the amount and any recipient already mentioned.`,
             );
@@ -794,24 +853,11 @@ export default function App() {
         }
 
         stopHandsFreeForSoloVoiceScreen();
-        stopGlobalCartesiaTts();
-        setHomeAiCloseSignal((n) => n + 1);
         setOpen(true);
         await ensureFresh();
         await startAction(session, 'send_money');
-        // Only re-feed the utterance if it actually carries payment details
-        // beyond the bare trigger phrase (an amount, or "to <someone>") —
-        // otherwise a generic "make a upi payment" would get re-parsed by
-        // the LLM as unrecognised follow-up chatter and produce a confusing
-        // reply instead of the normal "who do you want to send to?" prompt.
         const hasPaymentDetails = /\d/.test(text) || /\bto\s+\w+/i.test(text);
         if (hasPaymentDetails) {
-          // Deliberately no refresh() here yet — we don't want VoiceModal to
-          // speak the blank "who do you want to send to?" prompt only to
-          // immediately cut it off with the real answer below. Going through
-          // handleUtterance directly (not runUtterance) is deliberate: we've
-          // just guaranteed a fresh FILL state, so there's no risk of the
-          // CONFIRM/"yes" voice-shortcut misfiring on words like "send".
           await handleUtterance(session, text);
         }
         refresh();
@@ -819,7 +865,6 @@ export default function App() {
       }
 
       if (match.destination === 'transaction_history') {
-        stopGlobalCartesiaTts();
         openTxnHistory({
           dateFrom: match.dateFrom || null,
           dateTo: match.dateTo || null,
@@ -835,7 +880,6 @@ export default function App() {
       return { text, match };
     },
     [
-      goHome,
       handleNavigate,
       openTxnHistory,
       txnHistOpen,
@@ -843,6 +887,7 @@ export default function App() {
       ensureFresh,
       session,
       refresh,
+      goHome,
     ],
   );
 
@@ -864,19 +909,26 @@ export default function App() {
     continuousVoiceStopRef.current = continuousVoice.stop;
   }, [continuousVoice.stop]);
 
+  // Leaving Voice-to-Command must end the hands-free listen loop.
+  useEffect(() => {
+    if (!voiceCommandMode) continuousVoiceStopRef.current?.();
+  }, [voiceCommandMode]);
+
   const handleVoiceCommand = continuousVoice.runCommand;
 
-  const startVoiceCommandSession = useCallback(async () => {
+  const startVoiceCommandSession = useCallback(() => {
+    if (!voiceCommandMode) return;
     stopGlobalCartesiaTts();
+    // Must stay sync — called from bot FAB click (user gesture for Web Speech).
     continuousVoice.start();
-  }, [continuousVoice]);
+  }, [continuousVoice, voiceCommandMode]);
 
   const handleVoiceCommandMic = useCallback(() => {
     if (continuousVoice.active) {
       continuousVoice.stop();
       return;
     }
-    void startVoiceCommandSession();
+    startVoiceCommandSession();
   }, [continuousVoice, startVoiceCommandSession]);
 
   const inlineExtra = (
@@ -1108,6 +1160,7 @@ export default function App() {
           }}
           onNavigate={handleNavigate}
           navMode={voiceCommandMode}
+          voiceAssistMode={voiceAssistMode}
           onVoiceCommand={handleVoiceCommand}
           voiceCommandSessionActive={continuousVoice.active}
           voiceCommandListening={continuousVoice.listening}

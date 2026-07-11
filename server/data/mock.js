@@ -102,7 +102,7 @@ export const ACCOUNTS = [
 ];
 
 // Primary savings account statement — single source of truth for both UI and AI agent
-export const PRIMARY_ACCOUNT = { id: 'a1', label: 'Indian Bank Savings', last4: '1762', balance: 251000 };
+export const PRIMARY_ACCOUNT = { id: 'a1', label: 'DCB Bank Savings', last4: '1762', balance: 352089.79 };
 
 export const TRANSACTIONS = [
   { id: 1,  date: '16 May 2026', type: 'DR', amount: 1800,   description: 'UPI/BESCOM ELECTRICITY/bescom@icici/Online Bill Payment',              mode: 'UPI',  balance: 251000 },

@@ -1,141 +1,172 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoanAguiPanel from './LoanAguiPanel.jsx';
 import MpinSheet from './MpinSheet.jsx';
 import { DEPOSIT_AGUI_AGENT_ID } from '../lib/aguiClient.js';
 import { useRageDetect } from '../hooks/useRageDetect.js';
 import RMHelpPrompt from './RMHelpPrompt.jsx';
+import { DcbAppHeader } from './dcb/DcbHeader.jsx';
 
-/* ─── Interest rate lookup (simplified) ─── */
 function computeInterestRate(years, months, days) {
   const totalDays = years * 365 + months * 30 + days;
   if (totalDays < 181) return 0.0;
   if (totalDays < 270) return 4.5;
   if (totalDays < 365) return 4.75;
-  if (totalDays < 365 * 1 + 1) return 6.1;
-  if (totalDays < 365 * 2) return 6.2;
-  if (totalDays < 365 * 3) return 6.15;
-  if (totalDays < 365 * 5) return 6.05;
-  return 6.0;
+  if (totalDays < 365 * 1 + 1) return 7.9;
+  if (totalDays < 365 * 2) return 7.5;
+  if (totalDays < 365 * 3) return 7.25;
+  if (totalDays < 365 * 5) return 7.0;
+  return 6.75;
 }
 
 function computeMaturity(amount, years, months, days, rate) {
   const totalDays = years * 365 + months * 30 + days;
-  if (totalDays < 1 || !amount || !rate) return { amount: 0, date: null };
+  if (totalDays < 1 || !amount || !rate) return { amount: 0, interest: 0, date: null };
   const maturityAmount = amount * Math.pow(1 + rate / 100 / 365, totalDays);
   const maturityDate = new Date();
   maturityDate.setDate(maturityDate.getDate() + totalDays);
-  return { amount: maturityAmount, date: maturityDate };
+  return { amount: maturityAmount, interest: maturityAmount - amount, date: maturityDate };
 }
 
 function formatInr(n) {
-  return `₹${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₹${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+function formatInrFull(n) {
+  return `₹ ${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatDate(d) {
   if (!d) return '—';
-  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function formatTenure(y, m, d) {
-  const parts = [];
-  if (y) parts.push(`${y}Y`);
-  if (m) parts.push(`${m}M`);
-  if (d) parts.push(`${d}D`);
-  return parts.length ? parts.join('-') : '0';
-}
+const MATURITY_OPTIONS = [
+  { id: 'renew', label: 'Renew Principal Amount', short: 'Renew Principal', desc: 'Your original deposit is renewed for the same tenure. Interest is credited separately.' },
+  { id: 'savings', label: 'Credit to Savings Account', short: 'Credit to Savings', desc: 'Principal and earned interest are credited to your savings account.' },
+  { id: 'linked', label: 'Transfer to Linked Account', short: 'Transfer to Linked', desc: 'The maturity amount is transferred to your linked bank account.' },
+];
 
-/* ─── Slider ─── */
-function SliderInput({ label, value, min, max, onChange, unit }) {
+const PRODUCTS = [
+  {
+    id: 'fd',
+    name: 'DCB Fixed Deposit',
+    features: [
+      'Competitive Interest Rates',
+      'Compounding Power',
+      'Flexible Tenure Options',
+      'Flexible Interest Payment Options',
+    ],
+    graphic: 'chart',
+  },
+  {
+    id: 'rd',
+    name: 'DCB Pragati Recurring Deposit',
+    features: ['Set Your Target', 'Effortless Savings', 'Grow Your Wealth', 'Payment Flexibility'],
+    graphic: 'people',
+  },
+];
+
+function ProductGraphic({ type }) {
+  if (type === 'people') {
+    return (
+      <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16 11a3 3 0 100-6 3 3 0 000 6zM8 11a3 3 0 100-6 3 3 0 000 6zm8 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5c0-2.3-4.7-3.5-7-3.5zM8 13c-.3 0-.6 0-1 .1C4.7 13.6 2 14.7 2 16.5V19h5v-2.5c0-.9.3-2.2 1.4-3.2-.1 0-.3-.3-.4-.3z" />
+        </svg>
+      </div>
+    );
+  }
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold text-slate-700">{label} *</label>
-        <span className="text-xs font-bold text-[#003D7C]">{value}{unit}</span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1 h-1 w-full cursor-pointer accent-[#003D7C]"
-      />
-      <div className="flex justify-between text-[9px] text-slate-400">
-        <span>{min}</span><span>{max}</span>
-      </div>
+    <div className="flex h-16 w-16 items-end justify-center gap-1 pb-2">
+      {[10, 16, 22, 28, 34].map((h, i) => (
+        <span
+          key={i}
+          className="w-2.5 rounded-t-sm"
+          style={{
+            height: h,
+            background: `hsl(${175 + i * 12}, 55%, ${42 + i * 5}%)`,
+          }}
+        />
+      ))}
     </div>
   );
 }
 
-/* ─── Product card ─── */
-const PRODUCTS = [
-  {
-    id: 'fd',
-    name: 'Fixed Deposit',
-    rateLabel: '4.50 % - 6.60 %',
-    color: 'from-blue-600 to-blue-800',
-    illustration: (
-      <div className="flex items-center justify-center text-4xl">💰</div>
-    ),
-  },
-  {
-    id: 'mmd',
-    name: 'Money Multiplier Deposit',
-    rateLabel: '4.50 % - 6.60 %',
-    color: 'from-emerald-600 to-teal-700',
-    illustration: (
-      <div className="flex items-center justify-center text-4xl">🌱</div>
-    ),
-    badge: true,
-  },
-  {
-    id: 'rd',
-    name: 'Recurring Deposit',
-    rateLabel: '4.50 % - 6.20 %',
-    color: 'from-purple-600 to-indigo-700',
-    illustration: (
-      <div className="flex items-center justify-center text-4xl">📅</div>
-    ),
-  },
-];
+const BALANCE = 352089.79;
 
-/* ─── Main component ─── */
-export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrimer, voiceAssist = false }) {
-  /* form state */
-  const [selectedProduct, setSelectedProduct] = useState(null); // 'fd' | 'mmd' | 'rd'
-  const [phase, setPhase] = useState('select'); // 'select' | 'form' | 'review' | 'mpin' | 'success'
+function resolveDepositProduct(value) {
+  const v = String(value || '').toLowerCase();
+  if (/\b(rd|recurring|pragati)\b/.test(v) || /recurring\s*deposit/.test(v)) return 'rd';
+  if (/\b(fd|fixed)\b/.test(v) || /fixed\s*deposit/.test(v)) return 'fd';
+  // MMD is not on this DCB menu — treat as Fixed Deposit only when explicitly requested.
+  if (/\bmmd\b|money\s*multiplier/.test(v)) return 'fd';
+  // Unknown / empty — do not guess; keep the customer on the product menu.
+  return null;
+}
+
+export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrimer: aiPrimerProp, voiceAssist = false }) {
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [phase, setPhase] = useState('select'); // select | form | returns | maturityInfo | mpin | success
   const [years, setYears] = useState(1);
-  const [months, setMonths] = useState(6);
+  const [months, setMonths] = useState(0);
   const [days, setDays] = useState(0);
-  const [amount, setAmount] = useState(1000);
-  const [agreedTnc, setAgreedTnc] = useState(false);
+  const [amount, setAmount] = useState(10000);
+  const [taxSaver, setTaxSaver] = useState(false);
+  const [durationMode, setDurationMode] = useState('duration'); // duration | maturity
+  const [maturityInstr, setMaturityInstr] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showRates, setShowRates] = useState(false);
   const [mpinOpen, setMpinOpen] = useState(false);
   const [rmPromptOpen, setRmPromptOpen] = useState(false);
-  const [aiOpen, setAiOpen] = useState(true);
+  const [aiOpen, setAiOpen] = useState(() => !!aiPrimerProp || voiceAssist);
+  // Always force FD vs RD choice on the Term Deposit menu — never inherit a
+  // product-skipping primer from home (e.g. "Customer wants fixed deposit").
+  const [aiPrimer] = useState(() => {
+    if (!aiPrimerProp && !voiceAssist) return null;
+    const src = String(aiPrimerProp || '');
+    const amountHint = src.match(/₹\s*([\d]+)/)?.[1];
+    const tenureHint = src.match(/(\d+)\s*(year|years|yr|yrs|month|months|mo)\b/i);
+    let text =
+      'Customer is on the DCB Term Deposit menu with two on-screen options: DCB Fixed Deposit and DCB Pragati Recurring Deposit. Ask which one they want. Do NOT call set_field(depositType) until they clearly choose. After they choose, help fill the deposit form step by step.';
+    if (amountHint || tenureHint) {
+      text += ' After product selection, reuse any amount/tenure already mentioned.';
+      if (amountHint) text += ` Amount mentioned: ₹${amountHint}.`;
+      if (tenureHint) text += ` Tenure mentioned: ${tenureHint[0]}.`;
+    }
+    return text;
+  });
+  // Block auto-select on the primer turn — only accept depositType after the customer speaks.
+  const userRepliedRef = useRef(false);
 
-  /* ag-ui ref for form sync */
-  const formStateRef = useRef({ depositType: null, amount: 1000, years: 1, months: 6, days: 0 });
+  const formStateRef = useRef({ depositType: null, amount: 10000, years: 1, months: 0, days: 0 });
 
   const { containerProps: rageProps, dismiss: dismissRage } = useRageDetect({
-    onFrustrated: () => { if (!aiOpen) setRmPromptOpen(true); },
+    onFrustrated: () => {
+      if (!aiOpen) setRmPromptOpen(true);
+    },
   });
 
-  /* ─── Computed values ─── */
   const rate = useMemo(() => computeInterestRate(years, months, days), [years, months, days]);
-  const maturity = useMemo(() => computeMaturity(amount, years, months, days, rate), [amount, years, months, days, rate]);
-  const totalDays = years * 365 + months * 30 + days;
-  const minTenureMet = selectedProduct === 'mmd' ? totalDays >= 365 + 6 * 30 : totalDays >= 181;
+  const maturity = useMemo(
+    () => computeMaturity(amount, years, months, days, rate),
+    [amount, years, months, days, rate],
+  );
 
-  /* ─── AI tool call handler ─── */
   const setFvFromAgent = useCallback((field, value) => {
     if (field === 'depositType') {
-      const id = String(value).toLowerCase();
+      // Primer turn must not auto-open a form — wait until the customer speaks.
+      if (!userRepliedRef.current) return;
+      const id = resolveDepositProduct(value);
+      // Ignore ambiguous depositType until the customer clearly picks FD or RD.
+      if (!id) return;
       setSelectedProduct(id);
       formStateRef.current.depositType = id;
       setPhase('form');
+      // Stay in Voice Assist while filling the form.
+      setAiOpen(true);
     } else if (field === 'amount') {
-      const n = parseFloat(String(value)) || 1000;
+      const n = parseFloat(String(value)) || 10000;
       setAmount(Math.max(1000, n));
       formStateRef.current.amount = n;
     } else if (field === 'years') {
@@ -153,37 +184,43 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
     }
   }, []);
 
-  const handleToolCall = useCallback((toolName, args) => {
-    if (toolName === 'set_field') {
-      setFvFromAgent(args.field, args.value);
-    } else if (toolName === 'submit_deposit') {
-      setAgreedTnc(true);
-      setPhase('review');
-      // Agent already confirmed the details conversationally before calling
-      // this tool — skip the redundant manual "Confirm" tap and go straight
-      // to MPIN, matching the loan application flow's behaviour.
-      setMpinOpen(true);
-    } else if (toolName === 'navigate_to') {
-      const { destination, context, routingStatus } = args;
-      onNavigate?.(destination, context || '', routingStatus || '');
-    }
-  }, [setFvFromAgent, onNavigate]);
+  const handleUserMessage = useCallback((text) => {
+    if (String(text || '').trim()) userRepliedRef.current = true;
+    return false;
+  }, []);
 
-  /* ─── MPIN ─── */
-  const handleMpinSuccess = () => {
-    setMpinOpen(false);
-    setPhase('success');
-  };
+  const handleToolCall = useCallback(
+    (toolName, args) => {
+      if (toolName === 'set_field') {
+        setFvFromAgent(args.field, args.value);
+      } else if (toolName === 'submit_deposit') {
+        setPhase('returns');
+        setMpinOpen(true);
+      } else if (toolName === 'navigate_to') {
+        const { destination, context, routingStatus } = args;
+        onNavigate?.(destination, context || '', routingStatus || '');
+      }
+    },
+    [setFvFromAgent, onNavigate],
+  );
 
-  /* ─── Select product ─── */
   const openProduct = (id) => {
     setSelectedProduct(id);
     formStateRef.current.depositType = id;
     setPhase('form');
   };
 
-  const productInfo = PRODUCTS.find((p) => p.id === selectedProduct);
-  const productDisplayName = productInfo?.name || 'Deposit';
+  const handleBack = () => {
+    if (phase === 'success' || phase === 'select') onClose();
+    else if (phase === 'form') setPhase('select');
+    else if (phase === 'returns' || phase === 'maturityInfo') setPhase('form');
+    else onClose();
+  };
+
+  const selectedMaturity = MATURITY_OPTIONS.find((o) => o.id === maturityInstr);
+
+  const pinkField =
+    'w-full rounded-xl bg-[#F8E8E0] px-3 py-2.5 text-[15px] font-semibold text-[#1A237E] outline-none border-0';
 
   return (
     <motion.div
@@ -191,40 +228,19 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-      className="absolute inset-0 z-40 flex flex-col bg-white"
+      className="absolute inset-0 z-40 flex flex-col bg-[#F5F7FA]"
       {...rageProps}
     >
-      {/* Header */}
-      <div className="shrink-0 bg-gradient-to-r from-[#003D7C] to-[#0055B3]">
-        <div className="flex items-center gap-3 px-3 pt-2 pb-1.5">
-          <button
-            type="button"
-            onClick={phase !== 'select' && phase !== 'success' ? () => setPhase('select') : onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
-            aria-label="Back"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <h1 className="flex-1 text-base font-bold text-white">Create a Deposit</h1>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bank-gold text-bank-purpleDeep hover:opacity-90"
-            aria-label="Home"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      {phase === 'select' ? (
+        <DcbAppHeader title="Term Deposit" onBack={onClose} onHome={onClose} variant="navy" />
+      ) : phase === 'success' ? null : phase === 'mpin' || mpinOpen ? (
+        <DcbAppHeader title="Confirm with MPIN" onBack={handleBack} onHome={onClose} brandPill />
+      ) : (
+        <DcbAppHeader title="Open New Deposit" onBack={handleBack} onHome={onClose} />
+      )}
 
-      {/* Content */}
-      <div className="relative flex-1 overflow-y-auto">
+      <div className="relative flex-1 overflow-y-auto no-scrollbar pb-20">
         <AnimatePresence mode="wait">
-
           {/* ── Product selection ── */}
           {phase === 'select' && (
             <motion.div
@@ -232,172 +248,249 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="px-4 pb-4 pt-3"
+              className="space-y-4 px-4 pb-4 pt-4"
             >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-slate-700">Choose Your Deposit Plan</p>
-                <div className="flex flex-col items-end gap-0.5">
-                  <button type="button" className="text-[10px] font-semibold text-[#003D7C] hover:underline">DEPOSIT CALCULATOR</button>
-                  <button type="button" className="text-[10px] font-semibold text-[#003D7C] hover:underline">VIEW DEPOSIT INTEREST RATES</button>
-                </div>
-              </div>
-
-              <div className="mt-3 space-y-4">
-                {PRODUCTS.map((prod) => (
-                  <div key={prod.id} className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-                    {prod.badge && (
-                      <div className="flex items-center justify-center gap-2 bg-red-600 py-1.5">
-                        <span className="text-[10px] font-bold italic text-white tracking-wide">Special Products Available</span>
-                      </div>
-                    )}
-                    <div className="bg-white px-4 py-4">
-                      <p className="text-center text-base font-bold text-slate-800">{prod.name}</p>
-                      <div className="my-3 flex h-20 items-center justify-center">{prod.illustration}</div>
-                      <p className="text-center text-xs text-slate-500">Interest Rates</p>
-                      <p className="text-center text-lg font-black text-slate-800">{prod.rateLabel}</p>
-                      <button
-                        type="button"
-                        onClick={() => openProduct(prod.id)}
-                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#003D7C] px-4 py-2.5 text-sm font-bold text-white shadow hover:bg-[#0055B3] active:scale-[0.98]"
-                      >
-                        Open Now
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
+              {PRODUCTS.map((prod) => (
+                <div
+                  key={prod.id}
+                  className="rounded-2xl border border-[#C5CAE9] bg-white p-4 shadow-[0_2px_12px_rgba(26,35,126,0.06)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-[15px] font-bold text-[#1A237E]">{prod.name}</h2>
+                      <ul className="mt-3 space-y-1.5">
+                        {prod.features.map((f) => (
+                          <li key={f} className="flex items-start gap-2 text-[12px] text-[#1A237E]">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rotate-45 bg-[#FFD600]" />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
+                    <ProductGraphic type={prod.graphic} />
                   </div>
-                ))}
-              </div>
-              <div className="h-40" />
+                  <button
+                    type="button"
+                    onClick={() => openProduct(prod.id)}
+                    className="mt-4 rounded-xl bg-[#1A237E] px-5 py-2.5 text-[13px] font-bold text-white shadow press"
+                  >
+                    Apply Now
+                  </button>
+                </div>
+              ))}
             </motion.div>
           )}
 
           {/* ── Form ── */}
-          {phase === 'form' && (
+          {(phase === 'form' || phase === 'returns' || phase === 'maturityInfo') && (
             <motion.div
               key="form"
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
-              className="px-4 pb-4 pt-3"
+              className="px-4 pb-4 pt-2"
             >
-              {/* Selected account */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-[#003D7C]">Selected account</p>
-                  <button type="button" className="text-xs font-semibold text-[#003D7C] hover:underline">Change</button>
-                </div>
-                <div className="mt-1.5 flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bank-gold font-bold text-xs text-bank-purpleDeep">
-                    PA
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">Prateek Agrawal</p>
-                    <p className="text-[10px] text-slate-500">XXXXXX1762 — Savings</p>
-                    <p className="text-[10px] font-semibold text-slate-600">₹2,51,000.00</p>
-                  </div>
-                  <div className="ml-auto flex items-center gap-0.5">
-                    <div className="h-4 w-4 rounded-full border-2 border-[#003D7C] bg-[#003D7C] flex items-center justify-center">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5">
-                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                    <span className="text-[9px] font-semibold text-bank-gold">Primary</span>
-                  </div>
-                </div>
+              {/* Balance bar */}
+              <div className="mb-3 flex items-center gap-2 rounded-lg bg-[#E8EDF5] px-3 py-2.5">
+                <span className="h-5 w-0.5 bg-[#1A237E]" />
+                <p className="text-[18px] font-bold text-[#1A237E]">{formatInrFull(BALANCE)}</p>
               </div>
 
-              {/* Form title */}
-              <div className="mt-3 rounded-xl border border-[#003D7C]/20 bg-[#003D7C]/5 px-3 py-2">
-                <p className="text-xs font-bold text-[#003D7C]">Set your {productDisplayName} Amount and Tenure</p>
-                <p className="mt-1 text-[10px] text-slate-500">
-                  NOTE: You are eligible for interest rate applicable to public who is a resident of India.
-                </p>
+              <input
+                type="number"
+                value={amount}
+                min={1000}
+                onChange={(e) => setAmount(Math.max(1000, parseFloat(e.target.value) || 1000))}
+                className={`${pinkField} mb-2`}
+                aria-label="Deposit amount"
+              />
+              <input
+                type="text"
+                value={amount}
+                readOnly
+                className={`${pinkField} mb-3 opacity-90`}
+                aria-label="Deposit amount confirm"
+              />
+
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={taxSaver}
+                    onChange={(e) => setTaxSaver(e.target.checked)}
+                    className="h-4 w-4 accent-[#1A237E]"
+                  />
+                  <span className="text-[13px] font-semibold text-[#1A237E]">Tax Saver</span>
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#1565C0] text-[9px] font-bold text-white">
+                    i
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowRates((v) => !v)}
+                  className="text-[12px] font-semibold text-[#1565C0] underline"
+                >
+                  Check Interest Rates
+                </button>
               </div>
 
-              {/* Tenure sliders */}
-              <div className="mt-3 space-y-3">
-                <SliderInput label="Years" value={years} min={0} max={10} onChange={setYears} unit=" yr" />
-                <SliderInput label="Months" value={months} min={0} max={11} onChange={setMonths} unit=" mo" />
-                <SliderInput label="Days" value={days} min={0} max={30} onChange={setDays} unit=" d" />
-              </div>
-
-              {/* Min/Max tenure */}
-              <div className="mt-2 rounded-lg bg-slate-50 px-2 py-1.5 text-[10px] text-slate-500">
-                <p>Min Tenure (D-M-Y): {selectedProduct === 'mmd' ? '1-6-0' : '0-6-0'}</p>
-                <p>Max Tenure (D-M-Y): 0-0-10</p>
-              </div>
-
-              {!minTenureMet && selectedProduct === 'mmd' && (
-                <div className="mt-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-[10px] text-amber-700">
-                  MMD requires a minimum tenure of 1 year 6 months.
+              {showRates && (
+                <div className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600">
+                  Up to <strong className="text-[#1A237E]">7.90% p.a.</strong> for 1-year tenure. Senior citizens may get additional benefits.
                 </div>
               )}
 
-              {/* Amount */}
-              <div className="mt-3">
-                <label className="text-xs font-semibold text-slate-700">Deposit Amount *</label>
-                <input
-                  type="number"
-                  value={amount}
-                  min={1000}
-                  max={29999999}
-                  onChange={(e) => setAmount(Math.max(1000, parseFloat(e.target.value) || 1000))}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 focus:border-[#003D7C] focus:outline-none"
-                />
-                <div className="mt-1 flex justify-between text-[9px] text-slate-400">
-                  <span>Min Amount: 1,000.00</span>
-                  <span>Max Amount: 2,99,99,999.00</span>
-                </div>
+              <div className="mb-3 flex items-center gap-5">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <span
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                      durationMode === 'duration' ? 'border-[#1A237E]' : 'border-slate-400'
+                    }`}
+                  >
+                    {durationMode === 'duration' && <span className="h-2 w-2 rounded-full bg-[#1A237E]" />}
+                  </span>
+                  <button type="button" onClick={() => setDurationMode('duration')} className="text-[13px] font-semibold text-[#1A237E]">
+                    Deposit Duration
+                  </button>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <span
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                      durationMode === 'maturity' ? 'border-[#1A237E]' : 'border-slate-400'
+                    }`}
+                  >
+                    {durationMode === 'maturity' && <span className="h-2 w-2 rounded-full bg-[#1A237E]" />}
+                  </span>
+                  <button type="button" onClick={() => setDurationMode('maturity')} className="text-[13px] font-semibold text-[#1A237E]">
+                    Maturity Date
+                  </button>
+                </label>
               </div>
 
-              {/* Live calculation */}
-              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Maturity Date</span>
-                  <span className="font-bold text-slate-800">{formatDate(maturity.date)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Interest Rate</span>
-                  <span className="font-bold text-slate-800">{rate.toFixed(2)}%</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Maturity Amount</span>
-                  <span className="font-bold text-[#003D7C]">{maturity.amount > 0 ? formatInr(maturity.amount) : '—'}</span>
-                </div>
+              <div className="mb-2 grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Year', value: years, set: setYears, max: 10 },
+                  { label: 'Month', value: months, set: setMonths, max: 11 },
+                  { label: 'Days', value: days, set: setDays, max: 30 },
+                ].map((f) => (
+                  <div key={f.label}>
+                    <input
+                      type="number"
+                      value={f.value}
+                      min={0}
+                      max={f.max}
+                      onChange={(e) => f.set(Math.min(f.max, Math.max(0, parseInt(e.target.value) || 0)))}
+                      className={`${pinkField} text-center`}
+                      aria-label={f.label}
+                    />
+                    <p className="mt-0.5 text-center text-[10px] text-slate-500">{f.label}</p>
+                  </div>
+                ))}
               </div>
 
-              {/* T&C */}
-              <label className="mt-3 flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={agreedTnc}
-                  onChange={(e) => setAgreedTnc(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 accent-[#003D7C]"
-                />
-                <span className="text-[11px] text-slate-600">I have read all the Terms &amp; Conditions</span>
-              </label>
+              <div className="mb-3 rounded-xl bg-[#E8EDF5] px-3 py-2.5 text-[14px] font-semibold text-[#1A237E]">
+                {formatDate(maturity.date)}
+              </div>
 
-              {/* Actions */}
-              <div className="mt-4 flex gap-3">
+              {/* Estimated returns (shown after amount/tenure set) */}
+              {phase === 'returns' || amount >= 1000 ? (
+                <div className="mb-3 rounded-xl bg-[#ECEFF5] px-3.5 py-3">
+                  <p className="text-[11px] font-bold tracking-wide text-[#5E35B1]">ESTIMATED RETURNS</p>
+                  <div className="mt-2 space-y-1.5 text-[13px]">
+                    <div className="flex justify-between text-[#1A237E]">
+                      <span>Principal</span>
+                      <span className="font-semibold">{formatInr(amount)}</span>
+                    </div>
+                    <div className="flex justify-between text-[#1A237E]">
+                      <span>Rate</span>
+                      <span className="font-semibold">{rate.toFixed(1)}% p.a.</span>
+                    </div>
+                    <div className="flex justify-between text-[#1A237E]">
+                      <span>Tenure</span>
+                      <span className="font-semibold">
+                        {years > 0 ? `${years} year${years > 1 ? 's' : ''}` : ''}
+                        {months > 0 ? ` ${months} mo` : ''}
+                        {days > 0 ? ` ${days} d` : ''}
+                      </span>
+                    </div>
+                    <div className="my-1.5 border-t border-slate-300/80" />
+                    <div className="flex justify-between">
+                      <span className="text-[#1A237E]">Interest Earned</span>
+                      <span className="font-bold text-[#2E7D32]">{formatInr(Math.round(maturity.interest))}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-[#1A237E]">Maturity Value</span>
+                      <span className="font-bold text-[#2E7D32]">{formatInr(Math.round(maturity.amount))}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Maturity instructions */}
+              <p className="mb-1 text-[12px] font-semibold text-[#1A237E]">Maturity Instructions*</p>
+              <div className="relative mb-2">
                 <button
                   type="button"
-                  onClick={() => setPhase('select')}
-                  className="flex-1 rounded-lg border border-slate-300 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  onClick={() => setDropdownOpen((v) => !v)}
+                  className={`${pinkField} flex items-center justify-between text-left`}
                 >
-                  Cancel
+                  <span className={selectedMaturity ? '' : 'font-medium text-[#1A237E]/60'}>
+                    {selectedMaturity?.label || 'Select an option'}
+                  </span>
+                  <span className="text-[#1A237E]">▾</span>
                 </button>
-                <button
-                  type="button"
-                  disabled={!agreedTnc || !minTenureMet || amount < 1000}
-                  onClick={() => setPhase('review')}
-                  className="flex-1 rounded-lg bg-[#003D7C] py-2.5 text-sm font-bold text-white shadow disabled:opacity-40 hover:bg-[#0055B3] active:scale-[0.98]"
-                >
-                  Continue
-                </button>
+                {dropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                    {MATURITY_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setMaturityInstr(opt.id);
+                          setDropdownOpen(false);
+                          setPhase('maturityInfo');
+                        }}
+                        className="flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-[13px] text-[#1A237E] last:border-0 hover:bg-slate-50"
+                      >
+                        {opt.label}
+                        {maturityInstr === opt.id && (
+                          <span className="h-2.5 w-2.5 rounded-full bg-[#7C4DFF]" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="h-44" />
+
+              {phase === 'maturityInfo' && (
+                <div className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-3">
+                  <p className="text-[11px] font-bold tracking-wide text-[#1A237E]">WHAT HAPPENS AT MATURITY?</p>
+                  <div className="mt-2 grid grid-cols-[1fr_1.4fr] gap-x-2 gap-y-2 text-[10px]">
+                    <p className="font-bold text-slate-500">OPTION</p>
+                    <p className="font-bold text-slate-500">WHAT HAPPENS AT MATURITY</p>
+                    {MATURITY_OPTIONS.map((opt) => (
+                      <React.Fragment key={opt.id}>
+                        <p className={`font-bold ${maturityInstr === opt.id ? 'text-[#7C4DFF]' : 'text-[#1A237E]'}`}>
+                          {opt.short}
+                        </p>
+                        <p className="text-slate-600">{opt.desc}</p>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={!maturityInstr || amount < 1000}
+                onClick={() => {
+                  setPhase('returns');
+                  setMpinOpen(true);
+                }}
+                className="mt-2 w-full rounded-xl bg-[#1A237E] py-3 text-[14px] font-bold text-white shadow disabled:opacity-40 press"
+              >
+                Continue
+              </button>
             </motion.div>
           )}
 
@@ -405,135 +498,109 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
           {phase === 'success' && (
             <motion.div
               key="success"
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center gap-4 px-6 pt-16 text-center"
+              className="flex flex-col items-center px-6 pt-16 text-center"
             >
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-4xl shadow-lg">
-                🎉
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#28A745] text-white shadow-lg">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
-              <h2 className="text-xl font-black text-slate-800">Deposit Opened!</h2>
-              <p className="text-sm text-slate-600">
-                Your {productDisplayName} of {formatInr(amount)} has been successfully created.
+              <h2 className="mt-5 text-[22px] font-bold text-[#1A237E]">Congratulations!</h2>
+              <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
+                Your deposit request has been submitted successfully. You will receive a confirmation shortly. Thank
+                you for banking with DCB Bank.
               </p>
-              <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-left space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Product</span>
-                  <span className="font-bold text-slate-800">{productDisplayName}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Amount</span>
-                  <span className="font-bold text-[#003D7C]">{formatInr(amount)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Tenure</span>
-                  <span className="font-bold text-slate-800">{formatTenure(years, months, days)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Maturity Amount</span>
-                  <span className="font-bold text-green-700">{formatInr(maturity.amount)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Maturity Date</span>
-                  <span className="font-bold text-slate-800">{formatDate(maturity.date)}</span>
-                </div>
-              </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-2 w-full rounded-xl bg-[#003D7C] py-3 text-sm font-bold text-white shadow hover:bg-[#0055B3]"
+                className="mt-8 w-full rounded-full bg-[#1A237E] py-3.5 text-[15px] font-bold text-white shadow press"
               >
-                Done
+                Back to Home
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-3 rounded-full bg-slate-200/80 px-5 py-2 text-[12px] font-semibold text-slate-600"
+              >
+                No, I&apos;m good
               </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Review modal */}
+      {/* MPIN overlay styled like mock */}
       <AnimatePresence>
-        {phase === 'review' && (
+        {mpinOpen && (
           <motion.div
-            key="review-overlay"
+            key="mpin-dcb"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-end justify-center bg-black/40"
+            className="absolute inset-0 z-50 flex flex-col bg-[#B3D4FC]/40 backdrop-blur-[1px]"
           >
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-              className="w-full rounded-t-2xl bg-white px-4 py-5 shadow-xl"
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-bold text-slate-800">Review &amp; Confirm the Details</p>
-                <button
-                  type="button"
-                  onClick={() => setPhase('form')}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {[
-                  ['From', `Savings | XXXXXX1762 — ₹2,51,000.00`],
-                  ['Deposit Amount', formatInr(amount)],
-                  ['Product', productDisplayName],
-                  ['Tenure', `${years}Y-${months}M-${days}D`],
-                  ['Interest Rate', `${rate.toFixed(2)}%`],
-                  ['Maturity Amount', formatInr(maturity.amount)],
-                  ['Maturity Date', formatDate(maturity.date)],
-                  ['Whether Queer Community', 'No'],
-                ].map(([label, val]) => (
-                  <div key={label} className="flex justify-between py-2 text-xs">
-                    <span className="text-slate-500">{label}</span>
-                    <span className="font-semibold text-slate-800 text-right max-w-[55%]">{val}</span>
+            <DcbAppHeader
+              title="Confirm with MPIN"
+              onBack={() => {
+                setMpinOpen(false);
+                setPhase('form');
+              }}
+              onHome={onClose}
+              brandPill
+            />
+            <div className="flex flex-1 flex-col px-4 pt-4">
+              <div className="rounded-2xl bg-white px-4 py-5 shadow-lg">
+                <MpinInline
+                  onSuccess={() => {
+                    setMpinOpen(false);
+                    setPhase('success');
+                  }}
+                  onCancel={() => {
+                    setMpinOpen(false);
+                    setPhase('form');
+                  }}
+                />
+                <div className="mt-5 border-t border-slate-100 pt-4">
+                  <p className="text-[11px] font-bold tracking-wide text-slate-500">DEPOSIT SUMMARY</p>
+                  <div className="mt-2 divide-y divide-slate-100">
+                    {[
+                      ['Amount', formatInr(amount)],
+                      ['Interest Rate', `${rate.toFixed(2)}% p.a.`],
+                      ['Tenure', years === 1 && !months && !days ? '1 Year' : `${years}Y ${months}M ${days}D`],
+                      ['Maturity Value', formatInr(Math.round(maturity.amount))],
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex justify-between py-2.5 text-[13px]">
+                        <span className="text-slate-500">{k}</span>
+                        <span className="font-bold text-[#1A237E]">{v}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
-              <div className="mt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPhase('form')}
-                  className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setPhase('mpin'); setMpinOpen(true); }}
-                  className="flex-1 rounded-xl bg-[#003D7C] py-2.5 text-sm font-bold text-white shadow hover:bg-[#0055B3]"
-                >
-                  Confirm
-                </button>
-              </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* MPIN Sheet */}
-      <MpinSheet
-        open={mpinOpen}
-        lang={lang}
-        onCancel={() => { setMpinOpen(false); setPhase('review'); }}
-        onSuccess={handleMpinSuccess}
-      />
+      {/* Hidden legacy MpinSheet unused — keep import path for AI flows that may open it */}
+      <MpinSheet open={false} lang={lang} onCancel={() => {}} onSuccess={() => {}} />
 
-      {/* RM Help Prompt */}
       <RMHelpPrompt
         open={rmPromptOpen}
-        onHelp={() => { setRmPromptOpen(false); dismissRage(); setAiOpen(true); }}
-        onDismiss={() => { setRmPromptOpen(false); dismissRage(); }}
+        onHelp={() => {
+          setRmPromptOpen(false);
+          dismissRage();
+          setAiOpen(true);
+        }}
+        onDismiss={() => {
+          setRmPromptOpen(false);
+          dismissRage();
+        }}
       />
 
-      {/* AI FAB — only when panel is closed and not in review/mpin/success */}
-      {!aiOpen && phase !== 'mpin' && phase !== 'success' && (
+      {!aiOpen && phase !== 'mpin' && phase !== 'success' && !mpinOpen && (
         <button
           type="button"
           onClick={() => setAiOpen(true)}
@@ -544,26 +611,90 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
         </button>
       )}
 
-      {/* AI Overlay (only when not in review/mpin/success phase) */}
-      {phase !== 'mpin' && phase !== 'success' && (
+      {phase !== 'success' && !mpinOpen && (
         <LoanAguiPanel
           agentId={DEPOSIT_AGUI_AGENT_ID}
           open={aiOpen}
           onClose={() => setAiOpen(false)}
           greeting={
-            selectedProduct === 'mmd'
-              ? "Great choice! The Money Multiplier Deposit gives you compounded returns — better than a regular FD. How much would you like to deposit? (Minimum ₹1,000)"
-              : "Let me help you open a deposit. Would you like a Fixed Deposit (FD), Money Multiplier Deposit (MMD) — which gives compounded returns, or a Recurring Deposit (RD)?"
+            phase === 'select'
+              ? 'I can see two options on your screen — DCB Fixed Deposit and DCB Pragati Recurring Deposit. Which one would you like to open?'
+              : 'Great — I will help you fill this deposit form. How much would you like to deposit?'
           }
-          assistTitle="Deposit Assistant"
-          assistHint="Voice or text — I'll fill it for you"
+          assistTitle={voiceAssist ? 'AI Assistant · Voice Assist' : 'AI Assistant'}
+          assistHint={
+            voiceAssist
+              ? 'I will speak and listen — answer hands-free after I finish.'
+              : 'Voice or text — I will fill it for you'
+          }
           primer={aiPrimer || null}
           formValues={formStateRef.current}
           onToolCall={handleToolCall}
+          onUserMessage={handleUserMessage}
           lang={lang}
           voiceAssist={voiceAssist}
         />
       )}
     </motion.div>
+  );
+}
+
+/** Compact inline 4-digit MPIN matching Confirm with MPIN mock */
+function MpinInline({ onSuccess, onCancel }) {
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState(null);
+  const DEMO = '1234';
+
+  React.useEffect(() => {
+    if (pin.length !== 4) return;
+    if (pin === DEMO) onSuccess();
+    else {
+      setError('Wrong MPIN. Try again.');
+      setTimeout(() => {
+        setPin('');
+        setError(null);
+      }, 400);
+    }
+  }, [pin, onSuccess]);
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="flex gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-slate-200 bg-slate-50"
+          >
+            {i < pin.length ? <span className="h-3 w-3 rounded-full bg-[#1A237E]" /> : null}
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-center text-[11px] text-slate-500">
+        Enter the 4-digit MPIN you set during registration.
+      </p>
+      {error && <p className="mt-1 text-[11px] font-semibold text-red-600">{error}</p>}
+      <div className="mt-4 grid w-full max-w-[240px] grid-cols-3 gap-2">
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map((k, idx) =>
+          k === '' ? (
+            <span key={idx} />
+          ) : (
+            <button
+              key={k}
+              type="button"
+              onClick={() => {
+                if (k === '⌫') setPin((p) => p.slice(0, -1));
+                else if (pin.length < 4) setPin((p) => p + k);
+              }}
+              className="rounded-xl bg-slate-100 py-2.5 text-[16px] font-bold text-[#1A237E] press hover:bg-slate-200"
+            >
+              {k}
+            </button>
+          ),
+        )}
+      </div>
+      <button type="button" onClick={onCancel} className="mt-3 text-[12px] font-semibold text-slate-500">
+        Cancel
+      </button>
+    </div>
   );
 }

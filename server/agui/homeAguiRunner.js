@@ -36,7 +36,7 @@ function agUiMessagesToOpenAI(messages) {
   return out;
 }
 
-function buildRoutingStatus(destination, assistantText) {
+function buildRoutingStatus(destination, assistantText, context) {
   const reason = assistantText.match(/💭\s*([^\n]+)/);
   if (reason?.[1]) return reason[1].trim();
   if (destination === 'upi_payment') return 'Within UPI limit. Redirecting to UPI payment.';
@@ -44,6 +44,15 @@ function buildRoutingStatus(destination, assistantText) {
   if (destination === 'loan_application') return 'Redirecting to loan application.';
   if (destination === 'create_deposit') return 'Redirecting to Create a Deposit.';
   if (destination === 'transaction_history') return 'Opening your account statement.';
+  if (destination === 'credit_card') {
+    const c = String(context || '').toLowerCase();
+    if (c.includes('change_pin') || c.includes('pin')) return 'Opening credit card PIN change.';
+    if (c.includes('statement')) return 'Opening your credit card statement.';
+    return 'Opening credit card dashboard.';
+  }
+  if (destination === 'debit_card') return 'Opening debit card dashboard.';
+  if (destination === 'hotel_booking') return 'Opening hotel booking.';
+  if (destination === 'flight_booking') return 'Opening flight booking.';
   return 'Redirecting you now.';
 }
 
@@ -58,13 +67,23 @@ const HOME_TOOLS = [
         properties: {
           destination: {
             type: 'string',
-            enum: ['upi_payment', 'fund_transfer', 'loan_application', 'create_deposit', 'transaction_history'],
+            enum: [
+              'upi_payment',
+              'fund_transfer',
+              'loan_application',
+              'create_deposit',
+              'transaction_history',
+              'credit_card',
+              'debit_card',
+              'hotel_booking',
+              'flight_booking',
+            ],
             description: 'Which journey to open.',
           },
           context: {
             type: 'string',
             description:
-              'Short natural-language summary of what the customer said, to be passed to the destination AI as a primer (max 2 sentences).',
+              'Short note for the destination. For credit card PIN change use exactly "change_pin". For credit card statement use exactly "card_statement". Otherwise a brief primer (max 2 sentences).',
           },
         },
         required: ['destination'],
@@ -186,11 +205,11 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
         // ── Fallback: model wrote navigate_to as text instead of using the tool ──
         const textLower = assistantText;
         if (/navigate_to/i.test(textLower)) {
-          const destMatch = textLower.match(/destination\s*[=:]\s*["']?(upi_payment|fund_transfer|loan_application|create_deposit|transaction_history)["']?/i);
+          const destMatch = textLower.match(/destination\s*[=:]\s*["']?(upi_payment|fund_transfer|loan_application|create_deposit|transaction_history|credit_card|debit_card|hotel_booking|flight_booking)["']?/i);
           const ctxMatch = textLower.match(/context\s*[=:]\s*["']([^"'\n]+)["']/i);
           if (destMatch) {
             const args = { destination: destMatch[1], context: ctxMatch?.[1] || '' };
-            write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination, assistantText) });
+            write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination, assistantText, args.context) });
             write({ type: 'STATE_DELTA', delta: [{ op: 'replace', path: '/navigate_to', value: args }] });
             // Emit synthetic tool events so the client handler fires
             const fakeId = `fallback_${Date.now()}`;
@@ -217,7 +236,7 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
         let args = {};
         try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
 
-        write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination, assistantText) });
+        write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination, assistantText, args.context) });
 
         // Emit STATE_DELTA so the client can read navigate_to args
         write({

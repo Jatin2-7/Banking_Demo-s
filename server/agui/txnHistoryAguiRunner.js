@@ -38,6 +38,8 @@ function buildRoutingStatus(destination, assistantText) {
   if (reason?.[1]) return reason[1].trim();
   if (destination === 'create_deposit') return 'Redirecting you to Create a Deposit.';
   if (destination === 'home') return 'Going back to home.';
+  if (destination === 'credit_card') return 'Opening credit card PIN change.';
+  if (destination === 'debit_card') return 'Opening debit card dashboard.';
   return 'Redirecting now.';
 }
 
@@ -73,12 +75,13 @@ const TXN_HISTORY_TOOLS = [
         properties: {
           destination: {
             type: 'string',
-            enum: ['create_deposit', 'home'],
+            enum: ['create_deposit', 'home', 'credit_card', 'debit_card'],
             description: 'Where to navigate.',
           },
           context: {
             type: 'string',
-            description: 'Short context for the destination agent.',
+            description:
+              'Short context for the destination. For credit card PIN change use exactly "change_pin". For card statement use "card_statement".',
           },
         },
         required: ['destination'],

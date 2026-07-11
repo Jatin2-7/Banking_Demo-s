@@ -77,12 +77,23 @@ const DEPOSIT_TOOLS = [
   },
 ];
 
-function executeDepositTool(name, args, state) {
+function executeDepositTool(name, args, state, { allowDepositType = true } = {}) {
   if (name === 'set_field') {
     const { field, value } = args;
     const validFields = ['depositType', 'amount', 'years', 'months', 'days'];
     if (!validFields.includes(field)) {
       return { result: { ok: false, error: `Unknown field: ${field}` }, statePatches: [] };
+    }
+    // Do not accept product selection until the customer has spoken on this screen.
+    if (field === 'depositType' && !allowDepositType) {
+      return {
+        result: {
+          ok: false,
+          error:
+            'Product not selected yet. Ask the customer which on-screen product they want (Fixed Deposit or Pragati Recurring Deposit), then call set_field(depositType) after they answer.',
+        },
+        statePatches: [],
+      };
     }
     let coerced = value;
     if (field === 'amount' || field === 'years' || field === 'months' || field === 'days') {
@@ -164,6 +175,10 @@ export async function streamDepositAguiRun(res, agentId, inputData, { signal } =
       ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
       : '';
     const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+    // Primer-only turns have no user text yet — block depositType until the customer replies.
+    const hasUserUtterance = history.some(
+      (m) => m.role === 'user' && String(m.content || '').trim().length > 0,
+    );
 
     for (let step = 0; step < 14; step++) {
       if (signal?.aborted) break;
@@ -232,7 +247,9 @@ export async function streamDepositAguiRun(res, agentId, inputData, { signal } =
         let args = {};
         try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
 
-        const exec = executeDepositTool(slot.name, args, state);
+        const exec = executeDepositTool(slot.name, args, state, {
+          allowDepositType: hasUserUtterance || Boolean(state.depositType),
+        });
 
         if (exec.statePatches?.length) write({ type: 'STATE_DELTA', delta: exec.statePatches });
 

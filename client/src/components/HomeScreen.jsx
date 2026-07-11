@@ -1,104 +1,28 @@
 import React, { useMemo, useState } from 'react';
 import { ACCOUNTS as FALLBACK_ACCOUNTS } from '../data/mock.js';
-import { STRINGS } from '../i18n/strings.js';
 import LoanAguiPanel from './LoanAguiPanel.jsx';
 import RMHelpPrompt from './RMHelpPrompt.jsx';
 import { useRageDetect } from '../hooks/useRageDetect.js';
 import { HOME_AGUI_AGENT_ID } from '../lib/aguiClient.js';
+import { DcbHomeHeader } from './dcb/DcbHeader.jsx';
 
 function formatInr(n) {
-  return `₹${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₹ ${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-const HEADER_SIDE = '2.75rem'; /* hamburger column — matches logo breathing room */
-
-/** Header utility — fixed size for even row */
-function HeaderIconButton({ children, label }) {
-  return (
-    <button
-      type="button"
-      className="w-7 h-7 rounded-md bg-white/10 hover:bg-white/18 flex items-center justify-center text-white press shrink-0"
-      aria-label={label}
-    >
-      {children}
-    </button>
-  );
-}
-
-function TriColorUpiMark({ size = 22 }) {
-  return (
-    <div
-      className="rounded overflow-hidden flex shrink-0 shadow-sm mx-auto"
-      style={{ width: size, height: size * 0.7 }}
-      aria-hidden
-    >
-      <div className="flex-1 h-full bg-[#097939]" />
-      <div className="flex-1 h-full bg-white border-y border-slate-200/80" />
-      <div className="flex-1 h-full bg-[#E97529]" />
-    </div>
-  );
-}
-
-/** Gold quick tile — equal height cells in grid */
-function GoldQuickTile({ icon, label, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="press flex h-full min-h-[5.75rem] flex-col items-center justify-between gap-1 rounded-xl border border-white/10 bg-white/[0.06] px-1 py-2 text-center transition hover:bg-white/10"
-    >
-      <div className="flex shrink-0 items-center justify-center">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bank-gold text-bank-purpleDeep shadow-md [&>svg]:h-5 [&>svg]:w-5">
-          {icon}
-        </div>
-      </div>
-      <span className="line-clamp-2 w-full flex-1 px-0.5 text-[9px] font-semibold leading-[1.15] text-white/95">
-        {label}
-      </span>
-    </button>
-  );
-}
-
-/** White service tile — fixed icon row + label baseline */
 function ServiceTile({ icon, label, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="press flex h-full min-h-[4.75rem] flex-col items-center justify-between gap-1 rounded-xl border border-slate-200/90 bg-slate-50 p-1.5 text-center transition hover:bg-slate-100/95"
+      className="press flex min-h-[5.25rem] flex-col items-center justify-center gap-1.5 rounded-xl bg-[#EEF1F6] px-1 py-2.5 text-center transition hover:bg-[#E4E8F0]"
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-sm">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center text-[#1A237E] [&>svg]:h-[22px] [&>svg]:w-[22px]">
         {icon}
       </div>
-      <span className="line-clamp-2 w-full flex-1 text-[8px] font-semibold leading-[1.2] text-slate-600">{label}</span>
-    </button>
-  );
-}
-
-function SummaryCell({ icon, title, count, amount, visible, maskText }) {
-  const shown = visible ? formatInr(amount) : maskText;
-  return (
-    <div className="flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-lg border border-bank-gold/35 bg-black/30 px-1 py-2">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center text-bank-gold/95 [&>svg]:h-7 [&>svg]:w-7">{icon}</div>
-      <span className="text-center text-[8px] font-bold leading-none text-bank-gold">
-        {title}({count})
+      <span className="line-clamp-2 w-full px-0.5 text-[10px] font-semibold leading-tight text-[#1A237E]">
+        {label}
       </span>
-      <span className="text-center text-[10px] font-semibold tracking-tight text-white">{shown}</span>
-    </div>
-  );
-}
-
-function BottomNavItem({ icon, label, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="press flex w-full max-w-[4.5rem] flex-col items-center justify-end gap-1 justify-self-center"
-    >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bank-gold text-base text-bank-nav shadow-md">
-        {icon}
-      </div>
-      <span className="max-w-[4.5rem] text-center text-[8px] font-semibold leading-tight text-white/90">{label}</span>
     </button>
   );
 }
@@ -113,6 +37,7 @@ export default function HomeScreen({
   onOpenTxnHistory,
   onNavigate,
   navMode = false,
+  voiceAssistMode = false,
   onVoiceCommand,
   voiceCommandSessionActive = false,
   voiceCommandListening = false,
@@ -123,15 +48,12 @@ export default function HomeScreen({
   aiPanelCloseSignal = 0,
   accounts,
 }) {
-  const L = STRINGS[lang] || STRINGS.en;
-  const [balancesVisible, setBalancesVisible] = useState(false);
   const [homeAiOpen, setHomeAiOpen] = useState(false);
   const [rmHomePromptOpen, setRmHomePromptOpen] = useState(false);
+  const [balanceVisible, setBalanceVisible] = useState(false);
+  // Bump when demo mode changes so the panel remounts with the right greeting/mic behaviour.
+  const [panelKey, setPanelKey] = useState(0);
 
-  // A hands-free voice command can navigate away from Home without ever going
-  // through this panel's own close/auto-hide paths (it's driven from App-level
-  // state). Force the panel shut whenever the parent signals we've left Home,
-  // so it never lingers on top of the screen we just opened.
   const prevCloseSignalRef = React.useRef(aiPanelCloseSignal);
   React.useEffect(() => {
     if (aiPanelCloseSignal !== prevCloseSignalRef.current) {
@@ -140,454 +62,253 @@ export default function HomeScreen({
     }
   }, [aiPanelCloseSignal]);
 
+  // Switching Voice-to-Command ↔ Voice Assist while the panel is open must
+  // remount it — otherwise the old greeting / mic loop sticks around.
+  // Skip the initial mount so we don't remount before the first bot tap.
+  const modeInitRef = React.useRef(true);
+  React.useEffect(() => {
+    if (modeInitRef.current) {
+      modeInitRef.current = false;
+      return;
+    }
+    setPanelKey((k) => k + 1);
+    if (!navMode) onStopVoiceCommandSession?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to mode flips
+  }, [navMode, voiceAssistMode]);
+
   const { containerProps: homeRageProps, dismiss: dismissHomeRage } = useRageDetect({
-    onFrustrated: () => { if (!homeAiOpen) setRmHomePromptOpen(true); },
+    onFrustrated: () => {
+      if (!homeAiOpen) setRmHomePromptOpen(true);
+    },
   });
 
   const liveAccounts = accounts && accounts.length ? accounts : FALLBACK_ACCOUNTS;
-
-  const summary = useMemo(() => {
-    const savings = liveAccounts.filter((a) => a.type === 'savings' || a.type === 'wallet');
-    const od = liveAccounts.filter((a) => a.type === 'current');
-    const savingsBal = savings.reduce((s, a) => s + a.balance, 0);
-    const odBal = od.reduce((s, a) => s + a.balance, 0);
-    return {
-      savingsCount: savings.length,
-      savingsBal,
-      odCount: od.length,
-      odBal,
-      depositsCount: 0,
-      depositsBal: 0,
-      loansCount: 0,
-      loansBal: 0,
-    };
+  const primary = useMemo(() => {
+    return (
+      liveAccounts.find((a) => a.type === 'savings') ||
+      liveAccounts[0] || { balance: 352089.79, number: '1234' }
+    );
   }, [liveAccounts]);
 
-  const maskText = L.maskPlaceholder || '₹ XXXX.XX';
+  const maskedAcct = `XXXX ${(primary.last4 || primary.number || '1234').toString().slice(-4)}`;
 
-  const piggy = (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <ellipse cx="12" cy="14" rx="8" ry="6" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="8" cy="12" r="1" fill="currentColor" />
-      <circle cx="16" cy="12" r="1" fill="currentColor" />
-      <path d="M10 16h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <circle cx="18" cy="10" r="1.5" fill="currentColor" />
-    </svg>
-  );
-  const odIcon = (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="13" r="7" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12 9v4l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M7 7l2 1.5M17 7l-2 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-  const depIcon = (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="5" y="7" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M9 11h6M9 14h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M12 4v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  );
-  const loanIcon = (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M8 18V8l4-2 4 2v10" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M12 11v5M10 13h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
+  const openAi = () => {
+    // Arm mic FIRST while still inside the click gesture, then open the panel.
+    // (Web Speech / getUserMedia require a user gesture — no await before start.)
+    if (navMode) {
+      onStartVoiceCommandSession?.();
+    }
+    setHomeAiOpen(true);
+  };
+
+  const assistTitle = navMode
+    ? 'Voice Navigation'
+    : voiceAssistMode
+      ? 'AI Assistant · Voice Assist'
+      : 'AI Assistant';
+
+  const assistHint = navMode
+    ? voiceCommandSessionActive
+      ? 'Listening — speak a command. Mic re-opens after each action.'
+      : 'Speak a screen name — I will open it for you.'
+    : voiceAssistMode
+      ? 'I will speak and listen — answer hands-free after I finish.'
+      : 'Voice or text — your choice.';
+
+  const greeting = navMode
+    ? 'Sure. Tell me the screen you want to open, and I will take you there.'
+    : voiceAssistMode
+      ? "Namaste! I'm your DCB Bank AI assistant. Tell me what you'd like to do — transfer funds, open a deposit, check statements, change your card PIN, or anything else."
+      : "Namaste! I'm your DCB Bank AI assistant. Tell me what you'd like to do — transfer funds, open a deposit, check statements, or anything else.";
+
+  const handleUserMessage = (text) => {
+    const t = String(text || '').toLowerCase();
+    if (
+      /\b(change|reset|update|forgot)\b.{0,24}\b(credit\s*)?(card\s*)?pin\b/.test(t) ||
+      /\b(credit\s*)?card\s*pin\b.{0,16}\b(change|reset|update)\b/.test(t) ||
+      /\bchange\s+my\s+(credit\s+)?(card\s+)?pin\b/.test(t)
+    ) {
+      setHomeAiOpen(false);
+      onNavigate?.('credit_card', 'change_pin', 'Opening credit card PIN change.');
+      return 'Opening Change Credit Card PIN…';
+    }
+    return false;
+  };
 
   return (
-    <div className="relative flex min-h-full flex-col pb-2" {...homeRageProps}>
-      {/* Header — symmetric 3-column: menu | logo | tools */}
-      <header className="shrink-0 px-3 pt-1.5 pb-2">
-        <div
-          className="grid items-center gap-2"
-          style={{ gridTemplateColumns: `${HEADER_SIDE} minmax(0, 1fr) auto` }}
-        >
+    <div className="relative flex min-h-full flex-col bg-[#F5F7FA] pb-6" {...homeRageProps}>
+      <DcbHomeHeader />
+
+      {/* Promo banner */}
+      <section className="shrink-0 px-3 pt-3">
+        <div className="relative overflow-hidden rounded-xl bg-[#FFD600] px-8 py-4 text-center shadow-sm">
           <button
             type="button"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bank-gold text-bank-purpleDeep press justify-self-start"
-            aria-label="Menu"
+            className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[#1A237E]/70 press"
+            aria-label="Previous promo"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
-            </svg>
+            ‹
           </button>
-          <div className="flex min-w-0 justify-center">
-            <img
-              src="/indian-bank-banner.png"
-              alt={L.appName}
-              className="h-[46px] w-full max-w-[220px] select-none object-contain object-center pointer-events-none"
-              draggable={false}
-            />
-          </div>
-          <div className="flex shrink-0 flex-wrap justify-end gap-0.5 justify-self-end" style={{ maxWidth: '9.5rem' }}>
-            <HeaderIconButton label="Font size">
-              <span className="text-[9px] font-bold leading-none">
-                A<sup className="text-[6px]">^</sup>
-              </span>
-            </HeaderIconButton>
-            <HeaderIconButton label="Search">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="10" cy="10" r="6" />
-                <path d="M15 15l5 5" strokeLinecap="round" />
-              </svg>
-            </HeaderIconButton>
-            <HeaderIconButton label="Notifications">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22a2 2 0 002-2H10a2 2 0 002 2z" />
-                <path d="M6 9a6 6 0 1112 0c0 7 3 7 3 7H3s3 0 3-7" strokeLinejoin="round" />
-              </svg>
-            </HeaderIconButton>
-            <HeaderIconButton label="Cards">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="6" width="18" height="12" rx="2" />
-                <path d="M3 10h18" />
-              </svg>
-            </HeaderIconButton>
-            <HeaderIconButton label="Log out">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path
-                  d="M10 17H6a2 2 0 01-2-2V9a2 2 0 012-2h4M14 21l6-6-6-6M20 15H9"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </HeaderIconButton>
-          </div>
+          <button
+            type="button"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#1A237E]/70 press"
+            aria-label="Next promo"
+          >
+            ›
+          </button>
+          <p className="text-[9px] font-bold tracking-wide text-[#1A237E]/80">DCB BANK</p>
+          <p className="mt-0.5 text-[15px] font-bold text-[#1A237E]">DCB Fixed Deposit</p>
+          <p className="mt-0.5 text-[13px] font-semibold text-[#1A237E]">
+            Earn upto <span className="text-[18px] font-black">7.90%</span> p.a.
+          </p>
         </div>
+      </section>
 
-        {/* VBX row — 3 equal zones */}
-        <div className="mt-2.5 grid grid-cols-3 items-center gap-2 px-0.5">
-          <div className="flex justify-start">
-            <span
-              className="select-none text-lg font-black leading-none tracking-tight"
-              style={{
-                background: 'linear-gradient(90deg,#f5c518,#3b82f6,#a855f7,#f5c518)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                color: 'transparent',
-                WebkitTextFillColor: 'transparent',
-              }}
-              aria-hidden
-            >
-              VBX
-            </span>
-          </div>
-          <div className="flex min-w-0 items-center justify-center gap-2">
-            <span className="whitespace-nowrap rounded-full border border-white/15 bg-black/45 px-3 py-1.5 text-center text-[11px] font-semibold text-white shadow-inner">
-              {L.sparkBadge}
-            </span>
-            <button
-              type="button"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/12 text-xs font-bold text-white press"
-              aria-label={L.heroInfoAria}
-            >
-              !
-            </button>
-          </div>
-          <div className="flex justify-end" aria-hidden>
-            <div className="flex flex-col items-center gap-1 rounded-full border border-white/15 bg-white/10 px-1.5 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+      {/* Account summary card */}
+      <section className="shrink-0 px-3 pt-3">
+        <div className="rounded-xl bg-white px-3.5 py-3.5 shadow-[0_2px_12px_rgba(26,35,126,0.08)]">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] font-semibold text-slate-500">Last Login</p>
+              <p className="mt-0.5 text-[12px] font-medium leading-snug text-[#1A237E]">
+                21 Apr, 2026, 10:25 AM
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[11px] font-semibold text-slate-500">Savings Account</p>
+              <p className="mt-0.5 text-[12px] font-bold text-[#1A237E]">{maskedAcct}</p>
+              <button
+                type="button"
+                onClick={() => setBalanceVisible((v) => !v)}
+                className="mt-1 text-[12px] font-semibold text-[#1565C0] underline press"
+              >
+                {balanceVisible ? formatInr(primary.balance) : 'Check Balance'}
+              </button>
             </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      {/* Account summary */}
-      <section className="shrink-0 px-3 pb-2">
-        <div
-          className="relative overflow-hidden rounded-xl border-2 border-bank-gold/85 p-3 shadow-bankCard"
-          style={{
-            background: 'linear-gradient(165deg, #151028 0%, #2a1a48 55%, #161024 100%)',
-          }}
-        >
-          <div className="relative mb-3 flex min-h-[1.875rem] items-center justify-center px-1">
-            <span className="rounded-full bg-bank-gold px-3.5 py-1 text-center text-[10px] font-bold uppercase tracking-wider text-bank-purpleDeep shadow-sm">
-              {L.accountSummary}
-            </span>
-            <button
-              type="button"
-              onClick={() => setBalancesVisible((v) => !v)}
-              className="press-bright absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md py-1 pl-1 pr-0 text-[10px] font-semibold text-bank-gold hover:bg-white/5"
-            >
-              <svg className="shrink-0 opacity-95" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      {/* Service grid 3×3 */}
+      <section className="shrink-0 px-3 pt-3">
+        <div className="grid grid-cols-3 gap-2.5 rounded-2xl bg-[#F0F2F7] p-2.5">
+          <ServiceTile
+            label="My Accounts"
+            onClick={() => (onOpenTxnHistory ? onOpenTxnHistory() : onQuickAction('check_balance'))}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <path d="M3 10l9-7 9 7v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9z" />
+                <path d="M10 21V12h4v9" />
+                <path d="M9 8h.01M12 8h.01M15 8h.01" strokeLinecap="round" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Transfer"
+            onClick={() => (onFundTransferImps ? onFundTransferImps() : onQuickAction('internal_transfer'))}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <path d="M7 10h13l-3-3M17 14H4l3 3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Term Deposit"
+            onClick={() => (onOpenDeposit ? onOpenDeposit() : onQuickAction('check_balance'))}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <rect x="4" y="5" width="16" height="15" rx="2" />
+                <path d="M8 3v4M16 3v4M4 11h16" strokeLinecap="round" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Credit Card"
+            onClick={() => onNavigate?.('credit_card')}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20M6 15h4" strokeLinecap="round" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Debit Card"
+            onClick={() => onNavigate?.('debit_card')}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20" />
+                <circle cx="17" cy="15" r="1.5" fill="currentColor" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Apply IPO"
+            onClick={() => onQuickAction('check_balance')}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <path d="M4 18l5-6 4 3 6-8" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M15 7h4v4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Gold Loan"
+            onClick={() => (onApplyNewLoan ? onApplyNewLoan() : onQuickAction('check_balance'))}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <path d="M12 3l8 4v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V7l8-4z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              <span className="whitespace-nowrap pr-0.5">{balancesVisible ? L.hideBalances : L.showBalances}</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <SummaryCell
-              icon={piggy}
-              title={L.savingsShort}
-              count={summary.savingsCount}
-              amount={summary.savingsBal}
-              visible={balancesVisible}
-              maskText={maskText}
-            />
-            <SummaryCell
-              icon={odIcon}
-              title={L.odShort}
-              count={summary.odCount}
-              amount={summary.odBal}
-              visible={balancesVisible}
-              maskText={maskText}
-            />
-            <SummaryCell
-              icon={depIcon}
-              title={L.depositsShort}
-              count={summary.depositsCount}
-              amount={summary.depositsBal}
-              visible={balancesVisible}
-              maskText={maskText}
-            />
-            <SummaryCell
-              icon={loanIcon}
-              title={L.loansShort}
-              count={summary.loansCount}
-              amount={summary.loansBal}
-              visible={balancesVisible}
-              maskText={maskText}
-            />
-          </div>
-          <div className="mt-2.5 flex justify-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
-            <span className="h-1.5 w-1.5 rounded-full bg-white/35" />
-          </div>
-        </div>
-      </section>
-
-      {/* Upper gold grid */}
-      <section className="shrink-0 px-3 pb-2">
-        <div className="grid auto-rows-fr grid-cols-4 gap-2">
-          <GoldQuickTile
-            icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <rect x="5" y="4" width="14" height="16" rx="2" />
-                <path d="M9 8h6M9 12h6" strokeLinecap="round" />
-              </svg>
             }
-            label={L.tileAccountDetails}
-            onClick={() => onQuickAction('check_balance')}
           />
-          <GoldQuickTile
+          <ServiceTile
+            label="Bharat Connect"
+            onClick={() => onQuickAction('pay_bill')}
             icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M7 4h10v16H7z" />
-                <path d="M9 8h6M9 11h4" strokeLinecap="round" />
-              </svg>
-            }
-            label={L.tileAccountStatement}
-            onClick={() => onOpenTxnHistory ? onOpenTxnHistory() : onQuickAction('check_balance')}
-          />
-          <GoldQuickTile
-            icon={<span className="text-sm font-bold">m</span>}
-            label={L.tileMPassbookQuick}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <GoldQuickTile
-            icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M8 12h8M12 8v8" strokeLinecap="round" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
                 <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
               </svg>
             }
-            label={L.tileFundTransfers}
-            onClick={() => (onFundTransferImps ? onFundTransferImps() : onQuickAction('internal_transfer'))}
           />
-          <GoldQuickTile
-            icon={<span className="text-[10px] font-black tracking-tighter">VBX</span>}
-            label={L.tileVbxBenefits}
+          <ServiceTile
+            label="Services"
             onClick={() => onQuickAction('check_balance')}
-          />
-          <GoldQuickTile
             icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M5 4h14v12H5z" />
-                <path d="M9 20h6" strokeLinecap="round" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 16v-1.5a2.5 2.5 0 011.5-2.3A2.5 2.5 0 0012 7.5" strokeLinecap="round" />
+                <circle cx="12" cy="18.5" r="0.8" fill="currentColor" />
               </svg>
             }
-            label={L.tileCallback}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <GoldQuickTile
-            icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="12" cy="8" r="3" />
-                <path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-              </svg>
-            }
-            label={L.tileVirtualRM}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <GoldQuickTile
-            icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <rect x="4" y="6" width="16" height="12" rx="2" />
-                <path d="M8 10h8" strokeLinecap="round" />
-              </svg>
-            }
-            label={L.tilePriorityServiceCard}
-            onClick={() => onQuickAction('check_balance')}
           />
         </div>
       </section>
 
-      {/* White sheet — flex-1 fills space evenly above nav */}
-      <section className="mt-auto flex min-h-0 flex-1 flex-col rounded-t-[22px] border-t border-white/20 bg-white px-3 pb-3 pt-3 text-ink shadow-[0_-10px_36px_rgba(0,0,0,0.38)]">
-        <div className="mx-auto mb-3 h-1 w-9 shrink-0 rounded-full bg-slate-300/90" />
-        <div className="grid auto-rows-fr grid-cols-4 gap-2">
-          <ServiceTile
-            icon={<TriColorUpiMark />}
-            label={L.svcUPI}
-            onClick={() => onQuickAction('send_money')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 text-lg">
-                🏅
-              </div>
-            }
-            label={L.svcRewards}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-blue-700 text-white">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                  <path d="M8 4h12v16H8z" />
-                  <path d="M6 8H4v12h12v-2" />
-                </svg>
-              </div>
-            }
-            label={L.svcOpenOd}
-            onClick={() => onQuickAction('internal_transfer')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-sky-700 text-lg text-white">💳</div>
-            }
-            label={L.svcDebitApply}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center rounded-xl bg-blue-900 text-sm font-black text-white">
-                B
-              </div>
-            }
-            label={L.svcBillPay}
-            onClick={() => onQuickAction('pay_bill')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-orange-500 text-xl">🚗</div>
-            }
-            label={L.svcFastag}
-            onClick={() => onQuickAction('pay_bill')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-orange-600 text-sm font-bold text-white">
-                %
-              </div>
-            }
-            label={L.svcNewLoan}
-            onClick={() => (onApplyNewLoan ? onApplyNewLoan() : onQuickAction('check_balance'))}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-emerald-600 text-xl">🏦</div>
-            }
-            label="Create Deposit"
-            onClick={() => (onOpenDeposit ? onOpenDeposit() : onQuickAction('check_balance'))}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-indigo-600 px-1 text-center text-[10px] font-bold leading-tight text-white">
-                NCMC
-              </div>
-            }
-            label={L.svcRupayWallet}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-sky-800 text-lg">💳</div>
-            }
-            label={L.svcDebitCard}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-blue-950 text-lg">💳</div>
-            }
-            label={L.svcCreditCard}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-violet-800 text-white">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                  <path d="M8 4h12v16H8z" />
-                  <path d="M6 8H4v12h12v-2" />
-                </svg>
-              </div>
-            }
-            label={L.svcLoanAccounts}
-            onClick={() => onQuickAction('check_balance')}
-          />
-          <ServiceTile
-            icon={
-              <div className="flex h-full w-full items-center justify-center bg-cyan-700 text-xl">✈</div>
-            }
-            label={L.svcTravelLeisure}
-            onClick={() => onQuickAction('book_flight')}
-          />
-        </div>
-      </section>
+      {/* Spacer */}
+      <div className="flex-1" />
 
-      {/* Bottom nav — 5-column grid: symmetric + centred QR */}
-      <nav className="relative z-10 mt-0 shrink-0 border-t border-white/10 bg-bank-nav pb-4 pt-3">
-        <div className="relative mx-auto grid w-full max-w-[360px] grid-cols-5 items-end gap-0 px-1 pt-8">
-          <div className="flex justify-center">
-            <BottomNavItem icon="⎈" label={L.navEasyPay} onClick={onMicTap} />
-          </div>
-          <div className="flex justify-center">
-            <BottomNavItem icon="🔋" label={L.navRecharge} onClick={() => onQuickAction('pay_bill')} />
-          </div>
-          <div className="relative flex h-6 justify-center">
-            <button
-              type="button"
-              onClick={() => onQuickAction('send_money')}
-              className="press-bright absolute -top-[2.35rem] left-1/2 z-20 flex h-[3.75rem] w-[3.75rem] -translate-x-1/2 flex-col items-center justify-center rounded-full border-[3px] border-slate-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.42)]"
-              aria-label={L.navScanQrAria}
-            >
-              <svg width="30" height="30" viewBox="0 0 24 24" className="text-slate-800" fill="currentColor" aria-hidden>
-                <path d="M3 3h5v5H3V3zm7 0h2v2H10V3zm4 0h5v5h-5V3zM3 10h2v2H3v-2zm4 0h5v5H7v-5zm7 0h2v2h-2v-2zm4 0h5v5h-5v-5zM3 16h5v5H3v-5zm7 0h2v2h-2v-2zm4 0h2v2h-2v-2zm4 0h5v5h-5v-5zM14 10h2v2h-2v-2z" />
-              </svg>
-              <span className="mt-0.5 text-[6.5px] font-bold uppercase tracking-wide text-slate-500">QR</span>
-            </button>
-          </div>
-          <div className="flex justify-center">
-            <BottomNavItem icon="⧉" label={L.navLimits} onClick={() => onQuickAction('check_balance')} />
-          </div>
-          <div className="flex justify-center">
-            <BottomNavItem icon="👥" label={L.navPayee} onClick={() => onQuickAction('internal_transfer')} />
-          </div>
-        </div>
-      </nav>
+      {!homeAiOpen && (
+        <button
+          type="button"
+          onClick={openAi}
+          data-ai-fab
+          className="press-bright absolute bottom-5 right-3 z-30 flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-200/80 bg-white text-xl shadow-lg"
+          aria-label="Open AI Assistant"
+          title="AI Assistant"
+        >
+          <span className="translate-y-px">🧑‍💼</span>
+        </button>
+      )}
 
-      {/* RM Help Prompt — rage click trigger */}
       <RMHelpPrompt
         open={rmHomePromptOpen}
         onHelp={() => {
           setRmHomePromptOpen(false);
           dismissHomeRage();
-          setHomeAiOpen(true);
-          if (navMode) onStartVoiceCommandSession?.();
+          openAi();
         }}
         onDismiss={() => {
           setRmHomePromptOpen(false);
@@ -595,23 +316,8 @@ export default function HomeScreen({
         }}
       />
 
-      {/* Universal AI Assistant FAB */}
-      <button
-        type="button"
-        onClick={() => {
-          setHomeAiOpen(true);
-          if (navMode) onStartVoiceCommandSession?.();
-        }}
-        data-ai-fab
-        className="press-bright absolute bottom-[5.75rem] right-3 z-30 flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-200/80 bg-white text-xl shadow-lg"
-        aria-label="Open AI Assistant"
-        title="AI Assistant"
-      >
-        <span className="translate-y-px">🧑‍💼</span>
-      </button>
-
-      {/* Universal AI Assistant Panel */}
       <LoanAguiPanel
+        key={`home-ai-${panelKey}-${navMode ? 'nav' : voiceAssistMode ? 'assist' : 'chat'}`}
         agentId={HOME_AGUI_AGENT_ID}
         open={homeAiOpen}
         onClose={() => {
@@ -622,34 +328,26 @@ export default function HomeScreen({
         formValues={{}}
         onFormChange={() => {}}
         navOnly={navMode}
+        voiceAssist={voiceAssistMode && !navMode}
         onVoiceCommand={onVoiceCommand}
         continuousVoiceActive={navMode && voiceCommandSessionActive}
         continuousListening={voiceCommandListening}
         continuousTranscript={voiceCommandTranscript}
         continuousLiveTranscript={voiceCommandLiveTranscript}
         onStopContinuousVoice={onStopVoiceCommandSession}
+        onStartContinuousVoice={onStartVoiceCommandSession}
         suppressGreeting={navMode}
         onToolCall={(name, args) => {
           if (name === 'navigate_to' && args?.destination) {
             setHomeAiOpen(false);
+            if (navMode) onStopVoiceCommandSession?.();
             onNavigate?.(args.destination, args.context || '', args.routingStatus || '');
           }
         }}
-        greeting={
-          navMode
-            ? voiceCommandSessionActive
-              ? 'Voice session active — speak your command. I will keep listening after each action.'
-              : 'Sure. Tell me the screen you want to open, and I will take you there.'
-            : "Namaste! I'm your Indian Bank AI assistant. Tell me what you'd like to do — pay someone, transfer funds, apply for a loan, or anything else."
-        }
-        assistHint={
-          navMode
-            ? voiceCommandSessionActive
-              ? 'Mic stays on after each command — just speak again in 2–3 seconds.'
-              : 'Try: account statement, fund transfer, loan, deposit, UPI, hotel, flight, debit card, or credit card statement.'
-            : undefined
-        }
-        assistTitle={navMode ? 'AI RM · Voice Navigation' : 'AI Banking Assistant'}
+        onUserMessage={handleUserMessage}
+        greeting={greeting}
+        assistHint={assistHint}
+        assistTitle={assistTitle}
         showReasoning
         lang={lang}
       />

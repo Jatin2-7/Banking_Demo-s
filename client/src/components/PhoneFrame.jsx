@@ -1,9 +1,9 @@
 import React from 'react';
 
 function StatusBar() {
-  const fill = 'rgba(255,255,255,0.92)';
+  const fill = '#1A237E';
   return (
-    <div className="absolute top-0 left-0 right-0 h-11 px-7 flex items-center justify-between text-[13px] font-semibold text-white/90 z-30 pointer-events-none">
+    <div className="absolute top-0 left-0 right-0 h-11 px-7 flex items-center justify-between text-[13px] font-semibold text-[#1A237E] z-30 pointer-events-none">
       <span>9:41</span>
       <div className="flex items-center gap-1">
         <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
@@ -19,10 +19,10 @@ function StatusBar() {
           />
         </svg>
         <div className="ml-1 flex items-center">
-          <div className="relative w-6 h-3 rounded-[3px] border border-white/70">
-            <div className="absolute inset-[2px] right-[6px] bg-white/90 rounded-[1px]" />
+          <div className="relative w-6 h-3 rounded-[3px] border border-[#1A237E]/70">
+            <div className="absolute inset-[2px] right-[6px] bg-[#1A237E]/90 rounded-[1px]" />
           </div>
-          <div className="w-[2px] h-1.5 bg-white/70 rounded-r ml-[1px]" />
+          <div className="w-[2px] h-1.5 bg-[#1A237E]/70 rounded-r ml-[1px]" />
         </div>
       </div>
     </div>
@@ -52,7 +52,7 @@ export default function PhoneFrame({ children, overlay }) {
         >
           <StatusBar />
           <div
-            className="absolute top-2 left-1/2 -translate-x-1/2 bg-ink z-40"
+            className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#0D1642] z-40"
             style={{ width: '120px', height: '28px', borderRadius: '14px' }}
           />
           <div

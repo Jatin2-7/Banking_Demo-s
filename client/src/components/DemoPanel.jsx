@@ -92,7 +92,7 @@ export default function DemoPanel({
   onVoiceAssistModeChange,
 }) {
   const [open, setOpen] = useState(true);
-  const [tab, setTab] = useState(Object.keys(SCRIPTS)[0]);
+  const [tab, setTab] = useState(VOICE_TO_COMMAND);
   const [cmdFeedback, setCmdFeedback] = useState(null);
 
   const feedback = voiceCommandFeedback ?? cmdFeedback;
@@ -207,22 +207,21 @@ export default function DemoPanel({
           feedback={feedback}
           modeActive={voiceCommandMode}
           sessionActive={voiceCommandSessionActive}
-          onMic={() => onVoiceCommandMic?.()}
-          onStopSession={() => onStopVoiceCommandSession?.()}
+          onMic={onVoiceCommandMic}
+          onStopSession={onStopVoiceCommandSession}
           onRunExample={runCommand}
         />
       ) : (
         <>
-          {/* Scripts */}
           <div className="overflow-y-auto px-2 py-2 flex flex-col gap-1.5 no-scrollbar">
-            {SCRIPTS[tab].map((s, i) => (
+            {(SCRIPTS[tab] || []).map((s, i) => (
               <button
                 key={i}
                 onClick={() => {
-                  if (s.lang) onChangeLang(s.lang);
-                  setTimeout(() => onSpeak(s.text), s.lang ? 80 : 0);
+                  if (s.lang) onChangeLang?.(s.lang);
+                  onSpeak(s.text);
                 }}
-                className="press text-left px-3 py-2 rounded-lg bg-page hover:bg-brand/5 border border-divider/60"
+                className="press text-left px-3 py-2 rounded-lg bg-page hover:bg-slate-100 border border-divider/60"
               >
                 <div className="text-[12px] font-semibold text-ink">{s.label}</div>
                 <div className="text-[10px] text-muted font-mono mt-0.5 truncate">"{s.text}"</div>
@@ -264,15 +263,15 @@ function VoiceCommandPanel({
         <span className="ml-1">
           {sessionActive
             ? 'Hands-free session on — mic re-opens ~2.5s after each command.'
-            : 'Tap AI RM or Start session — mic stays on between commands.'}
+            : 'Tap the bot (🧑‍💼) or Start session — mic stays on between commands.'}
         </span>
       </div>
 
       <div className="px-1">
         <div className="text-[11px] font-bold text-ink">Voice navigation</div>
         <div className="text-[9px] text-muted leading-snug mt-0.5">
-          Open the AI RM (🧑‍💼) or rage-tap for help — speak once and keep giving commands
-          without tapping the mic again.
+          Open the bot (🧑‍💼) or rage-tap for help — speak once and keep giving commands
+          without tapping the mic again. The mic detects when you start and stop speaking.
         </div>
       </div>
 
@@ -342,7 +341,7 @@ function VoiceCommandPanel({
       ))}
 
       <div className="border-t border-divider mt-1 pt-1.5 text-[9px] text-muted text-center">
-        Example commands also work mid-session · End session via mic button or close AI RM
+        Example commands also work mid-session · End session via mic button or close the bot
       </div>
     </div>
   );
@@ -350,8 +349,8 @@ function VoiceCommandPanel({
 
 function VoiceAssistPanel({ modeActive }) {
   const steps = [
-    { icon: '🗣️', text: 'Aarav speaks every question & response (TTS)' },
-    { icon: '🎙', text: 'Mic auto-arms after Aarav finishes speaking' },
+    { icon: '🗣️', text: 'Assistant speaks every question & response (TTS)' },
+    { icon: '🎙', text: 'Mic auto-arms after the assistant finishes speaking' },
     { icon: '💬', text: 'Answer by speaking — hands-free conversation' },
     { icon: '🔢', text: 'Numbers read naturally: "one lakh" not "one zero zero zero zero zero"' },
   ];
@@ -367,7 +366,7 @@ function VoiceAssistPanel({ modeActive }) {
         <span className="font-bold">{modeActive ? '● Mode active' : '○ Mode inactive'}</span>
         <span className="ml-1">
           {modeActive
-            ? 'Voice Assist is on — open Loan Application or FD Deposit to start.'
+            ? 'Voice Assist is on — tap the bot (🧑‍💼) on Home, or open Loan / FD Deposit.'
             : 'Select this tab to enable Voice Assist mode.'}
         </span>
       </div>
@@ -375,8 +374,8 @@ function VoiceAssistPanel({ modeActive }) {
       <div className="px-1">
         <div className="text-[11px] font-bold text-ink">Voice Assistance mode</div>
         <div className="text-[9px] text-muted leading-snug mt-0.5">
-          Full hands-free conversation for Loan Application and Fixed Deposit flows.
-          Aarav guides you step-by-step using voice — no typing needed.
+          Full hands-free conversation on Home, Loan Application, and Fixed Deposit.
+          The assistant guides you step-by-step using voice — no typing needed.
         </div>
       </div>
 
@@ -390,9 +389,8 @@ function VoiceAssistPanel({ modeActive }) {
       </div>
 
       <div className="rounded-lg border border-violet-200 bg-violet-50 px-2 py-2 text-[9px] text-violet-800 leading-snug">
-        <span className="font-bold">How to use:</span> Switch to this tab → open Loan Application
-        (say "apply for a loan" in Voice-to-Command mode, or tap it on the home screen) →
-        Aarav starts the guided voice conversation.
+        <span className="font-bold">How to use:</span> Switch to this tab → tap the bot on Home
+        (or open Loan / Term Deposit) → the assistant speaks, then the mic listens for your reply.
       </div>
 
       <div className="border-t border-divider pt-1.5 text-[9px] text-muted text-center">

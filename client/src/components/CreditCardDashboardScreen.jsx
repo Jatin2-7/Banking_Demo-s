@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const AUTO_STATEMENT_MS = 1800;
-const AUTO_PIN_MS = 1200;
+const AUTO_PIN_MS = 0;
 const DEMO_CURRENT_PIN = '1234';
 const PIN_LEN = 4;
 
@@ -70,7 +70,7 @@ function CreditCardVisual({ card, showNumber }) {
     <div className="mx-4 overflow-hidden rounded-xl border border-violet-400/40 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 p-4 text-white shadow-lg">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-bold text-bank-gold">Indian Bank</p>
+          <p className="text-[10px] font-bold text-bank-gold">DCB Bank</p>
           <p className="text-[8px] text-white/70">Credit Card</p>
         </div>
         <span className="text-lg opacity-80">🔓</span>
@@ -147,12 +147,12 @@ function PinKeypad({ value, maxLen, onPress, onBack }) {
 
 function PinDots({ value, len }) {
   return (
-    <div className="flex justify-center gap-3">
+    <div className="flex justify-center gap-4">
       {Array.from({ length: len }, (_, i) => (
         <div
           key={i}
-          className={`h-3.5 w-3.5 rounded-full border-2 transition-all duration-150 ${
-            i < value.length ? 'scale-110 border-bank-gold bg-bank-gold' : 'border-white/40 bg-transparent'
+          className={`flex h-4 w-4 items-center justify-center rounded-full border-2 transition-all duration-150 ${
+            i < value.length ? 'border-white bg-white' : 'border-white/70 bg-transparent'
           }`}
         />
       ))}
@@ -303,6 +303,10 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
 
   useEffect(() => {
     if (!autoPin) return undefined;
+    if (AUTO_PIN_MS <= 0) {
+      setFlow('change_pin');
+      return undefined;
+    }
     setHighlightPin(true);
     autoNavRef.current = setTimeout(() => {
       setHighlightPin(false);

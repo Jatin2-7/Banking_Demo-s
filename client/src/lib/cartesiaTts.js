@@ -70,6 +70,13 @@ export function waitUntilTtsIdle(maxMs = 120000) {
 
 /** Stop any in-flight TTS immediately */
 export function stopGlobalCartesiaTts() {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      /* ignore */
+    }
+  }
   if (globalAudio) {
     try {
       globalAudio.pause();
@@ -214,7 +221,8 @@ function waitForCurrentTtsEnd() {
 }
 
 /**
- * Speak via Cartesia. Cancels any other TTS first (single channel).
+ * Speak via Cartesia when configured; otherwise fall back to browser speechSynthesis
+ * so Voice Assist still talks without CARTESIA_API_KEY.
  * @returns {Promise<boolean>}
  */
 export async function speakViaCartesia(text, { onBeforePlay } = {}) {
@@ -238,6 +246,36 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
     pendingPlay = null;
   };
 
+  const speakBrowserFallback = () =>
+    new Promise((resolve) => {
+      if (typeof window === 'undefined' || !window.speechSynthesis) {
+        notifyTtsPlaying(false);
+        pendingPlay?.(false);
+        resolve(false);
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        /* ignore */
+      }
+      const utter = new SpeechSynthesisUtterance(clean);
+      utter.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+      utter.rate = 1.05;
+      const done = (ok) => {
+        notifyTtsPlaying(false);
+        pendingPlay?.(ok);
+        resolve(ok);
+      };
+      utter.onend = () => done(true);
+      utter.onerror = () => done(false);
+      try {
+        window.speechSynthesis.speak(utter);
+      } catch {
+        done(false);
+      }
+    });
+
   try {
     const res = await fetch(`${resolveApiBase()}/api/tts`, {
       method: 'POST',
@@ -246,10 +284,12 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
     });
 
     if (!res.ok) {
-      if (res.status === 503) console.warn('[TTS] Cartesia not configured — add CARTESIA_API_KEY to server/.env');
-      notifyTtsPlaying(false);
-      pendingPlay?.(false);
-      return false;
+      if (res.status === 503) {
+        console.warn('[TTS] Cartesia not configured — using browser speechSynthesis fallback');
+        return speakBrowserFallback();
+      }
+      console.warn('[TTS] Cartesia error', res.status, '— using browser speechSynthesis fallback');
+      return speakBrowserFallback();
     }
 
     const blob = await res.blob();
@@ -274,10 +314,8 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
       audio.play().catch(() => done(false));
     });
   } catch (err) {
-    console.warn('[TTS] Cartesia request failed:', err?.message || err);
-    notifyTtsPlaying(false);
-    pendingPlay?.(false);
-    return false;
+    console.warn('[TTS] Cartesia request failed — using browser fallback:', err?.message || err);
+    return speakBrowserFallback();
   }
 }
 

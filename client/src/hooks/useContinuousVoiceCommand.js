@@ -2,19 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { waitUntilTtsIdle } from '../lib/cartesiaTts.js';
 
 /** Pause after an action finishes (post-TTS) before listening again. */
-const GAP_AFTER_ACTION_MS = 2500;
-
-/**
- * Small safety buffer before the very first listen of a session (audio
- * device / UI settle time). Callers that speak their own greeting should
- * await it fully before calling `start()` — this is just a light buffer,
- * not a substitute for that sequencing.
- */
-const INITIAL_SETTLE_MS = 250;
+const GAP_AFTER_ACTION_MS = 2000;
 
 /**
  * Hands-free Voice-to-Command loop: listen → run command → wait → listen again.
- * Uses a dedicated STT instance (cmdSpeech) so it works on any screen.
+ *
+ * CRITICAL: the first `speech.start()` must run synchronously inside the user
+ * gesture (bot FAB click). Any await before start() breaks Web Speech / getUserMedia
+ * permission in Chrome.
  */
 export function useContinuousVoiceCommand({ enabled, speech, onCommand, onResult } = {}) {
   const activeRef = useRef(false);
@@ -22,6 +17,8 @@ export function useContinuousVoiceCommand({ enabled, speech, onCommand, onResult
   const processingRef = useRef(false);
   const onCommandRef = useRef(onCommand);
   const onResultRef = useRef(onResult);
+  const speechRef = useRef(speech);
+  const enabledRef = useRef(enabled);
 
   const [active, setActive] = useState(false);
 
@@ -33,44 +30,44 @@ export function useContinuousVoiceCommand({ enabled, speech, onCommand, onResult
     onResultRef.current = onResult;
   }, [onResult]);
 
+  useEffect(() => {
+    speechRef.current = speech;
+  }, [speech]);
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
   const stop = useCallback(() => {
     activeRef.current = false;
     loopTokenRef.current += 1;
     setActive(false);
     try {
-      speech?.stop?.();
+      speechRef.current?.stop?.();
     } catch {
       /* noop */
     }
-  }, [speech]);
+  }, []);
 
-  const listenOnce = useCallback(
-    async (token, { skipGap = false, initialSettleMs = 0 } = {}) => {
-      if (!activeRef.current || token !== loopTokenRef.current) return;
-      if (!enabled || !speech?.supported) return;
-      if (processingRef.current) return;
+  const armMic = useCallback((token) => {
+    if (!activeRef.current || token !== loopTokenRef.current) return;
+    if (!enabledRef.current) return;
+    const sp = speechRef.current;
+    if (!sp?.supported) return;
+    if (processingRef.current) return;
 
-      if (initialSettleMs) {
-        await new Promise((r) => setTimeout(r, initialSettleMs));
-        if (!activeRef.current || token !== loopTokenRef.current) return;
-      }
-
-      await waitUntilTtsIdle();
-      if (!activeRef.current || token !== loopTokenRef.current) return;
-
-      if (!skipGap) {
-        await new Promise((r) => setTimeout(r, GAP_AFTER_ACTION_MS));
-        if (!activeRef.current || token !== loopTokenRef.current) return;
-      }
-
-      if (processingRef.current || speech.listening) return;
-
-      speech.start(async (finalText) => {
+    try {
+      // useSpeech.start() aborts any in-flight capture first, so this is safe
+      // even when listening is still true from a previous turn.
+      sp.start(async (finalText) => {
         if (!activeRef.current || token !== loopTokenRef.current) return;
 
         const text = String(finalText || '').trim();
         if (!text) {
-          listenOnce(token);
+          void (async () => {
+            await new Promise((r) => setTimeout(r, 400));
+            if (activeRef.current && token === loopTokenRef.current) armMic(token);
+          })();
           return;
         }
 
@@ -85,21 +82,30 @@ export function useContinuousVoiceCommand({ enabled, speech, onCommand, onResult
         }
 
         if (activeRef.current && token === loopTokenRef.current) {
-          listenOnce(token);
+          void (async () => {
+            await waitUntilTtsIdle();
+            await new Promise((r) => setTimeout(r, GAP_AFTER_ACTION_MS));
+            if (activeRef.current && token === loopTokenRef.current) armMic(token);
+          })();
         }
       });
-    },
-    [enabled, speech],
-  );
+    } catch {
+      void (async () => {
+        await new Promise((r) => setTimeout(r, 500));
+        if (activeRef.current && token === loopTokenRef.current) armMic(token);
+      })();
+    }
+  }, []);
 
   const start = useCallback(() => {
-    if (!enabled || !speech?.supported) return;
+    if (!enabledRef.current || !speechRef.current?.supported) return;
     activeRef.current = true;
     setActive(true);
     const token = loopTokenRef.current + 1;
     loopTokenRef.current = token;
-    void listenOnce(token, { skipGap: true, initialSettleMs: INITIAL_SETTLE_MS });
-  }, [enabled, speech, listenOnce]);
+    // Synchronous — must stay inside the click gesture for Web Speech / mic permission.
+    armMic(token);
+  }, [armMic]);
 
   /** Run a command manually (typed / panel) and continue the loop if session is active. */
   const runCommand = useCallback(
@@ -115,11 +121,15 @@ export function useContinuousVoiceCommand({ enabled, speech, onCommand, onResult
         processingRef.current = false;
         if (activeRef.current) {
           const token = loopTokenRef.current;
-          void listenOnce(token);
+          void (async () => {
+            await waitUntilTtsIdle();
+            await new Promise((r) => setTimeout(r, GAP_AFTER_ACTION_MS));
+            if (activeRef.current && token === loopTokenRef.current) armMic(token);
+          })();
         }
       }
     },
-    [listenOnce],
+    [armMic],
   );
 
   useEffect(() => {

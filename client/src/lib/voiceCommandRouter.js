@@ -29,6 +29,8 @@ const COMMANDS = [
     routingStatus: 'Opening your account statement.',
     patterns: [
       /\b(transaction|account|payment)s?\s+(history|statement)\b/,
+      /\b(see|show|view|open|check|get)\s+(me\s+)?(my\s+)?(transaction|account|payment)s?\b/,
+      /\bmy\s+(transaction|account|payment)s?\b/,
       /\b(mini\s*)?statement\b/,
       /\bpass\s*book\b/,
       /\b(transaction|txn)s?\b/,
@@ -193,13 +195,32 @@ const COMMANDS = [
   },
 ];
 
-/** Normalise an utterance for matching: lowercase + collapse whitespace. */
+/**
+ * Fix common STT mishearings before pattern match.
+ * e.g. "transition history" / "my translations" → transaction history.
+ */
+function correctSttTypos(q) {
+  return q
+    // transaction ← transition / translation / translations / transcations / etc.
+    .replace(/\b(transition|transitions|translation|translations|transcation|transcations|transaktion|transaktions)\b/g, 'transaction')
+    // statement ← statements / state ment
+    .replace(/\bstate\s*ment(s)?\b/g, 'statement')
+    // history ← hystory / histery
+    .replace(/\b(hystory|histery|histroy)\b/g, 'history')
+    // deposit ← deposite / diposit
+    .replace(/\b(deposite|diposit|deposits)\b/g, 'deposit')
+    // transfer ← trasfer / tranfer
+    .replace(/\b(trasfer|tranfer|transfers)\b/g, 'transfer');
+}
+
+/** Normalise an utterance for matching: lowercase + collapse whitespace + STT fixes. */
 function normalize(text) {
-  return String(text || '')
+  const base = String(text || '')
     .toLowerCase()
     .replace(/[._,!?]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+  return correctSttTypos(base);
 }
 
 /**

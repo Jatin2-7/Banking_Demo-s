@@ -3,17 +3,29 @@ import { motion } from 'framer-motion';
 import LoanAguiPanel from './LoanAguiPanel.jsx';
 import { TXN_HISTORY_AGUI_AGENT_ID } from '../lib/aguiClient.js';
 import {
-  PERIOD_PRESETS,
   filterTransactionsByRange,
   formatPeriodLabel,
   parseDateRangeFromUtterance,
 } from '../lib/transactionDateFilter.js';
+import { DcbAppHeader } from './dcb/DcbHeader.jsx';
 
 const API_BASE =
   import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'http://localhost:3001');
 
 function formatInr(n) {
-  return `₹${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₹ ${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function formatDisplayDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function toInputDate(iso) {
+  if (!iso) return '';
+  return String(iso).slice(0, 10);
 }
 
 export default function TransactionHistoryScreen({
@@ -33,61 +45,71 @@ export default function TransactionHistoryScreen({
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState(initialDateFrom || '');
   const [dateTo, setDateTo] = useState(initialDateTo || '');
+  const [appliedFrom, setAppliedFrom] = useState(initialDateFrom || '');
+  const [appliedTo, setAppliedTo] = useState(initialDateTo || '');
 
   useEffect(() => {
-    setDateFrom(initialDateFrom || '');
-    setDateTo(initialDateTo || '');
+    if (initialDateFrom) setDateFrom(initialDateFrom);
+    if (initialDateTo) setDateTo(initialDateTo);
+    if (initialDateFrom) setAppliedFrom(initialDateFrom);
+    if (initialDateTo) setAppliedTo(initialDateTo);
     if (initialDateFrom || initialDateTo) setAiOpen(false);
   }, [initialDateFrom, initialDateTo]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/account-statement`)
       .then((r) => r.json())
-      .then(({ account, transactions }) => {
-        setAccount(account);
+      .then(({ account: acct, transactions }) => {
+        setAccount(acct);
         setAllTransactions(transactions || []);
       })
-      .catch(() => {/* silently ignore — UI will show empty state */})
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const fromIso = dateFrom || null;
-  const toIso = dateTo || null;
-
   const transactions = useMemo(
-    () => filterTransactionsByRange(allTransactions, fromIso, toIso),
-    [allTransactions, fromIso, toIso],
+    () => filterTransactionsByRange(allTransactions, appliedFrom || null, appliedTo || null),
+    [allTransactions, appliedFrom, appliedTo],
   );
 
-  const periodLabel = formatPeriodLabel(fromIso, toIso);
-  const isFiltered = Boolean(fromIso || toIso);
+  const periodLabel = formatPeriodLabel(appliedFrom, appliedTo);
 
-  const applyPreset = (preset) => {
-    setDateFrom(preset.dateFrom || '');
-    setDateTo(preset.dateTo || '');
-    onDateRangeChange?.(preset.dateFrom || null, preset.dateTo || null);
+  const applyGo = () => {
+    setAppliedFrom(dateFrom);
+    setAppliedTo(dateTo);
+    onDateRangeChange?.(dateFrom || null, dateTo || null);
   };
 
   const clearFilter = () => {
     setDateFrom('');
     setDateTo('');
+    setAppliedFrom('');
+    setAppliedTo('');
     onDateRangeChange?.(null, null);
   };
 
   const applyDateRange = (nextFrom, nextTo) => {
-    if (nextFrom) setDateFrom(nextFrom);
-    if (nextTo) setDateTo(nextTo);
+    if (nextFrom) {
+      setDateFrom(nextFrom);
+      setAppliedFrom(nextFrom);
+    }
+    if (nextTo) {
+      setDateTo(nextTo);
+      setAppliedTo(nextTo);
+    }
     onDateRangeChange?.(nextFrom || null, nextTo || null);
   };
 
-  const applyDateRangeFromUtterance = (text) => {
-    const range = parseDateRangeFromUtterance(text);
-    if (!range?.dateFrom || !range?.dateTo) return false;
-    applyDateRange(range.dateFrom, range.dateTo);
-    return true;
-  };
-
   const handleUserMessage = (text) => {
+    const t = String(text || '').toLowerCase();
+    if (
+      /\b(change|reset|update|forgot)\b.{0,24}\b(credit\s*)?(card\s*)?pin\b/.test(t) ||
+      /\b(credit\s*)?card\s*pin\b.{0,16}\b(change|reset|update)\b/.test(t) ||
+      /\bchange\s+my\s+(credit\s+)?(card\s+)?pin\b/.test(t)
+    ) {
+      onNavigate?.('credit_card', 'change_pin', 'Opening credit card PIN change.');
+      return 'Opening Change Credit Card PIN…';
+    }
     const range = parseDateRangeFromUtterance(text);
     if (!range?.dateFrom || !range?.dateTo) return false;
     applyDateRange(range.dateFrom, range.dateTo);
@@ -106,9 +128,12 @@ export default function TransactionHistoryScreen({
     }
   };
 
-  const greeting = isFiltered
-    ? `Showing transactions for ${periodLabel}. Adjust the date range above or speak a new window.`
-    : 'Here are all your transactions. Pick a date range above or ask by voice.';
+  const acctLabel = account
+    ? `SAVING A/c - XXXXXX${account.last4 || '1762'}`
+    : 'SAVING A/c - XXXXXX1762';
+  const balance = account?.balance ?? 352089.79;
+
+  const displayTxns = transactions;
 
   return (
     <motion.div
@@ -116,156 +141,118 @@ export default function TransactionHistoryScreen({
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-      className="absolute inset-0 z-40 flex flex-col bg-white"
+      className="absolute inset-0 z-40 flex flex-col bg-[#F5F7FA]"
     >
-      <div className="shrink-0 bg-gradient-to-r from-[#003D7C] to-[#0055B3]">
-        <div className="flex items-center gap-3 px-3 pt-2 pb-1.5">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
-            aria-label="Back"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <h1 className="flex-1 text-base font-bold text-white">Account Statement</h1>
-          <button
-            type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bank-gold text-bank-purpleDeep hover:opacity-90"
-            aria-label="Home"
-            onClick={onClose}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <DcbAppHeader title="Account Summary" onBack={onClose} onHome={onClose} />
 
-      <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-slate-800">Chosen Account</p>
-            <div className="mt-1.5 flex items-center gap-2">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bank-gold font-bold text-sm text-bank-purpleDeep shadow">
-                SB
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-800">My Savings</p>
-                <p className="text-xs text-slate-500 truncate">
-                  XXXXXX{account?.last4 ?? '…'} — Primary
-                </p>
-              </div>
+      <div className="relative flex-1 overflow-y-auto no-scrollbar pb-20">
+        {/* Account carousel card */}
+        <div className="mx-3 mt-3 flex items-center gap-1 rounded-xl bg-[#EEF1F6] px-2 py-4">
+          <button type="button" className="px-1 text-[#1565C0] text-lg" aria-label="Previous account">
+            ‹
+          </button>
+          <div className="min-w-0 flex-1 text-center">
+            <p className="text-[12px] font-semibold text-[#1565C0]">{acctLabel}</p>
+            <p className="mt-1 text-[22px] font-bold tracking-tight text-[#1A237E]">{formatInr(balance)}</p>
+            <div className="mt-2 flex justify-center">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#1565C0]" />
             </div>
           </div>
-          <div className="shrink-0 text-right">
-            <p className="text-xs text-slate-500">Balance</p>
-            <p className="text-sm font-bold text-slate-800">
-              {account ? formatInr(account.balance) : '—'}
-            </p>
+          <button type="button" className="px-1 text-[#1565C0] text-lg" aria-label="Next account">
+            ›
+          </button>
+        </div>
+
+        {/* Date filters */}
+        <div className="mx-3 mt-4 flex items-end gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 text-[11px] font-medium text-slate-500">From Date</p>
+            <label className="flex items-center gap-1 rounded-lg bg-[#EEF1F6] px-2.5 py-2">
+              <input
+                type="date"
+                value={toInputDate(dateFrom)}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-[#1A237E] outline-none"
+              />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2">
+                <rect x="4" y="5" width="16" height="15" rx="2" />
+                <path d="M8 3v4M16 3v4M4 11h16" strokeLinecap="round" />
+              </svg>
+            </label>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 text-[11px] font-medium text-slate-500">To Date</p>
+            <label className="flex items-center gap-1 rounded-lg bg-[#EEF1F6] px-2.5 py-2">
+              <input
+                type="date"
+                value={toInputDate(dateTo)}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-[#1A237E] outline-none"
+              />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2">
+                <rect x="4" y="5" width="16" height="15" rx="2" />
+                <path d="M8 3v4M16 3v4M4 11h16" strokeLinecap="round" />
+              </svg>
+            </label>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <button type="button" onClick={clearFilter} className="text-[11px] font-semibold text-[#1565C0]">
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={applyGo}
+              className="rounded-lg bg-[#1A237E] px-3.5 py-2 text-[13px] font-bold text-white press"
+            >
+              Go
+            </button>
           </div>
         </div>
 
-        {/* Inline date-range filter — same screen, no modal */}
-        <div className="mt-3 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Period</p>
-            {isFiltered && (
-              <button
-                type="button"
-                onClick={clearFilter}
-                className="text-[10px] font-semibold text-[#003D7C] hover:underline"
-              >
-                Show all
-              </button>
-            )}
-          </div>
-          <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              aria-label="From date"
-              className="min-w-0 rounded border border-slate-300 px-1.5 py-1.5 text-[11px] outline-none focus:border-[#003D7C] focus:ring-1 focus:ring-[#003D7C]/30"
-            />
-            <span className="text-[10px] font-medium text-slate-400">to</span>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              aria-label="To date"
-              className="min-w-0 rounded border border-slate-300 px-1.5 py-1.5 text-[11px] outline-none focus:border-[#003D7C] focus:ring-1 focus:ring-[#003D7C]/30"
-            />
-          </div>
-          <div className="mt-2 flex gap-1 overflow-x-auto no-scrollbar pb-0.5">
-            {PERIOD_PRESETS.map((preset) => {
-              const active =
-                (preset.dateFrom || '') === dateFrom && (preset.dateTo || '') === dateTo;
+        {/* Transaction list */}
+        <div className="mt-4 space-y-2.5 px-3">
+          {loading && (
+            <p className="py-8 text-center text-[13px] text-slate-500">Loading transactions…</p>
+          )}
+          {!loading && displayTxns.length === 0 && (
+            <p className="py-8 text-center text-[13px] text-slate-500">No transactions in this period.</p>
+          )}
+          {!loading &&
+            displayTxns.map((txn) => {
+              const isDebit = txn.type === 'DR' || txn.type === 'debit' || txn.drCr === 'Dr';
+              const amt = Math.abs(Number(txn.amount) || 0);
+              const desc = txn.description || txn.narration || txn.remark || 'Transaction';
+              const dateStr = txn.date || formatDisplayDate(txn.txnDate || txn.valueDate);
               return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => applyPreset(preset)}
-                  className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-semibold press ${
-                    active
-                      ? 'bg-[#003D7C] text-white'
-                      : 'border border-slate-200 bg-slate-50 text-slate-600'
-                  }`}
+                <div
+                  key={txn.id || `${desc}-${dateStr}-${amt}`}
+                  className="relative overflow-hidden rounded-xl bg-white py-3 pl-4 pr-3 shadow-[0_2px_10px_rgba(26,35,126,0.07)]"
                 >
-                  {preset.id === 'all' ? 'All' : preset.label.replace(' 2026', '').replace(' transactions', '')}
-                </button>
+                  <span
+                    className={`absolute bottom-0 left-0 top-0 w-[4px] ${
+                      isDebit ? 'bg-[#D32F2F]' : 'bg-[#388E3C]'
+                    }`}
+                  />
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-[#1A237E]">{desc}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">{dateStr}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[13px] font-bold text-[#1A237E]">{formatInr(amt)}</p>
+                      <p
+                        className={`mt-1 text-[12px] font-bold ${
+                          isDebit ? 'text-[#D32F2F]' : 'text-[#388E3C]'
+                        }`}
+                      >
+                        {isDebit ? 'Dr.' : 'Cr.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               );
             })}
-          </div>
-          <p className="mt-2 text-[10px] text-slate-500">
-            <span className="font-semibold text-slate-700">{periodLabel}</span>
-            {!loading && (
-              <span className="text-slate-400"> · {transactions.length} transaction{transactions.length === 1 ? '' : 's'}</span>
-            )}
-          </p>
         </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-0">
-        {loading && (
-          <div className="flex items-center justify-center py-16 text-slate-400 text-sm">
-            Loading transactions…
-          </div>
-        )}
-        {!loading && transactions.length === 0 && (
-          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <p className="text-slate-500 text-sm">No transactions in this period.</p>
-            {isFiltered && (
-              <button
-                type="button"
-                onClick={clearFilter}
-                className="mt-3 text-xs font-semibold text-[#003D7C] hover:underline"
-              >
-                Show all transactions
-              </button>
-            )}
-          </div>
-        )}
-        {transactions.map((txn, idx) => (
-          <div key={txn.id} className={`border-b border-slate-100 px-4 py-3 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}`}>
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-slate-500">{txn.date}</p>
-                <p className="mt-0.5 text-[11px] leading-[1.35] text-slate-600 break-all line-clamp-3">{txn.description}</p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className={`text-sm font-bold ${txn.type === 'CR' ? 'text-green-600' : 'text-red-500'}`}>
-                  {txn.type === 'DR' ? '-' : '+'}{formatInr(txn.amount)}
-                </p>
-                <p className="text-[10px] font-medium text-slate-400">{txn.type}</p>
-                <p className="mt-0.5 text-[10px] text-slate-400">Bal: {formatInr(txn.balance)}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-        <div className="h-44" />
       </div>
 
       {!aiOpen && (
@@ -283,12 +270,17 @@ export default function TransactionHistoryScreen({
         agentId={TXN_HISTORY_AGUI_AGENT_ID}
         open={aiOpen}
         onClose={() => setAiOpen(false)}
-        greeting={greeting}
-        assistTitle="Account Assistant"
-        assistHint="Ask about your transactions"
+        greeting={
+          appliedFrom || appliedTo
+            ? `Showing transactions for ${periodLabel}. Adjust the date range above or speak a new window.`
+            : 'Here are your account transactions. Pick a date range above or ask by voice.'
+        }
+        assistTitle="AI Assistant"
+        assistHint="Ask for a date range — I'll filter the list"
         primer={aiPrimer || null}
-        onUserMessage={handleUserMessage}
+        formValues={{}}
         onToolCall={handleToolCall}
+        onUserMessage={handleUserMessage}
         lang={lang}
       />
     </motion.div>
