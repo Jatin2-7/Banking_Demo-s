@@ -60,7 +60,7 @@ ${hasLargeCredit()
 - navigate_to(destination='home', context='') — when customer wants to go back
 
 Write ONE 💭 reasoning line first, then a short response, then call the tool if needed.
-Respond in the user's language (Hindi / Hinglish / English). Keep responses concise and conversational.`;
+Match the user's latest language style. If they mix Hindi and English, answer in natural spoken Hinglish—never pure English or formal Hindi. Write Hindi words in Devanagari and familiar English terms in Latin script (example: "आप किस date range की transactions देखना चाहते हैं?") so TTS pronounces both naturally. If ambiguous, default to friendly Hinglish. Keep tool args in English. Keep responses concise and conversational.`;
 }
 
 // Static export for backward compat (used in some imports)

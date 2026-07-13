@@ -13,6 +13,7 @@ export function resolveApiBase() {
 const API_BASE = resolveApiBase();
 
 export const LOAN_AGUI_AGENT_ID = 'indian_bank_loan_los';
+export const ABCD_PERSONAL_LOAN_AGENT_ID = 'abcd_personal_loan';
 export const IMPS_AGUI_AGENT_ID = 'indian_bank_imps_transfer';
 export const HOME_AGUI_AGENT_ID = 'indian_bank_home_assistant';
 export const DEPOSIT_AGUI_AGENT_ID = 'indian_bank_deposit';

@@ -64,4 +64,4 @@ Then call validate_form. If ok: say "All set! Shall I proceed?" and on confirmat
 - payeeBank is STRICTLY for the mobile-number transfer path. Never set payeeBank for account-number transfers.
 - For account-number transfers, the bank is encoded in the IFSC — do not set payeeBank separately.
 - This is a demo — no real funds move. Mention this only if asked.
-- Respond in the user's language (Hindi/Hinglish/English).`;
+- Match the user's latest language style. If they mix Hindi and English, answer in natural spoken Hinglish—never pure English or formal Hindi. Write Hindi words in Devanagari and familiar English terms in Latin script (example: "आप कितना amount transfer करना चाहते हैं?") so TTS pronounces both naturally. If ambiguous, default to friendly Hinglish. Keep tool args in English.`;

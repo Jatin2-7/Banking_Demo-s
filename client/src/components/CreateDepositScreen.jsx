@@ -5,7 +5,7 @@ import MpinSheet from './MpinSheet.jsx';
 import { DEPOSIT_AGUI_AGENT_ID } from '../lib/aguiClient.js';
 import { useRageDetect } from '../hooks/useRageDetect.js';
 import RMHelpPrompt from './RMHelpPrompt.jsx';
-import { DcbAppHeader } from './dcb/DcbHeader.jsx';
+import { AbcdAppHeader } from './abcd/AbcdHeader.jsx';
 
 function computeInterestRate(years, months, days) {
   const totalDays = years * 365 + months * 30 + days;
@@ -232,11 +232,11 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
       {...rageProps}
     >
       {phase === 'select' ? (
-        <DcbAppHeader title="Term Deposit" onBack={onClose} onHome={onClose} variant="navy" />
+        <AbcdAppHeader title="Term Deposit" onBack={onClose} onHome={onClose} />
       ) : phase === 'success' ? null : phase === 'mpin' || mpinOpen ? (
-        <DcbAppHeader title="Confirm with MPIN" onBack={handleBack} onHome={onClose} brandPill />
+        <AbcdAppHeader title="Confirm with MPIN" onBack={handleBack} onHome={onClose} />
       ) : (
-        <DcbAppHeader title="Open New Deposit" onBack={handleBack} onHome={onClose} />
+        <AbcdAppHeader title="Open New Deposit" onBack={handleBack} onHome={onClose} />
       )}
 
       <div className="relative flex-1 overflow-y-auto no-scrollbar pb-20">
@@ -541,14 +541,13 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
             exit={{ opacity: 0 }}
             className="absolute inset-0 z-50 flex flex-col bg-[#B3D4FC]/40 backdrop-blur-[1px]"
           >
-            <DcbAppHeader
+            <AbcdAppHeader
               title="Confirm with MPIN"
               onBack={() => {
                 setMpinOpen(false);
                 setPhase('form');
               }}
               onHome={onClose}
-              brandPill
             />
             <div className="flex flex-1 flex-col px-4 pt-4">
               <div className="rounded-2xl bg-white px-4 py-5 shadow-lg">

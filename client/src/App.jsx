@@ -5,7 +5,7 @@ import HomeScreen from './components/HomeScreen';
 import ImpsFundTransferScreen from './components/ImpsFundTransferScreen';
 import FundTransferVoiceScreen from './components/FundTransferVoiceScreen';
 import CreateDepositVoiceScreen from './components/CreateDepositVoiceScreen';
-import LoanApplicationScreen from './components/LoanApplicationScreen';
+import AbcdPersonalLoanScreen from './components/abcd/loan/AbcdPersonalLoanScreen';
 import TransactionHistoryScreen from './components/TransactionHistoryScreen';
 import CreateDepositScreen from './components/CreateDepositScreen';
 import HotelBookingScreen from './components/HotelBookingScreen';
@@ -1018,7 +1018,7 @@ export default function App() {
             </AnimatePresence>
             <AnimatePresence>
               {loanLosOpen && (
-                <LoanApplicationScreen
+                <AbcdPersonalLoanScreen
                   key="loan-los"
                   onClose={() => { setLoanLosOpen(false); setLoanPrimer(''); }}
                   lang={lang}

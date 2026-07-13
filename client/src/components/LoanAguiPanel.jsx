@@ -41,10 +41,15 @@ function Wave({ active }) {
 function LoanAssistAvatar({ size = 24 }) {
   return (
     <div
-      className="flex shrink-0 select-none items-center justify-center rounded-full bg-gradient-to-br from-bank-gold to-amber-500 font-bold text-black shadow-md ring-2 ring-bank-gold/50"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
+      className="shrink-0 select-none overflow-hidden rounded-full bg-[#004b70] shadow-md ring-2 ring-[#004b70]/30"
+      style={{ width: size, height: size }}
     >
-      B
+      <img
+        src="/silversuits-logo.png"
+        alt="Silversuits.ai"
+        className="h-full w-full object-cover"
+        draggable="false"
+      />
     </div>
   );
 }
@@ -94,6 +99,8 @@ export default function LoanAguiPanel({
   chatFullscreen = false,
   voiceAssist = false,
   handsFree = false,
+  /** Override default `bottom-[3.85rem]` when a bottom tab bar is present. */
+  dockClassName = 'bottom-[3.85rem]',
 }) {
   // Auto-mic (listen → reply → auto-listen again) applies whenever either
   // `voiceAssist` (Loan/FD Voice Assist demo mode) or `handsFree` (e.g. Fund
@@ -600,7 +607,7 @@ export default function LoanAguiPanel({
           className={
             chatFullscreen
               ? 'pointer-events-auto absolute inset-0 z-10 flex min-h-0 flex-col overflow-hidden bg-transparent text-white'
-              : 'pointer-events-auto absolute bottom-[3.85rem] left-2 right-2 z-[84] flex min-h-0 flex-col overflow-hidden rounded-2xl border border-bank-gold/50 bg-white/96 text-black shadow-[0_10px_32px_rgba(15,23,42,0.18)] backdrop-blur-md'
+              : `pointer-events-auto absolute ${dockClassName} left-2 right-2 z-[84] flex min-h-0 flex-col overflow-hidden rounded-2xl border border-bank-gold/50 bg-white/96 text-black shadow-[0_10px_32px_rgba(15,23,42,0.18)] backdrop-blur-md`
           }
           style={chatFullscreen ? undefined : { height: panelH ? `${panelH}px` : 'min(34vh, 280px)' }}
         >
@@ -638,7 +645,7 @@ export default function LoanAguiPanel({
                     showListening ? 'animate-pulse bg-bank-gold' : running ? 'bg-amber-400' : handsFreeActive ? 'bg-emerald-400' : 'bg-emerald-400'
                   }`}
                 />
-                <span className="truncate text-[12px] font-semibold text-black">{assistTitle}</span>
+                <span className="truncate text-[12px] font-semibold text-black">silversuits.ai</span>
               </div>
             </div>
             <button

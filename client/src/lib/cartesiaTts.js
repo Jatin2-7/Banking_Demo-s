@@ -9,6 +9,8 @@ let globalUrl = null;
 let pendingPlay = null;
 let ttsPlaying = false;
 let ttsEnabled = true;
+let activeSpeechId = 0;
+let activeFetchController = null;
 const ttsListeners = new Set();
 
 /**
@@ -70,6 +72,11 @@ export function waitUntilTtsIdle(maxMs = 120000) {
 
 /** Stop any in-flight TTS immediately */
 export function stopGlobalCartesiaTts() {
+  activeSpeechId += 1;
+  if (activeFetchController) {
+    activeFetchController.abort();
+    activeFetchController = null;
+  }
   if (typeof window !== 'undefined' && window.speechSynthesis) {
     try {
       window.speechSynthesis.cancel();
@@ -134,6 +141,41 @@ function toIndianWords(n) {
   return parts.join(' ');
 }
 
+const MONEY_CONTEXT_TERMS = [
+  '₹', 'rs', 'rupee', 'amount', 'income', 'salary', 'emi', 'loan', 'deposit',
+  'balance', 'payment', 'transfer', 'रुपये', 'रुपए', 'राशि', 'आय', 'वेतन', 'किस्त',
+];
+const IDENTIFIER_CONTEXT_TERMS = [
+  'pan', 'pincode', 'pin code', 'mpin', 'otp', 'account number', 'account no',
+  'phone', 'mobile', 'ifsc',
+];
+
+function includesAnyTerm(value, terms) {
+  const normalized = value.toLowerCase();
+  return terms.some((term) => normalized.includes(term));
+}
+
+function normalizeDevanagariDigits(text) {
+  return String(text).replace(/[०-९]/g, (digit) => String(digit.codePointAt(0) - 0x0966));
+}
+
+function replaceContextualAmounts(text) {
+  return text.replace(/\b\d{4,9}\b/g, (match, offset, fullText) => {
+    const before = fullText.slice(Math.max(0, offset - 32), offset);
+    const after = fullText.slice(offset + match.length, offset + match.length + 24);
+    const nearby = `${before} ${after}`;
+    if (
+      includesAnyTerm(nearby, IDENTIFIER_CONTEXT_TERMS) ||
+      !includesAnyTerm(nearby, MONEY_CONTEXT_TERMS)
+    ) {
+      return match;
+    }
+
+    const amount = Number.parseInt(match, 10);
+    return Number.isNaN(amount) ? match : toIndianWords(amount);
+  });
+}
+
 /**
  * Pre-process financial text so TTS reads numbers naturally.
  *  ₹1,00,000    → "one lakh rupees"
@@ -142,32 +184,32 @@ function toIndianWords(n) {
  *  1,00,000     → "one lakh"   (standalone Indian-comma number)
  */
 function formatNumbersForTts(text) {
-  return (
-    text
-      // ── Currency: ₹1,00,000.50 ──────────────────────────────────────────────
-      .replace(/₹\s*([\d,]+)(?:\.\d{0,2})?/g, (_, intPart) => {
-        const n = parseInt(intPart.replace(/,/g, ''), 10);
-        if (isNaN(n)) return _;
-        return `${toIndianWords(n)} rupees`;
-      })
-      // ── Percentage with decimal: 6.2% ───────────────────────────────────────
-      .replace(/\b(\d{1,3})\.(\d{1,2})\s*%/g, (_, int, dec) => {
-        const decWords = dec.split('').map((d) => _ONES[parseInt(d, 10)] || d).join(' ');
-        return `${toIndianWords(parseInt(int, 10))} point ${decWords} percent`;
-      })
-      // ── Percentage without decimal: 6% ──────────────────────────────────────
-      .replace(/\b(\d{1,3})\s*%/g, (_, n) => `${toIndianWords(parseInt(n, 10))} percent`)
-      // ── p.a. → "per annum" ──────────────────────────────────────────────────
-      .replace(/\bp\.?a\.\b/gi, 'per annum')
-      // ── Indian-comma numbers ≥ 1,000 (e.g. 1,00,000 / 25,000) ──────────────
-      // Only matches numbers that contain commas — avoids stomping on plain
-      // small integers the TTS engine already reads correctly.
-      .replace(/\b(\d{1,2}(?:,\d{2})*,\d{3}|\d{1,3}(?:,\d{3})+)\b/g, (match) => {
-        const n = parseInt(match.replace(/,/g, ''), 10);
-        if (isNaN(n) || n < 1000) return match;
-        return toIndianWords(n);
-      })
-  );
+  const formatted = normalizeDevanagariDigits(text)
+    // ── Currency: ₹1,00,000.50 ──────────────────────────────────────────────
+    .replace(/₹\s*([\d,]+)(?:\.\d{0,2})?/g, (_, intPart) => {
+      const n = parseInt(intPart.replace(/,/g, ''), 10);
+      if (isNaN(n)) return _;
+      return `${toIndianWords(n)} rupees`;
+    })
+    // ── Percentage with decimal: 6.2% ───────────────────────────────────────
+    .replace(/\b(\d{1,3})\.(\d{1,2})\s*%/g, (_, int, dec) => {
+      const decWords = dec.split('').map((d) => _ONES[parseInt(d, 10)] || d).join(' ');
+      return `${toIndianWords(parseInt(int, 10))} point ${decWords} percent`;
+    })
+    // ── Percentage without decimal: 6% ──────────────────────────────────────
+    .replace(/\b(\d{1,3})\s*%/g, (_, n) => `${toIndianWords(parseInt(n, 10))} percent`)
+    // ── p.a. → "per annum" ──────────────────────────────────────────────────
+    .replace(/\bp\.?a\.\b/gi, 'per annum')
+    // ── Indian-comma numbers ≥ 1,000 (e.g. 1,00,000 / 25,000) ──────────────
+    // Only matches numbers that contain commas — avoids stomping on plain
+    // small integers the TTS engine already reads correctly.
+    .replace(/\b(\d{1,2}(?:,\d{2})*,\d{3}|\d{1,3}(?:,\d{3})+)\b/g, (match) => {
+      const n = parseInt(match.replace(/,/g, ''), 10);
+      if (isNaN(n) || n < 1000) return match;
+      return toIndianWords(n);
+    });
+
+  return replaceContextualAmounts(formatted);
 }
 
 /** Strip symbols TTS engines read aloud literally */
@@ -233,6 +275,9 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
   if (!clean) return false;
 
   stopGlobalCartesiaTts();
+  const speechId = activeSpeechId;
+  const fetchController = new AbortController();
+  activeFetchController = fetchController;
   onBeforePlay?.();
   // Block auto-mic during fetch + playback (not only after audio starts)
   notifyTtsPlaying(true);
@@ -248,6 +293,10 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
 
   const speakBrowserFallback = () =>
     new Promise((resolve) => {
+      if (speechId !== activeSpeechId) {
+        resolve(false);
+        return;
+      }
       if (typeof window === 'undefined' || !window.speechSynthesis) {
         notifyTtsPlaying(false);
         pendingPlay?.(false);
@@ -263,6 +312,10 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
       utter.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
       utter.rate = 1.05;
       const done = (ok) => {
+        if (speechId !== activeSpeechId) {
+          resolve(false);
+          return;
+        }
         notifyTtsPlaying(false);
         pendingPlay?.(ok);
         resolve(ok);
@@ -281,7 +334,10 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: clean, lang }),
+      signal: fetchController.signal,
     });
+
+    if (speechId !== activeSpeechId) return false;
 
     if (!res.ok) {
       if (res.status === 503) {
@@ -293,18 +349,26 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
     }
 
     const blob = await res.blob();
-    globalUrl = URL.createObjectURL(blob);
-    const audio = new Audio(globalUrl);
+    if (speechId !== activeSpeechId) return false;
+
+    activeFetchController = null;
+    const audioUrl = URL.createObjectURL(blob);
+    globalUrl = audioUrl;
+    const audio = new Audio(audioUrl);
     globalAudio = audio;
 
     return await new Promise((resolve) => {
       resolvePlay = resolve;
       const done = (ok) => {
-        if (globalUrl) {
-          URL.revokeObjectURL(globalUrl);
+        URL.revokeObjectURL(audioUrl);
+        if (speechId !== activeSpeechId) {
+          resolve(false);
+          return;
+        }
+        if (globalUrl === audioUrl) {
           globalUrl = null;
         }
-        globalAudio = null;
+        if (globalAudio === audio) globalAudio = null;
         notifyTtsPlaying(false);
         pendingPlay?.(ok);
         resolve(ok);
@@ -314,6 +378,8 @@ export async function speakViaCartesia(text, { onBeforePlay } = {}) {
       audio.play().catch(() => done(false));
     });
   } catch (err) {
+    if (err?.name === 'AbortError' || speechId !== activeSpeechId) return false;
+    activeFetchController = null;
     console.warn('[TTS] Cartesia request failed — using browser fallback:', err?.message || err);
     return speakBrowserFallback();
   }

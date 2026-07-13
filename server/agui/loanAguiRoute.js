@@ -4,7 +4,9 @@ import { streamHomeAguiRun } from './homeAguiRunner.js';
 import { streamDepositAguiRun } from './depositAguiRunner.js';
 import { streamTxnHistoryAguiRun } from './txnHistoryAguiRunner.js';
 import { streamSSQuickLoanRun } from './ssQuickLoanRunner.js';
+import { streamAbcdPersonalLoanRun } from './abcdPersonalLoanRunner.js';
 import { LOAN_AGENT_ID } from './loanAgentConfig.js';
+import { ABCD_PERSONAL_LOAN_AGENT_ID } from './abcdPersonalLoanConfig.js';
 import { IMPS_AGENT_ID } from './impsAguiConfig.js';
 import { HOME_AGENT_ID } from './homeAguiConfig.js';
 import { DEPOSIT_AGENT_ID } from './depositAguiConfig.js';
@@ -18,6 +20,7 @@ const RUNNERS = {
   [DEPOSIT_AGENT_ID]: streamDepositAguiRun,
   [TXN_HISTORY_AGENT_ID]: streamTxnHistoryAguiRun,
   [SS_QUICKLOAN_AGENT_ID]: streamSSQuickLoanRun,
+  [ABCD_PERSONAL_LOAN_AGENT_ID]: streamAbcdPersonalLoanRun,
 };
 
 export function handleLoanAguiPost(req, res) {
