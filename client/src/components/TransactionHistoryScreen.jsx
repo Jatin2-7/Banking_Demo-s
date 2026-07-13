@@ -7,7 +7,7 @@ import {
   formatPeriodLabel,
   parseDateRangeFromUtterance,
 } from '../lib/transactionDateFilter.js';
-import { AbcdAppHeader } from './abcd/AbcdHeader.jsx';
+import { CompanyAppHeader } from '../shared/ui/CompanyAppHeader.jsx';
 
 const API_BASE =
   import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'http://localhost:3001');
@@ -143,7 +143,7 @@ export default function TransactionHistoryScreen({
       transition={{ type: 'spring', damping: 28, stiffness: 260 }}
       className="absolute inset-0 z-40 flex flex-col bg-[#F5F7FA]"
     >
-      <AbcdAppHeader title="Account Summary" onBack={onClose} onHome={onClose} />
+      <CompanyAppHeader title="Account Summary" onBack={onClose} onHome={onClose} />
 
       <div className="relative flex-1 overflow-y-auto no-scrollbar pb-20">
         {/* Account carousel card */}

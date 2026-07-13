@@ -1,24 +1,25 @@
 import React, { useMemo, useState } from 'react';
-import { ACCOUNTS as FALLBACK_ACCOUNTS } from '../data/mock.js';
-import LoanAguiPanel from './LoanAguiPanel.jsx';
-import RMHelpPrompt from './RMHelpPrompt.jsx';
-import { useRageDetect } from '../hooks/useRageDetect.js';
-import { HOME_AGUI_AGENT_ID } from '../lib/aguiClient.js';
-import { AbcdHomeHeader } from './abcd/AbcdHeader.jsx';
-import AbcdBottomNav from './abcd/AbcdBottomNav.jsx';
-import AbcdHomeTab from './abcd/AbcdHomeTab.jsx';
-import AbcdMyTrackTab from './abcd/AbcdMyTrackTab.jsx';
+import { ACCOUNTS as FALLBACK_ACCOUNTS } from '../../data/mock.js';
+import LoanAguiPanel from '../../components/LoanAguiPanel.jsx';
+import RMHelpPrompt from '../../components/RMHelpPrompt.jsx';
+import { useRageDetect } from '../../hooks/useRageDetect.js';
+import { useCompanyAgents } from '../../shared/lib/companyAgents.js';
+import { AbcdHomeHeader } from './AbcdHeader.jsx';
+import AbcdBottomNav from './AbcdBottomNav.jsx';
+import AbcdHomeTab from './AbcdHomeTab.jsx';
+import AbcdMyTrackTab from './AbcdMyTrackTab.jsx';
 import {
   AbcdInsureTab,
   AbcdInvestTab,
   AbcdLoansTab,
-} from './abcd/AbcdLoansInsureInvest.jsx';
+} from './AbcdLoansInsureInvest.jsx';
+import { ABCD } from './theme.js';
 
 function formatInr(n) {
   return `₹ ${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function HomeScreen({
+export default function AbcdHomeScreen({
   lang,
   onQuickAction,
   onFundTransferImps,
@@ -38,6 +39,7 @@ export default function HomeScreen({
   aiPanelCloseSignal = 0,
   accounts,
 }) {
+  const agents = useCompanyAgents();
   const [homeAiOpen, setHomeAiOpen] = useState(false);
   const [rmHomePromptOpen, setRmHomePromptOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
@@ -131,12 +133,12 @@ export default function HomeScreen({
 
   return (
     <div
-      className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[#C41E24]"
+      className="relative flex h-full min-h-0 flex-col overflow-hidden"
+      style={{ backgroundColor: ABCD.red }}
       {...homeRageProps}
     >
       <AbcdHomeHeader tab={activeTab} onPillClick={handlePillClick} />
 
-      {/* White content sheet */}
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-[28px] bg-white">
         <div className="flex shrink-0 justify-center pb-1 pt-2.5">
           <span className="h-1 w-10 rounded-full bg-[#D1D5DB]" aria-hidden />
@@ -198,7 +200,7 @@ export default function HomeScreen({
 
       <LoanAguiPanel
         key={`home-ai-${panelKey}-${navMode ? 'nav' : voiceAssistMode ? 'assist' : 'chat'}`}
-        agentId={HOME_AGUI_AGENT_ID}
+        agentId={agents.home}
         open={homeAiOpen}
         onClose={() => {
           setHomeAiOpen(false);

@@ -28,6 +28,13 @@ export default {
           credit: '#388E3C',
           page: '#F5F7FA',
         },
+        optimo: {
+          orange: '#E85D3B',
+          orangeLight: '#FF8A65',
+          navy: '#1B2B4B',
+          bg: '#F8FAFF',
+          pill: '#FFF5F0',
+        },
         abcd: {
           red: '#C41E24',
           redDark: '#A8181E',

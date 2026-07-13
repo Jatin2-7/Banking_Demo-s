@@ -1,5 +1,5 @@
 import React from 'react';
-import { getRotatedTabs } from './tokens.js';
+import { getRotatedTabs } from './theme.js';
 
 function TabIcon({ id, active }) {
   const stroke = active ? '#FFFFFF' : '#6B7280';

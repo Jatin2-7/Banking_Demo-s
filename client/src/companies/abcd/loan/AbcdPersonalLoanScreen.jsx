@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import LoanAguiPanel from '../../LoanAguiPanel.jsx';
-import RMHelpPrompt from '../../RMHelpPrompt.jsx';
+import LoanAguiPanel from '../../../components/LoanAguiPanel.jsx';
+import RMHelpPrompt from '../../../components/RMHelpPrompt.jsx';
 import { useRageDetect } from '../../../hooks/useRageDetect.js';
-import { ABCD_PERSONAL_LOAN_AGENT_ID } from '../../../lib/aguiClient.js';
+import { useCompanyAgents } from '../../../shared/lib/companyAgents.js';
 import AbcdPersonalLoanLanding from './AbcdPersonalLoanLanding.jsx';
 import AbcdCalculatorPickerSheet from './AbcdCalculatorPickerSheet.jsx';
 import AbcdEmiCalculatorScreen from './AbcdEmiCalculatorScreen.jsx';
@@ -56,6 +56,7 @@ export default function AbcdPersonalLoanScreen({
   aiPrimer: aiPrimerProp,
   voiceAssist = false,
 }) {
+  const agents = useCompanyAgents();
   const entryContext = String(aiPrimerProp || '').trim().toLowerCase();
   const isCalculatorEntry =
     entryContext === 'open_emi_calculator' || entryContext === 'open_loan_amount_calculator';
@@ -310,7 +311,7 @@ export default function AbcdPersonalLoanScreen({
       />
 
       <LoanAguiPanel
-        agentId={ABCD_PERSONAL_LOAN_AGENT_ID}
+        agentId={agents.loan}
         open={aiOpen}
         onClose={() => setAiOpen(false)}
         formValues={agentState}

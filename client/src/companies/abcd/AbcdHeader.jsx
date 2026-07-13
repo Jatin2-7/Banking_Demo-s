@@ -1,5 +1,5 @@
 import React from 'react';
-import { ABCD_PILLS } from './tokens.js';
+import { ABCD_PILLS } from './theme.js';
 
 function YellowShareBtn({ onClick }) {
   return (

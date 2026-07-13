@@ -5,6 +5,8 @@ import { streamDepositAguiRun } from './depositAguiRunner.js';
 import { streamTxnHistoryAguiRun } from './txnHistoryAguiRunner.js';
 import { streamSSQuickLoanRun } from './ssQuickLoanRunner.js';
 import { streamAbcdPersonalLoanRun } from './abcdPersonalLoanRunner.js';
+import { streamOptimoHomeAguiRun } from './optimoHomeAguiRunner.js';
+import { streamOptimoLapAguiRun } from './optimoLapAguiRunner.js';
 import { LOAN_AGENT_ID } from './loanAgentConfig.js';
 import { ABCD_PERSONAL_LOAN_AGENT_ID } from './abcdPersonalLoanConfig.js';
 import { IMPS_AGENT_ID } from './impsAguiConfig.js';
@@ -12,6 +14,8 @@ import { HOME_AGENT_ID } from './homeAguiConfig.js';
 import { DEPOSIT_AGENT_ID } from './depositAguiConfig.js';
 import { TXN_HISTORY_AGENT_ID } from './txnHistoryAguiConfig.js';
 import { SS_QUICKLOAN_AGENT_ID } from './ssQuickLoanConfig.js';
+import { OPTIMO_HOME_AGENT_ID } from './optimoHomeAguiConfig.js';
+import { OPTIMO_LAP_AGENT_ID } from './optimoLapAguiConfig.js';
 
 const RUNNERS = {
   [LOAN_AGENT_ID]: streamLoanAguiRun,
@@ -21,6 +25,8 @@ const RUNNERS = {
   [TXN_HISTORY_AGENT_ID]: streamTxnHistoryAguiRun,
   [SS_QUICKLOAN_AGENT_ID]: streamSSQuickLoanRun,
   [ABCD_PERSONAL_LOAN_AGENT_ID]: streamAbcdPersonalLoanRun,
+  [OPTIMO_HOME_AGENT_ID]: streamOptimoHomeAguiRun,
+  [OPTIMO_LAP_AGENT_ID]: streamOptimoLapAguiRun,
 };
 
 export function handleLoanAguiPost(req, res) {

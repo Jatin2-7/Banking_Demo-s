@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCompanyOptional } from '../context/CompanyContext.jsx';
 
 function StatusBar() {
   return (
@@ -29,6 +30,12 @@ function StatusBar() {
 }
 
 export default function PhoneFrame({ children, overlay }) {
+  const company = useCompanyOptional();
+  const primary = company?.theme?.primary ?? '#C41E24';
+  const phoneShadow =
+    company?.theme?.phoneShadow ??
+    '0 30px 60px rgba(120, 20, 24, 0.28), inset 0 0 0 1.5px rgba(255,255,255,0.06)';
+
   return (
     <div className="flex min-h-full w-full items-center justify-center py-6">
       <div
@@ -38,12 +45,17 @@ export default function PhoneFrame({ children, overlay }) {
           height: '860px',
           borderRadius: '52px',
           padding: '8px',
-          boxShadow: '0 30px 60px rgba(120, 20, 24, 0.28), inset 0 0 0 1.5px rgba(255,255,255,0.06)',
+          boxShadow: phoneShadow,
         }}
       >
         <div
-          className="relative flex h-full w-full flex-col overflow-hidden bg-[#C41E24]"
-          style={{ width: '390px', height: '844px', borderRadius: '44px' }}
+          className="relative flex h-full w-full flex-col overflow-hidden"
+          style={{
+            width: '390px',
+            height: '844px',
+            borderRadius: '44px',
+            backgroundColor: primary,
+          }}
         >
           <StatusBar />
           <div
