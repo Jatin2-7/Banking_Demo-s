@@ -140,7 +140,8 @@ export async function streamOptimoLapAguiRun(res, agentId, inputData, { signal }
         if (!slot.id) continue;
         let args = {};
         try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
-        const exec = executeOptimoLapTool(slot.name, args, state);
+        const lastUser = [...history].reverse().find((m) => m.role === 'user')?.content || '';
+        const exec = executeOptimoLapTool(slot.name, args, state, { lastUserMessage: lastUser });
         if (exec.statePatches?.length) write({ type: 'STATE_DELTA', delta: exec.statePatches });
         write({ type: 'TOOL_CALL_RESULT', message_id: randomUUID(), tool_call_id: slot.id, content: JSON.stringify(exec.result), role: 'tool' });
         messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });

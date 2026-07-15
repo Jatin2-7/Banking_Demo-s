@@ -22,11 +22,11 @@ export const dcbConfig = {
   },
   agents: {
     home: 'indian_bank_home_assistant',
-    loan: 'indian_bank_loan_los',
+    loan: 'dcb_gold_loan',
     imps: 'indian_bank_imps_transfer',
     deposit: 'indian_bank_deposit',
     txnHistory: 'indian_bank_txn_history',
-    loanLos: 'indian_bank_loan_los',
+    loanLos: 'dcb_gold_loan',
   },
   journeys: [
     'home',

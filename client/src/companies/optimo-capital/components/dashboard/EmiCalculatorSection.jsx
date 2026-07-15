@@ -35,7 +35,7 @@ export default function EmiCalculatorSection({ values, onChange, onApply, onScro
   const setField = (field, value) => onChange?.({ ...values, [field]: value });
 
   return (
-    <section ref={onScrollRef} id="emi-calculator" className="scroll-mt-24">
+    <section ref={onScrollRef} id="emi-calculator" className="scroll-mt-24 scroll-mb-80">
       <h2
         className="mb-6 text-center"
         style={{ fontFamily: FONTS.display, fontSize: 28, fontWeight: 700, color: OPTIMO.navy }}
@@ -124,7 +124,7 @@ export default function EmiCalculatorSection({ values, onChange, onApply, onScro
                   >
                     <option value="">Select</option>
                     {TENURE_OPTIONS.map((y) => (
-                      <option key={y} value={y}>
+                      <option key={y} value={String(y)}>
                         {y} {y === 1 ? 'year' : 'years'}
                       </option>
                     ))}

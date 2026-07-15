@@ -36,6 +36,7 @@ function agUiMessagesToOpenAI(messages) {
 function buildRoutingStatus(destination) {
   const map = {
     lap_application: 'Opening Loan Against Property application.',
+    loan_application: 'Opening Loan Against Property application.',
     lap_balance_transfer: 'Opening LAP Balance Transfer application.',
     lap_top_up: 'Opening LAP Top-Up application.',
     check_eligibility: 'Scrolling to eligibility & EMI calculator.',
@@ -45,8 +46,64 @@ function buildRoutingStatus(destination) {
   return map[destination] || 'Redirecting you now.';
 }
 
+function resolveNavigationIntentFromSpeech(text) {
+  const t = String(text || '').toLowerCase().trim();
+  if (!t) return null;
+  if (/calculate\s+emi|emi\s+calculat|monthly\s+instal|check\s+emi/.test(t)) return 'emi_calculator';
+  if (/check\s+eligibility/.test(t)) return 'check_eligibility';
+  if (/balance\s+transfer/.test(t)) return 'lap_balance_transfer';
+  if (/top[\s-]?up|additional\s+loan/.test(t)) return 'lap_top_up';
+  if (
+    /apply\s+(for\s+)?(a\s+)?loan/.test(t)
+    || /loan\s+application/.test(t)
+    || /open\s+(the\s+)?(loan\s+)?application/.test(t)
+    || /start\s+(the\s+)?(loan\s+)?application/.test(t)
+    || /(want|need)\s+(to\s+)?apply/.test(t)
+    || /(loan\s+against\s+property|business\s+loan|lap\b)/.test(t) && /apply|want|need|open|start/.test(t)
+  ) {
+    return 'lap_application';
+  }
+  if (/(go\s+)?(back\s+)?(to\s+)?(home|dashboard|main\s+page)/.test(t)) return 'dashboard';
+  return null;
+}
+
+function parseNavigationDestinationFromText(text) {
+  const raw = String(text || '');
+  const jsonMatch = raw.match(/\{\s*"destination"\s*:\s*"([^"]+)"\s*(?:,\s*"context"\s*:\s*"[^"]*")?\s*\}/i);
+  if (jsonMatch) return jsonMatch[1];
+  const fnMatch = raw.match(/navigate_to\s*\(\s*\{[^}]*"destination"\s*:\s*"([^"]+)"/i);
+  if (fnMatch) return fnMatch[1];
+  return null;
+}
+
+function emitNavigateFallback(write, destination) {
+  const args = { destination, context: '' };
+  write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(destination) });
+  write({ type: 'STATE_DELTA', delta: [{ op: 'replace', path: '/navigate_to', value: args }] });
+}
+
+function normalizeEmiValue(fieldId, raw) {
+  const s = raw == null ? '' : String(raw).trim();
+  if (fieldId === 'interest_rate') {
+    return s.replace(/[^\d.]/g, '');
+  }
+  if (fieldId === 'tenure_years') {
+    const m = s.match(/(\d{1,2})/);
+    return m ? m[1] : s.replace(/[^\d]/g, '');
+  }
+  if (fieldId === 'loan_amount') {
+    const lower = s.toLowerCase();
+    const crore = lower.match(/(\d+(?:\.\d+)?)\s*crore/);
+    if (crore) return String(Math.round(Number(crore[1]) * 10000000));
+    const lakh = lower.match(/(\d+(?:\.\d+)?)\s*lakh/);
+    if (lakh) return String(Math.round(Number(lakh[1]) * 100000));
+    return s.replace(/[^\d]/g, '');
+  }
+  return s;
+}
+
 function validateEmiField(fieldId, raw) {
-  const value = raw == null ? '' : String(raw).trim();
+  const value = normalizeEmiValue(fieldId, raw);
   if (fieldId === 'loan_amount') {
     const n = Number(value);
     if (!value || Number.isNaN(n) || n <= 0) return 'Loan amount must be positive.';
@@ -73,7 +130,7 @@ function executeHomeTool(toolName, args, state) {
     }
     const err = validateEmiField(field_id, value);
     if (err) return { result: { ok: false, field_id, error: err }, statePatches: [] };
-    state[field_id] = String(value).trim();
+    state[field_id] = normalizeEmiValue(field_id, value);
     return {
       result: { ok: true, field_id, value: state[field_id] },
       statePatches: [{ op: 'replace', path: `/${field_id}`, value: state[field_id] }],
@@ -96,6 +153,7 @@ const OPTIMO_HOME_TOOLS = [
             enum: [
               'dashboard',
               'lap_application',
+              'loan_application',
               'lap_balance_transfer',
               'lap_top_up',
               'check_eligibility',
@@ -226,6 +284,11 @@ export async function streamOptimoHomeAguiRun(res, agentId, inputData, { signal 
       }
 
       if (toolCallBuf.size === 0) {
+        const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
+        const fallbackDest =
+          parseNavigationDestinationFromText(assistantText)
+          || resolveNavigationIntentFromSpeech(lastUser);
+        if (fallbackDest) emitNavigateFallback(write, fallbackDest);
         messages.push({ role: 'assistant', content: assistantText || '' });
         break;
       }

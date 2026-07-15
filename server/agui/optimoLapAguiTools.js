@@ -1,4 +1,7 @@
 import { OPTIMO_LAP_FIELD_IDS } from './optimoLapAguiConfig.js';
+import { normalizeLapMoneyField } from './optimoMoneyParse.js';
+
+const MONEY_FIELDS = new Set(['loan_amount', 'property_value', 'business_revenue', 'business_profit']);
 
 function validateField(fieldId, raw) {
   const value = raw == null ? '' : String(raw).trim();
@@ -33,10 +36,11 @@ function validateField(fieldId, raw) {
   }
 }
 
-function normalizeValue(fieldId, raw) {
+function normalizeValue(fieldId, raw, userContext = '') {
   const value = raw == null ? '' : String(raw).trim();
   if (fieldId === 'mobile') return value.replace(/\D/g, '').slice(0, 10);
   if (fieldId === 'property_pincode') return value.replace(/\D/g, '').slice(0, 6);
+  if (MONEY_FIELDS.has(fieldId)) return normalizeLapMoneyField(fieldId, value, userContext);
   return value;
 }
 
@@ -56,14 +60,14 @@ export function runValidateForm(state) {
   return { valid: Object.keys(errors).length === 0, errors, missing };
 }
 
-export function executeOptimoLapTool(toolName, args, state) {
+export function executeOptimoLapTool(toolName, args, state, { lastUserMessage = '' } = {}) {
   switch (toolName) {
     case 'set_field': {
       const { field_id, value } = args;
       if (!OPTIMO_LAP_FIELD_IDS.includes(field_id)) {
         return { result: { ok: false, error: `Unknown field_id: ${field_id}` }, statePatches: [] };
       }
-      const normalized = normalizeValue(field_id, value);
+      const normalized = normalizeValue(field_id, value, lastUserMessage);
       const err = validateField(field_id, normalized);
       if (err) {
         return { result: { ok: false, field_id, error: err }, statePatches: [] };

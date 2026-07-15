@@ -115,7 +115,12 @@ app.post(
       if (!r.ok) {
         const detail = (await r.text().catch(() => '')).slice(0, 600);
         log.error({ status: r.status, ms, detail }, 'elevenlabs stt failed');
-        return res.status(502).json({ error: 'stt_failed', status: r.status, detail });
+        const paymentIssue = /payment_issue|payment_required/i.test(detail);
+        return res.status(502).json({
+          error: paymentIssue ? 'stt_payment_required' : 'stt_failed',
+          status: r.status,
+          detail,
+        });
       }
 
       let data = await r.json().catch(() => ({}));
@@ -291,7 +296,7 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'internal_error' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   log.info(
     {
       port: PORT,
@@ -300,4 +305,15 @@ app.listen(PORT, () => {
     },
     'engine listening',
   );
+});
+
+server.on('error', (err) => {
+  if (err?.code === 'EADDRINUSE') {
+    log.error(
+      { port: PORT },
+      `Port ${PORT} is already in use. Stop the other server (Task Manager → end node.exe on that port) or run: Get-NetTCPConnection -LocalPort ${PORT} | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }`,
+    );
+    process.exit(1);
+  }
+  throw err;
 });

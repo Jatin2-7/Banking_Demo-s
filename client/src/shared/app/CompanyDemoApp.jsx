@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import CompanyShell from '../../shells/CompanyShell.jsx';
 import { useCompany } from '../../context/CompanyContext.jsx';
+import { tryOpenSbiCreditCardPin } from '../lib/companyNavBridge.js';
 import { resolveHomeScreen } from '../home/resolveHomeScreen.js';
 import { resolveLoanScreen } from '../journeys/resolveLoanScreen.js';
 import ImpsFundTransferScreen from '../../components/ImpsFundTransferScreen';
@@ -597,7 +598,7 @@ export default function CompanyDemoApp() {
   // Called by HomeScreen's AI assistant when navigate_to tool fires.
   // Pass { silent: true } when called from voice-to-command mode so TTS is skipped.
   const handleNavigate = useCallback(
-    async (destination, context, routingStatus, { silent = false } = {}) => {
+    async (destination, context, routingStatus, { silent = false, dateFrom = null, dateTo = null } = {}) => {
       stopGlobalCartesiaTts();
 
       // Intercept over-limit UPI amounts BEFORE speaking anything — context
@@ -637,7 +638,14 @@ export default function CompanyDemoApp() {
         setImpsPrimer(context || '');
         setImpsOpen(true);
       } else if (destination === 'loan_application') {
-        setLoanPrimer(context || '');
+        let primer = context || '';
+        if (company?.homeVariant === 'sbi') {
+          setHomeAiCloseSignal((n) => n + 1);
+          primer =
+            primer ||
+            'Customer opened SBI YONO home loan application. Guide them step by step — ask one question at a time and call set_field immediately when they answer so the form updates on screen.';
+        }
+        setLoanPrimer(primer);
         setLoanLosOpen(true);
       } else if (destination === 'create_deposit') {
         // Always land on the Term Deposit menu and force FD vs RD choice first.
@@ -657,7 +665,16 @@ export default function CompanyDemoApp() {
         setDepositPrimer(depositPrimerText);
         setDepositOpen(true);
       } else if (destination === 'transaction_history') {
-        openTxnHistory({ primer: context || '', dateFrom: null, dateTo: null });
+        if (company?.homeVariant === 'sbi') return;
+        const range =
+          dateFrom && dateTo
+            ? { dateFrom, dateTo }
+            : parseDateRangeFromUtterance(context || '');
+        openTxnHistory({
+          primer: context || '',
+          dateFrom: range?.dateFrom || null,
+          dateTo: range?.dateTo || null,
+        });
       } else if (destination === 'hotel_booking') {
         setHotelBookingOpen(true);
       } else if (destination === 'flight_booking') {
@@ -666,6 +683,9 @@ export default function CompanyDemoApp() {
         setDebitCardSubFlow(context || null);
         setDebitCardOpen(true);
       } else if (destination === 'credit_card') {
+        if (company?.homeVariant === 'sbi' && tryOpenSbiCreditCardPin()) {
+          return;
+        }
         const ctx = String(context || '').toLowerCase();
         let subFlow = null;
         if (ctx.includes('change_pin') || /\b(change|reset|update)\b.*\bpin\b/.test(ctx) || /\bpin\b.*\b(change|reset|update)\b/.test(ctx)) {
@@ -679,7 +699,7 @@ export default function CompanyDemoApp() {
         setCreditCardOpen(true);
       }
     },
-    [ensureFresh, session, refresh, openTxnHistory],
+    [ensureFresh, session, refresh, openTxnHistory, company?.homeVariant],
   );
 
   // Word-number vocabulary — STT engines sometimes transcribe spoken numbers
@@ -870,11 +890,18 @@ export default function CompanyDemoApp() {
       }
 
       if (match.destination === 'transaction_history') {
+        if (company?.homeVariant === 'sbi') return { text, match };
         openTxnHistory({
           dateFrom: match.dateFrom || null,
           dateTo: match.dateTo || null,
         });
         return { text, match };
+      }
+
+      if (match.destination === 'credit_card') {
+        if (company?.homeVariant === 'sbi' && tryOpenSbiCreditCardPin()) {
+          return { text, match };
+        }
       }
 
       // Every remaining destination (loan application, hotel/flight booking,
@@ -893,6 +920,7 @@ export default function CompanyDemoApp() {
       session,
       refresh,
       goHome,
+      company?.homeVariant,
     ],
   );
 
@@ -1153,15 +1181,6 @@ export default function CompanyDemoApp() {
             stopHandsFreeForSoloVoiceScreen();
             setHomeAiCloseSignal((n) => n + 1);
             setLoanLosOpen(true);
-          }}
-          onOpenDeposit={() => {
-            stopHandsFreeForSoloVoiceScreen();
-            setHomeAiCloseSignal((n) => n + 1);
-            setDepositOpen(true);
-          }}
-          onOpenTxnHistory={() => {
-            setHomeAiCloseSignal((n) => n + 1);
-            openTxnHistory();
           }}
           onNavigate={handleNavigate}
           navMode={voiceCommandMode}

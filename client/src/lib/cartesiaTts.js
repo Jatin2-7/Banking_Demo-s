@@ -218,6 +218,7 @@ export function cleanTextForTts(text) {
     .replace(/\p{Emoji_Presentation}/gu, '')
     .replace(/\p{Extended_Pictographic}/gu, '')
     .replace(/[✦•·★☆©®™°🙏💭]/g, '')
+    .replace(/\{\s*\}/g, '')
     .replace(/[*_`#~|]/g, '')
     .replace(/[—–]/g, ',')
     .replace(/[!？！]/g, '.')
@@ -240,6 +241,7 @@ export function textForTtsDisplay(raw) {
         if (t.startsWith('💭')) return false;
         if (/functions?\.\w+\s*\(/i.test(t)) return false;
         if (/navigate_to\s*\(/i.test(t)) return false;
+        if (/^\{\s*\}$/.test(t)) return false;
         return true;
       })
       .join(' '),

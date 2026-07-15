@@ -12,10 +12,17 @@ import DemoPanel from '../../components/DemoPanel.jsx';
 import DraggableVoiceFab from '../../shared/ui/DraggableVoiceFab.jsx';
 import { useCompanyAgents } from '../../shared/lib/companyAgents.js';
 import { DEFAULT_LANG } from '../../i18n/strings.js';
+import { parseLapFromUserSpeech } from './lib/moneyParse.js';
 import {
   agentStateToEmiPatch,
   emiToAgentState,
+  normalizeEmiFieldId,
+  normalizeEmiFieldValue,
+  parseEmiFromUserSpeech,
+  parseNavigationDestinationFromText,
+  resolveNavigationIntentFromSpeech,
   resolveOptimoNavigation,
+  scrollToEmiCalculator,
 } from './lib/navigation.js';
 
 const VOICE_PANEL_DOCK = 'bottom-28 left-4 right-4 sm:left-auto sm:right-8 sm:max-w-[400px]';
@@ -29,40 +36,51 @@ export default function OptimoHomeScreen() {
   const [consent, setConsent] = useState(true);
   const [emiValues, setEmiValues] = useState({ loanAmount: '', interestRate: '', tenureYears: '' });
   const [aiOpen, setAiOpen] = useState(false);
-  const [voiceAssistMode, setVoiceAssistMode] = useState(false);
+  const [voiceAssistMode, setVoiceAssistMode] = useState(true);
+  const [aiSession, setAiSession] = useState(0);
+  const [gestureListen, setGestureListen] = useState(false);
   const applyRef = useRef(null);
+  const lastUserTextRef = useRef('');
+
+  const openAssistant = useCallback(() => {
+    setGestureListen(true);
+    setAiOpen(true);
+  }, []);
 
   const goToDashboard = useCallback(() => {
     setView('dashboard');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const goToLap = useCallback((product = 'lap', prefill = {}) => {
+  const goToLap = useCallback((product = 'lap', prefill = {}, { startAssistant = false } = {}) => {
     setLapProduct(product);
     if (prefill && Object.keys(prefill).length > 0) {
       setForm((prev) => ({ ...prev, ...prefill }));
     }
     setView('lap');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (startAssistant) {
+      setAiOpen(true);
+      setAiSession((s) => s + 1);
+    }
   }, []);
 
   const handleNavigate = useCallback(
     (destination, context = '') => {
       const nav = resolveOptimoNavigation(destination, context);
+      if (nav.view === 'lap' && view === 'lap') return;
       if (nav.view === 'dashboard') {
         setView('dashboard');
         if (nav.scrollTo === 'emi') {
-          setTimeout(() => {
-            document.getElementById('emi-calculator')?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
+          setTimeout(scrollToEmiCalculator, 50);
         } else {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         return;
       }
-      goToLap(nav.product || 'lap');
+      goToLap(nav.product || 'lap', {}, { startAssistant: true });
     },
-    [goToLap],
+    [goToLap, view],
   );
 
   const handleAgentFormChange = useCallback(
@@ -74,12 +92,53 @@ export default function OptimoHomeScreen() {
         }
         return;
       }
-      const patch = agentStateToFormPatch(next);
+      const patch = agentStateToFormPatch(next, lastUserTextRef.current);
       if (Object.keys(patch).length > 0) {
         setForm((prev) => ({ ...prev, ...patch }));
       }
     },
     [view],
+  );
+
+  const handleUserMessage = useCallback(
+    (text) => {
+      lastUserTextRef.current = text;
+      const navDest = resolveNavigationIntentFromSpeech(text);
+      if (navDest) {
+        handleNavigate(navDest);
+      }
+
+      if (view === 'lap') {
+        const lapPatch = parseLapFromUserSpeech(text, form);
+        if (Object.keys(lapPatch).length > 0) {
+          setForm((prev) => ({ ...prev, ...lapPatch }));
+          return formToAgentState({ ...form, ...lapPatch });
+        }
+      }
+
+      if (view === 'dashboard') {
+        const speechPatch = parseEmiFromUserSpeech(text, emiValues);
+        if (Object.keys(speechPatch).length > 0) {
+          setEmiValues((prev) => ({ ...prev, ...speechPatch }));
+          const agentPatch = {};
+          if (speechPatch.loanAmount) agentPatch.loan_amount = speechPatch.loanAmount;
+          if (speechPatch.interestRate) agentPatch.interest_rate = speechPatch.interestRate;
+          if (speechPatch.tenureYears) agentPatch.tenure_years = speechPatch.tenureYears;
+          return agentPatch;
+        }
+      }
+      return false;
+    },
+    [view, emiValues, form, handleNavigate],
+  );
+
+  const handleAfterAssistantReply = useCallback(
+    (_userText, assistantText) => {
+      if (view !== 'dashboard') return;
+      const dest = parseNavigationDestinationFromText(assistantText);
+      if (dest) handleNavigate(dest);
+    },
+    [view, handleNavigate],
   );
 
   const handleAgentToolCall = useCallback(
@@ -89,20 +148,27 @@ export default function OptimoHomeScreen() {
         return;
       }
 
-      if (name === 'set_field' && args?.field_id) {
+      if (name === 'set_field') {
+        const rawFieldId = args?.field_id || args?.field;
+        if (!rawFieldId) return;
         if (view === 'dashboard') {
-          const emiPatch = agentStateToEmiPatch({ [args.field_id]: args.value });
+          const fieldId = normalizeEmiFieldId(rawFieldId);
+          const normalizedValue = normalizeEmiFieldValue(fieldId, args?.value);
+          scrollToEmiCalculator();
+          const emiPatch = agentStateToEmiPatch({ [fieldId]: normalizedValue });
           if (Object.keys(emiPatch).length > 0) {
             setEmiValues((prev) => ({ ...prev, ...emiPatch }));
           }
           return;
         }
-        const patch = agentStateToFormPatch({ [args.field_id]: args.value });
+        const patch = agentStateToFormPatch({ [rawFieldId]: args?.value }, lastUserTextRef.current);
         if (Object.keys(patch).length > 0) {
           setForm((prev) => ({ ...prev, ...patch }));
         }
         return;
       }
+
+      if (name === 'validate_form') return;
 
       if (view !== 'lap') return;
 
@@ -131,25 +197,41 @@ export default function OptimoHomeScreen() {
         : "Hello! I'm your Optimo Capital assistant. I can help you apply for a Loan Against Property, check eligibility, or use the EMI calculator. What would you like to do?";
 
   const voiceFab = !aiOpen ? (
-    <DraggableVoiceFab storageKey="optimo-capital-voice-fab" onClick={() => setAiOpen(true)} />
+    <DraggableVoiceFab storageKey="optimo-capital-voice-fab" onClick={openAssistant} />
   ) : null;
+
+  const agentPrimer =
+    view === 'lap'
+      ? 'The Loan Against Property application form is now open. Greet briefly, then ask for the customer mobile number as your first question.'
+      : null;
 
   const aiPanel = (
     <LoanAguiPanel
+      key={`optimo-ai-${view}-${aiSession}`}
       agentId={activeAgent}
       open={aiOpen}
       onClose={() => setAiOpen(false)}
       formValues={agentFormState}
       onFormChange={handleAgentFormChange}
       onToolCall={handleAgentToolCall}
-      voiceAssist={voiceAssistMode}
-      showReasoning={view === 'dashboard'}
-      navOnly={view === 'dashboard'}
+      onUserMessage={handleUserMessage}
+      onAfterAssistantReply={handleAfterAssistantReply}
+      voiceAssist
+      showReasoning
+      navOnly={false}
+      primer={agentPrimer}
+      gestureListen={gestureListen}
+      onGestureListenHandled={() => setGestureListen(false)}
       greeting={greeting}
       assistTitle="Optimo AI Assistant"
-      assistHint={view === 'lap' ? "Voice or text — I'll help complete your application." : 'Ask me to apply for a loan or calculate EMI.'}
+      assistHint={
+        view === 'lap'
+          ? "Voice or text — I'll fill the LAP form and submit when you're ready."
+          : 'Say "apply for loan" to open the application, or ask me to calculate EMI.'
+      }
       lang={lang}
       dockClassName={VOICE_PANEL_DOCK}
+      dockFixed
     />
   );
 
@@ -170,7 +252,7 @@ export default function OptimoHomeScreen() {
           emiValues={emiValues}
           onEmiChange={setEmiValues}
           onNavigateLap={goToLap}
-          onCheckEligibility={() => document.getElementById('emi-calculator')?.scrollIntoView({ behavior: 'smooth' })}
+          onCheckEligibility={scrollToEmiCalculator}
         />
       ) : (
         <LapApplicationScreen

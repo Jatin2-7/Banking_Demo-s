@@ -5,9 +5,40 @@ import LoanAguiPanel from './LoanAguiPanel.jsx';
 import MpinSheet from './MpinSheet.jsx';
 import RMHelpPrompt from './RMHelpPrompt.jsx';
 import { useRageDetect } from '../hooks/useRageDetect.js';
+import { useCompany } from '../context/CompanyContext.jsx';
+import { useCompanyAgent } from '../shared/lib/companyAgents.js';
 
-const HEADER_BLUE = '#0a3d62';
-const GOLD_BAR = '#f5c518';
+/** Per-company loan screen chrome — shared LOS form, different bank branding. */
+function getLoanBranding(homeVariant) {
+  if (homeVariant === 'dcb') {
+    return {
+      headerBg: '#1A237E',
+      accentBar: '#B3D4FC',
+      primary: '#1A237E',
+      brandMode: 'pill',
+      brandLabel: 'DCB BANK',
+      highlightRing: 'ring-[#B3D4FC]/90',
+      fieldFocus: 'focus:border-[#1A237E] focus:ring-1 focus:ring-[#1A237E]/30',
+      focusWithin: 'focus-within:border-[#1A237E] focus-within:ring-1 focus-within:ring-[#1A237E]/30',
+      fabBorder: '#B3D4FC',
+      fabBg: '#0D1642',
+      fabText: '#B3D4FC',
+    };
+  }
+  return {
+    headerBg: '#0a3d62',
+    accentBar: '#f5c518',
+    primary: '#0a3d62',
+    brandMode: 'banner',
+    bannerSrc: '/indian-bank-banner.png',
+    highlightRing: 'ring-bank-gold/90',
+    fieldFocus: 'focus:border-[#0a3d62] focus:ring-1 focus:ring-[#0a3d62]/30',
+    focusWithin: 'focus-within:border-[#0a3d62] focus-within:ring-1 focus-within:ring-[#0a3d62]/30',
+    fabBorder: null,
+    fabBg: null,
+    fabText: null,
+  };
+}
 
 function emptyForm() {
   return {
@@ -39,11 +70,11 @@ function formValidFromFv(fv) {
   );
 }
 
-function FormRow({ label, required, highlight, children }) {
+function FormRow({ label, required, highlight, highlightRing, children }) {
   return (
     <div
       className={`grid grid-cols-[minmax(0,44%)_1fr] items-center gap-x-2 border-b border-dashed border-slate-300 py-2.5 ${
-        highlight ? 'rounded-md ring-2 ring-bank-gold/90 ring-offset-1' : ''
+        highlight ? `rounded-md ring-2 ${highlightRing} ring-offset-1` : ''
       }`}
     >
       <label className="text-left text-[11px] font-medium leading-snug text-slate-900">
@@ -55,10 +86,10 @@ function FormRow({ label, required, highlight, children }) {
   );
 }
 
-function fieldClass(disabled) {
+function fieldClass(disabled, focusClass) {
   return [
     'w-full rounded border border-slate-400 bg-white px-2 py-1.5 text-[11px] text-slate-900 outline-none',
-    disabled ? 'cursor-not-allowed bg-slate-100 text-slate-600' : 'focus:border-[#0a3d62] focus:ring-1 focus:ring-[#0a3d62]/30',
+    disabled ? 'cursor-not-allowed bg-slate-100 text-slate-600' : focusClass,
   ].join(' ');
 }
 
@@ -145,7 +176,7 @@ function SelectListModal({ open, options, value, onPick, onClose, title }) {
   );
 }
 
-function GuidelinesModal({ open, onClose, title, rows, okLabel }) {
+function GuidelinesModal({ open, onClose, title, rows, okLabel, primary }) {
   return (
     <AnimatePresence>
       {open && (
@@ -164,7 +195,10 @@ function GuidelinesModal({ open, onClose, title, rows, okLabel }) {
             className="max-h-[85%] w-full max-w-[340px] overflow-hidden rounded border-2 border-slate-400 bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b-2 border-[#0a3d62] bg-[#0a3d62] px-2 py-2">
+            <div
+              className="flex items-center justify-between border-b-2 px-2 py-2"
+              style={{ borderColor: primary, backgroundColor: primary }}
+            >
               <span className="flex-1 text-center text-[12px] font-bold text-white">{title}</span>
               <button
                 type="button"
@@ -193,7 +227,8 @@ function GuidelinesModal({ open, onClose, title, rows, okLabel }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="min-w-[120px] rounded bg-[#0a3d62] px-6 py-2 text-[12px] font-bold uppercase tracking-wide text-white press"
+                className="min-w-[120px] rounded px-6 py-2 text-[12px] font-bold uppercase tracking-wide text-white press"
+                style={{ backgroundColor: primary }}
               >
                 {okLabel}
               </button>
@@ -219,6 +254,9 @@ const MODAL_FIELD = {
 };
 
 export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrimerProp, voiceAssist = false }) {
+  const company = useCompany();
+  const loanAgentId = useCompanyAgent('loanLos');
+  const branding = useMemo(() => getLoanBranding(company?.homeVariant), [company?.homeVariant]);
   const L = STRINGS[lang] || STRINGS.en;
   const J = STRINGS.en.loanLos;
 
@@ -439,7 +477,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
       className="absolute inset-0 z-[60] flex flex-col overflow-hidden bg-white"
       style={{ borderRadius: '44px' }}
     >
-      <div className="shrink-0 pt-10" style={{ backgroundColor: HEADER_BLUE }}>
+      <div className="shrink-0 pt-10" style={{ backgroundColor: branding.headerBg }}>
         <div className="flex items-center gap-2 px-2 pb-1">
           <button
             type="button"
@@ -452,15 +490,21 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
             </svg>
           </button>
           <div className="min-w-0 flex-1">
-            <img
-              src="/indian-bank-banner.png"
-              alt=""
-              className="mx-auto h-9 max-w-[200px] object-contain object-center pointer-events-none select-none"
-            />
+            {branding.brandMode === 'pill' ? (
+              <span className="mx-auto block w-fit rounded-lg bg-white/15 px-5 py-1.5 text-center text-[13px] font-bold tracking-wide text-white">
+                {branding.brandLabel}
+              </span>
+            ) : (
+              <img
+                src={branding.bannerSrc}
+                alt=""
+                className="mx-auto h-9 max-w-[200px] object-contain object-center pointer-events-none select-none"
+              />
+            )}
           </div>
           <div className="w-9 shrink-0" aria-hidden />
         </div>
-        <div className="h-1 w-full" style={{ backgroundColor: GOLD_BAR }} />
+        <div className="h-1 w-full" style={{ backgroundColor: branding.accentBar }} />
 
         <div className="px-2 pb-2 pt-2 text-white">
           <ProgressDots step={step} total={3} />
@@ -487,7 +531,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
           <>
             <p className="px-1 py-1 text-[9px] text-slate-500">{J.portalLabel}</p>
             <div className="rounded border border-slate-300 bg-white px-1">
-              <FormRow label={J.occupationType} required highlight={highlightField === 'occupation'}>
+              <FormRow label={J.occupationType} required highlightRing={branding.highlightRing} highlight={highlightField === 'occupation'}>
                 <button
                   type="button"
                   onClick={() => openModal('occupation')}
@@ -499,7 +543,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.subProduct} required highlight={highlightField === 'subProduct'}>
+              <FormRow label={J.subProduct} required highlightRing={branding.highlightRing} highlight={highlightField === 'subProduct'}>
                 <button
                   type="button"
                   onClick={() => openModal('subProduct')}
@@ -511,7 +555,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.purposeOfLoan} required highlight={highlightField === 'purposeLoan'}>
+              <FormRow label={J.purposeOfLoan} required highlightRing={branding.highlightRing} highlight={highlightField === 'purposeLoan'}>
                 <button
                   type="button"
                   onClick={() => openModal('purposeLoan')}
@@ -523,7 +567,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.variant} required highlight={highlightField === 'variant'}>
+              <FormRow label={J.variant} required highlightRing={branding.highlightRing} highlight={highlightField === 'variant'}>
                 <button
                   type="button"
                   onClick={() => openModal('variant')}
@@ -535,7 +579,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.facilityType} required highlight={highlightField === 'facility'}>
+              <FormRow label={J.facilityType} required highlightRing={branding.highlightRing} highlight={highlightField === 'facility'}>
                 <button
                   type="button"
                   onClick={() => openModal('facility')}
@@ -547,7 +591,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.proposalType} required highlight={highlightField === 'proposal'}>
+              <FormRow label={J.proposalType} required highlightRing={branding.highlightRing} highlight={highlightField === 'proposal'}>
                 <button
                   type="button"
                   onClick={() => openModal('proposal')}
@@ -560,12 +604,12 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                 </button>
               </FormRow>
               <FormRow label={J.interestType} required={false}>
-                <select className={fieldClass(true)} disabled value="floating">
+                <select className={fieldClass(true, branding.fieldFocus)} disabled value="floating">
                   <option value="floating">{J.interestFloating}</option>
                 </select>
               </FormRow>
-              <FormRow label={J.requestedAmount} required highlight={highlightField === 'loanAmount'}>
-                <div className="flex items-center gap-1 rounded border border-slate-400 bg-white px-2 py-1.5 focus-within:border-[#0a3d62] focus-within:ring-1 focus-within:ring-[#0a3d62]/30">
+              <FormRow label={J.requestedAmount} required highlightRing={branding.highlightRing} highlight={highlightField === 'loanAmount'}>
+                <div className={`flex items-center gap-1 rounded border border-slate-400 bg-white px-2 py-1.5 ${branding.focusWithin}`}>
                   <span className="text-[11px] font-semibold text-slate-600">₹</span>
                   <input
                     className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[11px] outline-none"
@@ -577,9 +621,9 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   />
                 </div>
               </FormRow>
-              <FormRow label={J.requestedTenure} required highlight={highlightField === 'tenureMonths'}>
+              <FormRow label={J.requestedTenure} required highlightRing={branding.highlightRing} highlight={highlightField === 'tenureMonths'}>
                 <input
-                  className={fieldClass()}
+                  className={fieldClass(false, branding.fieldFocus)}
                   inputMode="numeric"
                   value={fv.tenureMonths}
                   onChange={(e) =>
@@ -589,9 +633,9 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   placeholder={J.phTenure}
                 />
               </FormRow>
-              <FormRow label={J.processingBranch} required highlight={highlightField === 'branchPin'}>
+              <FormRow label={J.processingBranch} required highlightRing={branding.highlightRing} highlight={highlightField === 'branchPin'}>
                 <input
-                  className={fieldClass()}
+                  className={fieldClass(false, branding.fieldFocus)}
                   value={fv.branchPin}
                   onChange={(e) => setFv((p) => ({ ...p, branchPin: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
                   onBlur={(e) => { if (!/^\d{6}$/.test(e.target.value)) markInvalidField('branchPin'); }}
@@ -602,7 +646,8 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
             <button
               type="button"
               onClick={() => setProductOpen(true)}
-              className="mt-2 px-1 text-left text-[10px] font-semibold text-[#0a3d62] underline"
+              className="mt-2 px-1 text-left text-[10px] font-semibold underline"
+              style={{ color: branding.primary }}
             >
               {J.viewProductDetails}
             </button>
@@ -651,7 +696,8 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
             <button
               type="button"
               onClick={handleClose}
-              className="mt-6 min-w-[160px] rounded bg-[#0a3d62] py-2.5 text-[12px] font-bold text-white press"
+              className="mt-6 min-w-[160px] rounded py-2.5 text-[12px] font-bold text-white press"
+              style={{ backgroundColor: branding.primary }}
             >
               {J.doneHome}
             </button>
@@ -667,7 +713,20 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
             setAiPrimer(null);
             setAiOpen(true);
           }}
-          className="press-bright absolute bottom-[3.85rem] right-2 z-[86] flex h-11 w-11 items-center justify-center rounded-full border-2 border-bank-gold bg-bank-purpleDeep text-[11px] font-black text-bank-gold shadow-lg"
+          className={
+            branding.fabBorder
+              ? 'press-bright absolute bottom-[3.85rem] right-2 z-[86] flex h-11 w-11 items-center justify-center rounded-full border-2 text-[11px] font-black shadow-lg'
+              : 'press-bright absolute bottom-[3.85rem] right-2 z-[86] flex h-11 w-11 items-center justify-center rounded-full border-2 border-bank-gold bg-bank-purpleDeep text-[11px] font-black text-bank-gold shadow-lg'
+          }
+          style={
+            branding.fabBorder
+              ? {
+                  borderColor: branding.fabBorder,
+                  backgroundColor: branding.fabBg,
+                  color: branding.fabText,
+                }
+              : undefined
+          }
           aria-label={J.aiFabAria}
         >
           {J.aiFab}
@@ -680,7 +739,8 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
             type="button"
             onClick={onNext}
             disabled={step === 0 && !formValid}
-            className="rounded bg-[#0a3d62] px-8 py-2 text-[12px] font-bold text-white press disabled:cursor-not-allowed disabled:opacity-45"
+            className="rounded px-8 py-2 text-[12px] font-bold text-white press disabled:cursor-not-allowed disabled:opacity-45"
+            style={{ backgroundColor: branding.primary }}
           >
             {step === 0 ? J.next : 'Submit & Verify'}
           </button>
@@ -702,6 +762,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
         title={J.productModalTitle}
         rows={productRows}
         okLabel={J.guidelinesOk}
+        primary={branding.primary}
       />
 
       <MpinSheet
@@ -727,6 +788,7 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
       />
 
       <LoanAguiPanel
+        agentId={loanAgentId}
         open={aiOpen}
         onClose={() => {
           lastActivityRef.current = Date.now();

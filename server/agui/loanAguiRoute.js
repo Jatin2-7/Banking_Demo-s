@@ -7,6 +7,17 @@ import { streamSSQuickLoanRun } from './ssQuickLoanRunner.js';
 import { streamAbcdPersonalLoanRun } from './abcdPersonalLoanRunner.js';
 import { streamOptimoHomeAguiRun } from './optimoHomeAguiRunner.js';
 import { streamOptimoLapAguiRun } from './optimoLapAguiRunner.js';
+import { streamDcbGoldLoanRun } from './dcbGoldLoanRunner.js';
+import { streamSbiHomeLoanRun } from './sbiHomeLoanRunner.js';
+import { streamSbiHomeAguiRun } from './sbiHomeAguiRunner.js';
+import { streamKreditbeeArmRun } from './kreditbeeArmRunner.js';
+import { streamKreditbeeHomeAguiRun } from './kreditbeeHomeAguiRunner.js';
+import { streamIncredHomeAguiRun } from './incredHomeAguiRunner.js';
+import { streamIncredPersonalLoanRun } from './incredPersonalLoanRunner.js';
+import { streamEasemytripHomeAguiRun } from './easemytripHomeAguiRunner.js';
+import { streamEasemytripForexAguiRun } from './easemytripForexAguiRunner.js';
+import { streamEasemytripVisaAguiRun } from './easemytripVisaAguiRunner.js';
+import { streamEasemytripAirportAguiRun } from './easemytripAirportAguiRunner.js';
 import { LOAN_AGENT_ID } from './loanAgentConfig.js';
 import { ABCD_PERSONAL_LOAN_AGENT_ID } from './abcdPersonalLoanConfig.js';
 import { IMPS_AGENT_ID } from './impsAguiConfig.js';
@@ -16,6 +27,17 @@ import { TXN_HISTORY_AGENT_ID } from './txnHistoryAguiConfig.js';
 import { SS_QUICKLOAN_AGENT_ID } from './ssQuickLoanConfig.js';
 import { OPTIMO_HOME_AGENT_ID } from './optimoHomeAguiConfig.js';
 import { OPTIMO_LAP_AGENT_ID } from './optimoLapAguiConfig.js';
+import { KREDITBEE_ARM_AGENT_ID } from './kreditbeeArmConfig.js';
+import { KREDITBEE_HOME_AGENT_ID } from './kreditbeeHomeAguiConfig.js';
+import { DCB_GOLD_LOAN_AGENT_ID } from './dcbGoldLoanConfig.js';
+import { SBI_HOME_LOAN_AGENT_ID } from './sbiHomeLoanConfig.js';
+import { SBI_HOME_AGENT_ID } from './sbiHomeAguiConfig.js';
+import { INCRED_HOME_AGENT_ID } from './incredHomeAguiConfig.js';
+import { INCRED_PERSONAL_LOAN_AGENT_ID } from './incredPersonalLoanConfig.js';
+import { EASEMYTRIP_HOME_AGENT_ID } from './easemytripHomeAguiConfig.js';
+import { EASEMYTRIP_FOREX_AGENT_ID } from './easemytripForexAguiConfig.js';
+import { EASEMYTRIP_VISA_AGENT_ID } from './easemytripVisaAguiConfig.js';
+import { EASEMYTRIP_AIRPORT_AGENT_ID } from './easemytripAirportAguiConfig.js';
 
 const RUNNERS = {
   [LOAN_AGENT_ID]: streamLoanAguiRun,
@@ -27,6 +49,17 @@ const RUNNERS = {
   [ABCD_PERSONAL_LOAN_AGENT_ID]: streamAbcdPersonalLoanRun,
   [OPTIMO_HOME_AGENT_ID]: streamOptimoHomeAguiRun,
   [OPTIMO_LAP_AGENT_ID]: streamOptimoLapAguiRun,
+  [KREDITBEE_ARM_AGENT_ID]: streamKreditbeeArmRun,
+  [KREDITBEE_HOME_AGENT_ID]: streamKreditbeeHomeAguiRun,
+  [DCB_GOLD_LOAN_AGENT_ID]: streamDcbGoldLoanRun,
+  [SBI_HOME_LOAN_AGENT_ID]: streamSbiHomeLoanRun,
+  [SBI_HOME_AGENT_ID]: streamSbiHomeAguiRun,
+  [INCRED_HOME_AGENT_ID]: streamIncredHomeAguiRun,
+  [INCRED_PERSONAL_LOAN_AGENT_ID]: streamIncredPersonalLoanRun,
+  [EASEMYTRIP_HOME_AGENT_ID]: streamEasemytripHomeAguiRun,
+  [EASEMYTRIP_FOREX_AGENT_ID]: streamEasemytripForexAguiRun,
+  [EASEMYTRIP_VISA_AGENT_ID]: streamEasemytripVisaAguiRun,
+  [EASEMYTRIP_AIRPORT_AGENT_ID]: streamEasemytripAirportAguiRun,
 };
 
 export function handleLoanAguiPost(req, res) {

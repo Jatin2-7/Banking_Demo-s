@@ -100,9 +100,14 @@ export function dateToIso(d) {
   return `${y}-${m}-${day}`;
 }
 
-/** @param {string} dateStr e.g. "16 May 2026" */
+/** @param {string} dateStr e.g. "16 May 2026" or "15/06/2026" */
 export function parseStatementDate(dateStr) {
-  const m = String(dateStr || '').trim().match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+  const s = String(dateStr || '').trim();
+  const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slash) {
+    return new Date(Number(slash[3]), Number(slash[2]) - 1, Number(slash[1]));
+  }
+  const m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
   if (!m) return null;
   const month = MONTHS[m[2].toLowerCase()];
   if (month == null) return null;

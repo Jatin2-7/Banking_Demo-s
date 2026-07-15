@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { applyStateDelta, runAgent, LOAN_AGUI_AGENT_ID } from '../lib/aguiClient.js';
+import { applyStateDelta, runAgent, LOAN_AGUI_AGENT_ID, resolveApiBase } from '../lib/aguiClient.js';
+import ArmLiveDataFeed from '../companies/kreditbee/arm/components/ArmLiveDataFeed.jsx';
 // LOAN_AGUI_AGENT_ID is the default; callers may pass a different agentId prop.
 import { useSpeech } from '../hooks/useSpeech.js';
 import { useElevenSpeech } from '../hooks/useElevenSpeech.js';
@@ -64,6 +65,7 @@ function LoanAssistAvatar({ size = 24 }) {
  * @param {(next: Record<string, string>) => void} props.onFormChange
  * @param {(name: string, args: Record<string, unknown>) => void} [props.onToolCall]
  * @param {(text: string) => false | string | true} [props.onUserMessage] - Fired when the user sends voice/text (before the agent run). Return a period label string (or true) if handled locally (e.g. date filter applied).
+ * @param {boolean} [props.directHandledReply] - When true, onUserMessage string replies are shown verbatim (ARM/KYC).
  * @param {string} [props.greeting]
  * @param {string} [props.assistTitle]
  * @param {string} [props.assistHint]
@@ -79,6 +81,8 @@ export default function LoanAguiPanel({
   onFormChange,
   onToolCall,
   onUserMessage,
+  onAfterAssistantReply,
+  directHandledReply = false,
   greeting,
   assistTitle = 'Loan form assist',
   assistHint = 'Voice or text — your choice',
@@ -99,13 +103,22 @@ export default function LoanAguiPanel({
   chatFullscreen = false,
   voiceAssist = false,
   handsFree = false,
+  /** Arm mic immediately after open — must be set from a user click (e.g. voice FAB). */
+  gestureListen = false,
+  onGestureListenHandled,
+  /** When true, float a compact panel so the journey UI stays visible behind. */
+  overlayPeek = false,
+  liveFeed = null,
   /** Override default `bottom-[3.85rem]` when a bottom tab bar is present. */
   dockClassName = 'bottom-[3.85rem]',
+  /** Pin panel to the viewport (for full-page web demos that scroll). */
+  dockFixed = false,
 }) {
   // Auto-mic (listen → reply → auto-listen again) applies whenever either
   // `voiceAssist` (Loan/FD Voice Assist demo mode) or `handsFree` (e.g. Fund
   // Transfer, which is always hands-free like the UPI flow) is set.
   const autoMicMode = voiceAssist || handsFree;
+  const dockPosition = dockFixed ? 'fixed' : 'absolute';
   const [messages, setMessages] = useState(() => [
     {
       id: 'greet',
@@ -141,7 +154,13 @@ export default function LoanAguiPanel({
   browserSpeechRef.current = browserSpeech;
   const useEleven = ELEVENLABS_STT_ENABLED && elevenSpeech.supported;
   const useBrowserStt = !useEleven && browserSpeech.supported;
-  const micActive = useEleven ? elevenSpeech.listening : (useBrowserStt ? browserSpeech.listening : false);
+  const useActiveEleven = useEleven;
+  const useActiveBrowser = useBrowserStt;
+  const micActive = useActiveEleven
+    ? elevenSpeech.listening
+    : useActiveBrowser
+      ? browserSpeech.listening
+      : false;
   const handsFreeActive = navOnly && continuousVoiceActive;
   const showListening = handsFreeActive ? continuousListening : micActive;
   // While listening, prefer the real-time Web Speech interim text (continuousLiveTranscript)
@@ -151,6 +170,7 @@ export default function LoanAguiPanel({
     : '';
 
   const skipTtsRef = useRef(false);
+  const pendingNavigateRef = useRef(null);
 
   useEffect(() => {
     statusStepsRef.current = statusSteps;
@@ -182,8 +202,115 @@ export default function LoanAguiPanel({
 
   useEffect(() => {
     if (!useBrowserStt || !browserSpeech.error) return;
-    setVoiceBanner(`Speech: ${browserSpeech.error}`);
+    const err = String(browserSpeech.error);
+    const friendly =
+      err === 'not-allowed'
+        ? 'Allow microphone in Chrome (lock icon in address bar), then tap the bot again.'
+        : `Speech: ${err}`;
+    setVoiceBanner(friendly);
   }, [useBrowserStt, browserSpeech.error]);
+
+  const rearmMicTimerRef = useRef(null);
+  const clearRearmMicTimer = useCallback(() => {
+    if (rearmMicTimerRef.current) {
+      clearTimeout(rearmMicTimerRef.current);
+      rearmMicTimerRef.current = null;
+    }
+  }, []);
+
+  const armMic = useCallback((opts = {}) => {
+    if (!open || runningRef.current) return;
+    stopAudio();
+    if (useActiveEleven) {
+      if (elevenSpeech.listening) return;
+      elevenSpeech.start((text) => {
+        const t = String(text || '').trim();
+        if (t) {
+          setVoiceBanner(null);
+          void sendRef.current(t);
+        } else {
+          setVoiceBanner('No speech detected — speak clearly, then pause for 2 seconds.');
+          if (autoMicMode) {
+            clearRearmMicTimer();
+            rearmMicTimerRef.current = setTimeout(() => {
+              rearmMicTimerRef.current = null;
+              armMic();
+            }, 1400);
+          }
+        }
+      });
+      return;
+    }
+    if (useActiveBrowser) {
+      if (browserSpeech.listening) return;
+      browserSpeech.start((text) => {
+        const t = String(text || '').trim();
+        if (t) {
+          setVoiceBanner(null);
+          void sendRef.current(t);
+        } else if (autoMicMode) {
+          setVoiceBanner('No speech detected — try again.');
+          clearRearmMicTimer();
+          rearmMicTimerRef.current = setTimeout(() => {
+            rearmMicTimerRef.current = null;
+            armMic();
+          }, 1400);
+        }
+      });
+    }
+  }, [open, useActiveEleven, useActiveBrowser, elevenSpeech, browserSpeech, autoMicMode, clearRearmMicTimer, stopAudio]);
+
+  useEffect(() => {
+    if (!useEleven || !elevenSpeech.error) return;
+    const err = String(elevenSpeech.error);
+    const friendly =
+      err === 'empty_audio'
+        ? 'No speech detected — speak clearly, then pause for 2 seconds.'
+        : err === 'not-allowed'
+          ? 'Allow microphone in Chrome (lock icon in address bar), then tap the bot again.'
+          : err === 'backend_unreachable'
+            ? 'Cannot reach the backend — run npm run dev from the project root, then refresh.'
+          : err === 'stt_not_configured'
+            ? 'Speech API not configured on the server — check ELEVENLABS_API_KEY in .env.'
+          : err === 'stt_payment_required'
+            ? 'ElevenLabs speech billing issue — complete payment on elevenlabs.io, or type your commands in the chat box. The AGUI assistant still works via text.'
+          : err.startsWith('stt_') || err === 'stt_failed'
+            ? 'Server speech-to-text failed — type your command below. The AGUI assistant still works via text.'
+            : `Voice error: ${err}`;
+    setVoiceBanner(friendly);
+    if (autoMicMode && open && !runningRef.current && err !== 'not-allowed' && err !== 'stt_payment_required') {
+      clearRearmMicTimer();
+      rearmMicTimerRef.current = setTimeout(() => {
+        rearmMicTimerRef.current = null;
+        void (async () => {
+          await waitUntilTtsIdle();
+          armMic();
+        })();
+      }, 1600);
+    }
+  }, [useEleven, elevenSpeech.error, autoMicMode, open, armMic, clearRearmMicTimer]);
+
+  useEffect(() => () => clearRearmMicTimer(), [clearRearmMicTimer]);
+
+  useEffect(() => {
+    if (!open || navOnly) return undefined;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const base = resolveApiBase();
+        const url = base ? `${base}/api/health` : '/api/health';
+        const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+        if (!cancelled && !r.ok) {
+          setVoiceBanner('Backend not responding — run npm run dev from the project root.');
+        }
+      } catch {
+        if (!cancelled) {
+          setVoiceBanner('Cannot reach backend — start the server (npm run dev) and refresh this page.');
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, navOnly]);
 
   useEffect(() => {
     if (!open) {
@@ -200,22 +327,12 @@ export default function LoanAguiPanel({
       threadRef.current = tid();
       primerSent.current = false;
       setStatusSteps([]);
-    } else if (!suppressGreeting && (!autoMicMode || !primer)) {
-      // Speak greeting only after any ongoing TTS (e.g. routing status) finishes.
-      // Skipped when `suppressGreeting` is set (hands-free session start speaks
-      // its own greeting synchronously before the mic arms, avoiding a race
-      // where this delayed timer fires after the mic has already started).
-      // In hands-free auto-mic modes with a `primer`, the agent's own first
-      // structured response (triggered by the primer below) is the one that
-      // should play instead — speaking this static greeting too would create
-      // two overlapping voices. But when there's no primer, nothing else will
-      // ever prompt the conversation, so the greeting must still be spoken —
-      // otherwise the mic silently auto-arms with no audible cue and the
-      // "hands-free" session feels broken/inert.
+    } else if (!suppressGreeting && open) {
+      // Voice Assist: always speak the greeting so the user hears the first prompt.
       let cancelled = false;
       const t = setTimeout(async () => {
         await waitUntilTtsIdle();
-        if (!cancelled) speakText(greeting || "Let's fill this form together.");
+        if (!cancelled && !primer) speakText(greeting || "Let's fill this form together.");
       }, 300);
       return () => { cancelled = true; clearTimeout(t); };
     }
@@ -237,6 +354,14 @@ export default function LoanAguiPanel({
             onToolCall?.('apply_date_filter', patch.value);
             continue;
           }
+          if (patch.path === '/navigate_to' && patch.value) {
+            if (navOnlyRef.current) {
+              onToolCall?.('navigate_to', patch.value);
+            } else {
+              pendingNavigateRef.current = patch.value;
+            }
+            continue;
+          }
           const next = applyStateDelta(valuesRef.current, [patch]);
           valuesRef.current = next;
           onFormChange?.(next);
@@ -256,13 +381,24 @@ export default function LoanAguiPanel({
             args = {};
           }
           if (slot.name === 'navigate_to') {
-            skipTtsRef.current = true;
-            stopGlobalCartesiaTts();
             const routingStatus = statusStepsRef.current.at(-1)?.text || '';
-            onToolCall?.(slot.name, { ...args, routingStatus });
+            const payload = { ...args, routingStatus };
+            if (navOnlyRef.current) {
+              stopGlobalCartesiaTts();
+              onToolCall?.(slot.name, payload);
+              skipTtsRef.current = true;
+            } else {
+              pendingNavigateRef.current = payload;
+            }
           } else if (slot.name === 'apply_date_filter') {
             onToolCall?.(slot.name, args);
-          } else if (slot.name === 'request_field' || slot.name === 'set_field') {
+          } else if (
+            slot.name === 'request_field' ||
+            slot.name === 'set_field' ||
+            slot.name === 'select_option' ||
+            slot.name === 'submit_step' ||
+            slot.name === 'click_button'
+          ) {
             onToolCall?.(slot.name, args);
           }
         }
@@ -270,7 +406,14 @@ export default function LoanAguiPanel({
         const slot = toolCallReg.current[ev.tool_call_id];
         try {
           const data = JSON.parse(ev.content);
-          if (slot?.name === 'click_button' || slot?.name === 'validate_form' || slot?.name === 'submit_transfer' || slot?.name === 'submit_deposit') {
+          if (slot?.name === 'set_field' && data?.ok && data.field_id) {
+            const next = applyStateDelta(valuesRef.current, [
+              { op: 'replace', path: `/${data.field_id}`, value: String(data.value ?? '') },
+            ]);
+            valuesRef.current = next;
+            onFormChange?.(next);
+            onToolCall?.(slot.name, { field_id: data.field_id, value: data.value });
+          } else if (slot?.name === 'click_button' || slot?.name === 'validate_form' || slot?.name === 'submit_transfer' || slot?.name === 'submit_deposit') {
             onToolCall?.(slot.name, { tool_call_id: ev.tool_call_id, ...data });
           }
         } catch {
@@ -300,6 +443,10 @@ export default function LoanAguiPanel({
   onVoiceCommandRef.current = onVoiceCommand;
   const onUserMessageRef = useRef(onUserMessage);
   onUserMessageRef.current = onUserMessage;
+  const onAfterAssistantReplyRef = useRef(onAfterAssistantReply);
+  onAfterAssistantReplyRef.current = onAfterAssistantReply;
+  const directHandledReplyRef = useRef(directHandledReply);
+  directHandledReplyRef.current = directHandledReply;
   const continuousVoiceActiveRef = useRef(continuousVoiceActive);
   continuousVoiceActiveRef.current = continuousVoiceActive;
   const onAutoHideRef = useRef(onAutoHide);
@@ -365,12 +512,37 @@ export default function LoanAguiPanel({
 
       if (userMsg) {
         const handled = onUserMessageRef.current?.(userMsg.content);
-        if (handled) {
+        if (handled && typeof handled === 'object' && !Array.isArray(handled)) {
+          if (handled.deferNavigate) {
+            const reply =
+              typeof handled.reply === 'string' && handled.reply.trim()
+                ? handled.reply.trim()
+                : 'One moment…';
+            setMessages((prev) => [
+              ...prev,
+              userMsg,
+              { id: tid(), role: 'assistant', content: reply, pending: false },
+            ]);
+            runningRef.current = false;
+            void (async () => {
+              await speakText(reply);
+              await waitUntilTtsIdle();
+              onToolCall?.('navigate_to', handled.deferNavigate);
+            })();
+            return;
+          }
+          const next = { ...valuesRef.current, ...handled };
+          valuesRef.current = next;
+          onFormChange?.(next);
+        } else if (handled) {
           const handledText =
             typeof handled === 'string' && handled.trim() ? handled.trim() : '';
           // Date-filter path returns a period label; navigation intercepts return a full reply.
           const looksLikeNavReply =
-            /opening|redirect|navigat|pin|deposit|transfer|loan|card/i.test(handledText);
+            directHandledReplyRef.current ||
+            /opening|redirect|navigat|pin|deposit|transfer|loan|card|otp|email|aadhaar|kyc|thank|consent|please tell|what is your/i.test(
+              handledText,
+            );
           const reply = looksLikeNavReply
             ? handledText
             : `Done — showing transactions for ${handledText || 'the selected period'}. See the filtered list above.`;
@@ -380,7 +552,7 @@ export default function LoanAguiPanel({
             { id: tid(), role: 'assistant', content: reply, pending: false },
           ]);
           runningRef.current = false;
-          speakText(reply);
+          void speakText(reply);
           return;
         }
       }
@@ -434,10 +606,20 @@ export default function LoanAguiPanel({
         runningRef.current = false;
         setRunning(false);
         setMessages((prev) => prev.map((m) => (m.id === asstId ? { ...m, pending: false } : m)));
-        // Speak assistant reply — skip when redirecting (UPI/IMPS/loan takes over TTS)
+        if (userMsg?.content && collected.text) {
+          onAfterAssistantReplyRef.current?.(userMsg.content, collected.text);
+        }
         if (collected.text && !skipTtsRef.current) {
           const forTts = textForTtsDisplay(collected.text);
-          if (forTts) speakText(forTts);
+          if (forTts) {
+            await speakText(forTts);
+            await waitUntilTtsIdle();
+          }
+        }
+        if (pendingNavigateRef.current) {
+          const nav = pendingNavigateRef.current;
+          pendingNavigateRef.current = null;
+          onToolCall?.('navigate_to', nav);
         }
         skipTtsRef.current = false;
       }
@@ -447,6 +629,13 @@ export default function LoanAguiPanel({
 
   const sendRef = useRef(send);
   sendRef.current = send;
+
+  // Arm mic in the same user-gesture window as the voice FAB click.
+  useLayoutEffect(() => {
+    if (!open || !gestureListen) return;
+    armMic();
+    onGestureListenHandled?.();
+  }, [open, gestureListen, armMic, onGestureListenHandled]);
 
   useEffect(() => {
     if (!open || !primer || primerSent.current || running) return;
@@ -473,7 +662,7 @@ export default function LoanAguiPanel({
     const el = transcriptScrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [open, transcriptRows, running]);
+  }, [open, transcriptRows, running, liveFeed]);
 
   const toggleMic = () => {
     // Voice-to-Command: yellow mic must drive the SAME continuous session as the bot FAB.
@@ -493,28 +682,21 @@ export default function LoanAguiPanel({
     setVoiceBanner(null);
     stopAudio();
 
-    if (useEleven) {
+    if (useActiveEleven) {
       if (elevenSpeech.listening) {
         elevenSpeech.stop();
         return;
       }
-      elevenSpeech.start((text) => {
-        const t = String(text || '').trim();
-        if (!t) { setVoiceBanner('No words detected — speak closer to the mic and try again.'); return; }
-        void sendRef.current(t);
-      });
+      armMic();
       return;
     }
 
-    if (useBrowserStt) {
+    if (useActiveBrowser) {
       if (browserSpeech.listening) {
         browserSpeech.stop();
         return;
       }
-      browserSpeech.start((text) => {
-        const t = String(text || '').trim();
-        if (t) void sendRef.current(t);
-      });
+      armMic();
       return;
     }
 
@@ -546,19 +728,7 @@ export default function LoanAguiPanel({
       if (cancelled || runningRef.current || micActive || isTtsPlaying()) return;
       if (!open) return;
 
-      stopAudio();
-      if (useEleven) {
-        elevenSpeech.start((text) => {
-          const t = String(text || '').trim();
-          if (t) void sendRef.current(t);
-          else setVoiceBanner('No speech detected — speak closer to the mic and try again.');
-        });
-      } else if (useBrowserStt) {
-        browserSpeech.start((text) => {
-          const t = String(text || '').trim();
-          if (t) void sendRef.current(t);
-        });
-      }
+      armMic();
     })();
 
     return () => { cancelled = true; };
@@ -571,19 +741,10 @@ export default function LoanAguiPanel({
     if (!autoMicMode || !open || navOnly) return undefined;
     let cancelled = false;
     const t = setTimeout(async () => {
+      if (cancelled || runningRef.current || micActive) return;
+      await waitUntilTtsIdle();
       if (cancelled || runningRef.current || micActive || isTtsPlaying()) return;
-      stopAudio();
-      if (useEleven) {
-        elevenSpeech.start((text) => {
-          const t2 = String(text || '').trim();
-          if (t2) void sendRef.current(t2);
-        });
-      } else if (useBrowserStt) {
-        browserSpeech.start((text) => {
-          const t2 = String(text || '').trim();
-          if (t2) void sendRef.current(t2);
-        });
-      }
+      armMic();
     }, 2800);
     return () => {
       cancelled = true;
@@ -607,9 +768,17 @@ export default function LoanAguiPanel({
           className={
             chatFullscreen
               ? 'pointer-events-auto absolute inset-0 z-10 flex min-h-0 flex-col overflow-hidden bg-transparent text-white'
-              : `pointer-events-auto absolute ${dockClassName} left-2 right-2 z-[84] flex min-h-0 flex-col overflow-hidden rounded-2xl border border-bank-gold/50 bg-white/96 text-black shadow-[0_10px_32px_rgba(15,23,42,0.18)] backdrop-blur-md`
+              : overlayPeek
+                ? `pointer-events-auto ${dockPosition} ${dockClassName} z-[84] flex min-h-0 flex-col overflow-hidden rounded-t-2xl border border-bank-gold/50 border-b-0 bg-white/97 text-black shadow-[0_-10px_40px_rgba(15,23,42,0.2)] backdrop-blur-md`
+                : `pointer-events-auto ${dockPosition} ${dockClassName} left-2 right-2 z-[84] flex min-h-0 flex-col overflow-hidden rounded-2xl border border-bank-gold/50 bg-white/96 text-black shadow-[0_10px_32px_rgba(15,23,42,0.18)] backdrop-blur-md`
           }
-          style={chatFullscreen ? undefined : { height: panelH ? `${panelH}px` : 'min(34vh, 280px)' }}
+          style={
+            chatFullscreen
+              ? undefined
+              : overlayPeek
+                ? { height: panelH ? `${panelH}px` : 'min(38vh, 300px)' }
+                : { height: panelH ? `${panelH}px` : 'min(34vh, 280px)' }
+          }
         >
           {!chatFullscreen && (
           <>
@@ -670,9 +839,6 @@ export default function LoanAguiPanel({
             }
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            {messages.length <= 1 ? (
-              <p className={`text-[10px] leading-snug ${chatFullscreen ? 'text-white/55' : 'text-black'}`}>{assistHint}</p>
-            ) : null}
             {transcriptRows.map((m) => {
               const isUser = m.role === 'user';
               // Strip 💭 reasoning lines and raw function-call text from the visible transcript
@@ -682,6 +848,7 @@ export default function LoanAguiPanel({
                     .replace(/💭[^\n]*/g, '')          // remove 💭 reasoning lines
                     .replace(/functions?\.\w+\s*\([^)]*\)/gs, '') // remove functions.navigate_to(...)
                     .replace(/navigate_to\s*\(\s*\{[\s\S]*?\}\s*\)/gs, '') // alternate format
+                    .replace(/\{\s*"destination"\s*:\s*"[^"]+"\s*(?:,\s*"context"\s*:\s*"[^"]*")?\s*\}/g, '')
                     .trim()
                 : rawText.trim();
               const show = isUser ? text : text || (m.pending ? '…' : '');
@@ -704,6 +871,13 @@ export default function LoanAguiPanel({
                 </div>
               );
             })}
+            {liveFeed?.active ? (
+              <ArmLiveDataFeed {...liveFeed} variant="chat" />
+            ) : messages.length <= 1 ? (
+              <p className={`text-[10px] leading-snug ${chatFullscreen ? 'text-white/55' : 'text-black'}`}>
+                {assistHint}
+              </p>
+            ) : null}
           </div>
 
           {/* Reasoning / status ticker — home routing agent only */}

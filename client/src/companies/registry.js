@@ -2,9 +2,13 @@ import { abcdConfig } from './abcd/config.js';
 import { dcbConfig } from './dcb/config.js';
 import { indianBankConfig } from './indian-bank/config.js';
 import { optimoCapitalConfig } from './optimo-capital/config.js';
+import { kreditbeeConfig } from './kreditbee/config.js';
+import { sbiConfig } from './sbi/config.js';
+import { incredConfig } from './incred/config.js';
+import { easemytripConfig } from './easemytrip/config.js';
 
 /** All registered company demos — add a config + import here for each new client. */
-export const COMPANIES = [abcdConfig, optimoCapitalConfig, dcbConfig, indianBankConfig];
+export const COMPANIES = [abcdConfig, optimoCapitalConfig, dcbConfig, indianBankConfig, kreditbeeConfig, sbiConfig, incredConfig, easemytripConfig];
 
 /** @param {string} slug */
 export function getCompanyBySlug(slug) {

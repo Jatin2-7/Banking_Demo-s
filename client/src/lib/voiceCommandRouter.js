@@ -214,13 +214,18 @@ function correctSttTypos(q) {
 }
 
 /** Normalise an utterance for matching: lowercase + collapse whitespace + STT fixes. */
-function normalize(text) {
+export function normalizeVoiceCommandText(text) {
   const base = String(text || '')
     .toLowerCase()
     .replace(/[._,!?]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   return correctSttTypos(base);
+}
+
+/** @deprecated internal alias */
+function normalize(text) {
+  return normalizeVoiceCommandText(text);
 }
 
 /**

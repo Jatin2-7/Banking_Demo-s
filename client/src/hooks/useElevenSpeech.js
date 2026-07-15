@@ -30,10 +30,12 @@ import { resolveApiBase } from '../lib/aguiClient.js';
 
 const SILENCE_MS = 2200;       // pause length that ends an utterance
 const MIN_SPEECH_MS = 400;     // ignore very short blips before arming silence
+const MIN_RECORDING_MS = 900;  // never stop before this — avoids corrupt tiny clips
+const MIN_AUDIO_BYTES = 3500;  // reject clips too small for ElevenLabs
 const MAX_DURATION_MS = 15000; // hard cap so a stuck recorder can't run forever
-const SILENCE_THRESHOLD = 0.025; // RMS — raised so typical ambient/room noise doesn't trigger
-const VAD_STARTUP_MS = 300;    // ignore the first N ms after mic start (mic settle + echo tail)
-const SPEECH_ONSET_MS = 200;   // require this many ms of continuous loud audio to confirm speech
+const SILENCE_THRESHOLD = 0.02; // RMS — tuned for typical laptop mics in demo rooms
+const VAD_STARTUP_MS = 250;    // ignore the first N ms after mic start (mic settle + echo tail)
+const SPEECH_ONSET_MS = 150;   // require this many ms of continuous loud audio to confirm speech
 
 function pickMime() {
   if (typeof MediaRecorder === 'undefined') return null;
@@ -72,6 +74,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
   const vadStartTimeRef = useRef(0); // timestamp when the current VAD session started
   const onFinalRef = useRef(null);
   const abortedRef = useRef(false);
+  const recordingStartedAtRef = useRef(0);
   const langRef = useRef(lang);
 
   useEffect(() => {
@@ -131,6 +134,8 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
   const stopRecorder = useCallback(() => {
     const rec = recorderRef.current;
     if (rec && rec.state !== 'inactive') {
+      const elapsed = performance.now() - (recordingStartedAtRef.current || 0);
+      if (elapsed > 0 && elapsed < MIN_RECORDING_MS) return;
       try {
         rec.stop();
       } catch {
@@ -145,7 +150,10 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
         setError('not_supported');
         return;
       }
-      if (recorderRef.current) return; // already recording
+      if (recorderRef.current) {
+        if (recorderRef.current.state === 'inactive') recorderRef.current = null;
+        else return; // already recording
+      }
 
       abortedRef.current = false;
       onFinalRef.current = onFinal || null;
@@ -203,6 +211,10 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
         }
 
         const blob = new Blob(chunks, { type: effectiveMime });
+        if (blob.size < MIN_AUDIO_BYTES) {
+          setError('empty_audio');
+          return;
+        }
         const langCode = String(langRef.current || 'en')
           .split('-')[0]
           .toLowerCase();
@@ -215,18 +227,39 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
           });
           const data = await r.json().catch(() => ({}));
           if (!r.ok) {
-            setError(data?.error || `stt_${r.status}`);
+            const detail = String(data?.detail || data?.message || '');
+            if (
+              detail.includes('invalid_audio')
+              || detail.includes('invalid_content')
+              || detail.includes('corrupted')
+            ) {
+              setError('empty_audio');
+            } else if (r.status === 503) {
+              setError('stt_not_configured');
+            } else if (data?.error === 'stt_payment_required' || /payment_issue|payment_required/i.test(detail)) {
+              setError('stt_payment_required');
+            } else {
+              setError(data?.error || `stt_${r.status}`);
+            }
             return;
           }
           const finalText = String(data?.text || '').trim();
           setTranscript(finalText);
+          setError(null);
           if (finalText && onFinalRef.current) {
             const cb = onFinalRef.current;
             onFinalRef.current = null;
             cb(finalText);
+          } else if (!finalText) {
+            setError('empty_audio');
           }
         } catch (e) {
-          setError(e?.message || 'stt_failed');
+          const msg = String(e?.message || e || '');
+          if (/failed to fetch|network|load/i.test(msg)) {
+            setError('backend_unreachable');
+          } else {
+            setError('stt_failed');
+          }
         }
       };
 
@@ -332,6 +365,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
         setError(e?.message || 'recorder_start_failed');
         return;
       }
+      recordingStartedAtRef.current = performance.now();
       setListening(true);
     },
     [supported, cleanupTurn, stopRecorder],

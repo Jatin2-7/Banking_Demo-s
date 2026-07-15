@@ -6,7 +6,9 @@
   "description": "Voice-powered UPI payment demo (Indian Bank) — React + Express + Claude Haiku",
   "scripts": {
     "dev": "concurrently -n server,client -c blue,magenta \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "cd server && node index.js",
+    "kill-port": "powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 3001 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }\"",
+    "dev:clean": "npm run kill-port && npm run dev",
+    "dev:server": "cd server && node --watch index.js",
     "dev:client": "cd client && npm run dev",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
     "lint": "eslint \"server/**/*.js\" \"client/src/**/*.{js,jsx}\" \"tests/**/*.js\"",
