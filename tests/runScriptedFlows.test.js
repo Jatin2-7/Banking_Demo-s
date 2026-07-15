@@ -42,6 +42,7 @@ const FIX_DIR = path.join(__dirname, 'scripted-flows');
 
 const { processInput } = await import('../server/engine/engine.js');
 const { createSession } = await import('../server/engine/session.js');
+const { backend } = await import('../server/data/backend.js');
 
 function loadFixtures() {
   if (!fs.existsSync(FIX_DIR)) return [];
@@ -106,6 +107,7 @@ if (fixtures.length === 0) {
 
 for (const { file, data } of fixtures) {
   test(`${file} — ${data.name || 'unnamed'}`, async () => {
+    backend.reset();
     const session = createSession({ lang: data.lang || 'en' });
     intentQueue.length = 0;
 
