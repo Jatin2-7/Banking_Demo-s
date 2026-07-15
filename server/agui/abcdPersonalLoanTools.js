@@ -4,7 +4,7 @@ import {
   ABCD_PL_EMPLOYMENT,
 } from './abcdPersonalLoanConfig.js';
 
-function validateField(fieldId, raw, journeyStep = 'landing') {
+function validateField(fieldId, raw, _journeyStep = 'landing') {
   const value = raw == null ? '' : String(raw).trim();
   switch (fieldId) {
     case 'pan':

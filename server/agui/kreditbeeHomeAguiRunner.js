@@ -119,8 +119,6 @@ export async function streamKreditbeeHomeAguiRun(res, agentId, inputData, { sign
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
-
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');

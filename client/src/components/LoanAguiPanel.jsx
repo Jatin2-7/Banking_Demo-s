@@ -732,7 +732,6 @@ export default function LoanAguiPanel({
     })();
 
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoMicMode, open, running, micActive, ttsPlayingLocal, messages.length]);
 
   // Voice Assist: if greeting TTS never starts (or finishes instantly), still
@@ -750,7 +749,6 @@ export default function LoanAguiPanel({
       cancelled = true;
       clearTimeout(t);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoMicMode, open, navOnly]);
 
   return (

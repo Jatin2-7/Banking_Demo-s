@@ -217,7 +217,7 @@ export function cleanTextForTts(text) {
   return formatNumbersForTts(String(text || ''))
     .replace(/\p{Emoji_Presentation}/gu, '')
     .replace(/\p{Extended_Pictographic}/gu, '')
-    .replace(/[✦•·★☆©®™°🙏💭]/g, '')
+    .replace(/[✦•·★☆©®™°🙏💭]/gu, '')
     .replace(/\{\s*\}/g, '')
     .replace(/[*_`#~|]/g, '')
     .replace(/[—–]/g, ',')

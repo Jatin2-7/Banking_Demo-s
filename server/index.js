@@ -109,7 +109,7 @@ app.post(
 
     try {
       const t0 = Date.now();
-      let r = await callElevenLabs(null);
+      const r = await callElevenLabs(null);
       let ms = Date.now() - t0;
 
       if (!r.ok) {
@@ -181,7 +181,7 @@ function cleanForTts(text) {
   return text
     .replace(/\p{Emoji_Presentation}/gu, '')
     .replace(/\p{Extended_Pictographic}/gu, '')
-    .replace(/[✦•·★☆©®™°🙏]/g, '')
+    .replace(/[✦•·★☆©®™°🙏]/gu, '')
     .replace(/[*_`#~|]/g, '')
     .replace(/[—–]/g, ',')                       // em/en dash → pause
     .replace(/[!？！]/g, '.')

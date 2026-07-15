@@ -118,7 +118,7 @@ function coercePurposeOfLoan(raw) {
 function executeSbiHomeLoanTool(name, args, state) {
   if (name === 'set_field') {
     const field = args.field_id || args.field;
-    let value = args.value;
+    const value = args.value;
     if (!SBI_HOME_LOAN_FIELD_IDS.includes(field)) {
       return { result: { ok: false, error: `Unknown field: ${field}` }, statePatches: [] };
     }

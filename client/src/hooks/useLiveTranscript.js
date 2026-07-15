@@ -103,7 +103,6 @@ export function useLiveTranscript({ enabled = false, lang = 'en-IN' } = {}) {
       }
       setText('');
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, lang]);
 
   return text;

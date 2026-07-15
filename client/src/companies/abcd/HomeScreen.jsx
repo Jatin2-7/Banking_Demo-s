@@ -61,7 +61,6 @@ export default function AbcdHomeScreen({
     }
     setPanelKey((k) => k + 1);
     if (!navMode) onStopVoiceCommandSession?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navMode, voiceAssistMode]);
 
   const { containerProps: homeRageProps, dismiss: dismissHomeRage } = useRageDetect({

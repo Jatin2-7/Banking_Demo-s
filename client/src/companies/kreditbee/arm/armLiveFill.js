@@ -25,7 +25,6 @@ export async function animateDigitFill(onUpdate, fullValue, msPerDigit = 70) {
   const v = String(fullValue || '').replace(/\D/g, '');
   for (let i = 1; i <= v.length; i += 1) {
     onUpdate(v.slice(0, i));
-    // eslint-disable-next-line no-await-in-loop
     await sleep(msPerDigit);
   }
   return v;
