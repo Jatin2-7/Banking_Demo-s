@@ -13,7 +13,8 @@ function validateFieldValue(fieldId, raw) {
       if (value.length < 2) return 'Payee name must be at least 2 characters.';
       return null;
     case 'payeeAccountNo':
-      if (!/^\d{9,18}$/.test(value.replace(/\s/g, ''))) return 'Account number must be 9–18 digits.';
+      if (!/^\d{9,18}$/.test(value.replace(/\s/g, '')))
+        return 'Account number must be 9–18 digits.';
       return null;
     case 'ifsc':
       if (!/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(value.replace(/\s/g, '')))
@@ -23,7 +24,8 @@ function validateFieldValue(fieldId, raw) {
       if (value.length < 2) return 'Payee bank name must be at least 2 characters.';
       return null;
     case 'mobileNo':
-      if (!/^\d{10}$/.test(value.replace(/\s/g, ''))) return 'Mobile number must be exactly 10 digits.';
+      if (!/^\d{10}$/.test(value.replace(/\s/g, '')))
+        return 'Mobile number must be exactly 10 digits.';
       return null;
     case 'amount': {
       const n = Number(value);
@@ -59,7 +61,8 @@ export function impsOpenAiTools() {
       type: 'function',
       function: {
         name: 'validate_form',
-        description: 'Return missing required fields and validation errors for the current form state.',
+        description:
+          'Return missing required fields and validation errors for the current form state.',
         parameters: { type: 'object', properties: {} },
       },
     },
@@ -111,7 +114,10 @@ export function executeImpsTool(name, args, state) {
     const err = validateFieldValue(field_id, value);
     if (err) return { result: { ok: false, field_id, error: err }, statePatches: [] };
     state[field_id] = value;
-    return { result: { ok: true, field_id, value }, statePatches: [{ op: 'replace', path: `/${field_id}`, value }] };
+    return {
+      result: { ok: true, field_id, value },
+      statePatches: [{ op: 'replace', path: `/${field_id}`, value }],
+    };
   }
   if (name === 'validate_form') {
     return { result: runImpsValidateForm(state), statePatches: [] };

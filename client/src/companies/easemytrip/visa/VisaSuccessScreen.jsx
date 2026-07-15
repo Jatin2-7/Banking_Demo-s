@@ -10,12 +10,22 @@ export default function VisaSuccessScreen({ form, onBackHome, onTrackApplication
     <VisaShell onBack={onBackHome} showTabs={false}>
       <div className="flex flex-1 flex-col items-center px-6 py-8">
         <div className="relative mb-6 flex h-24 w-24 items-center justify-center">
-          <div className="absolute inset-0 rounded-full opacity-15" style={{ backgroundColor: EMT.green }} />
+          <div
+            className="absolute inset-0 rounded-full opacity-15"
+            style={{ backgroundColor: EMT.green }}
+          />
           <div
             className="flex h-16 w-16 items-center justify-center rounded-full"
             style={{ backgroundColor: EMT.green }}
           >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+            >
               <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -23,7 +33,8 @@ export default function VisaSuccessScreen({ form, onBackHome, onTrackApplication
 
         <h2 className="text-center text-[20px] font-bold text-emt-ink">Application Submitted!</h2>
         <p className="mt-2 text-center text-[13px] leading-relaxed text-emt-muted">
-          Your {dest.name} visa application has been submitted successfully. Track your progress anytime.
+          Your {dest.name} visa application has been submitted successfully. Track your progress
+          anytime.
         </p>
 
         <div className="mt-6 w-full rounded-2xl border border-emt-border bg-white p-4 shadow-sm">
@@ -53,7 +64,8 @@ export default function VisaSuccessScreen({ form, onBackHome, onTrackApplication
 
         <div className="mt-4 w-full rounded-xl px-4 py-3" style={{ backgroundColor: '#E8F5E9' }}>
           <p className="text-[11px] leading-relaxed" style={{ color: '#2E7D32' }}>
-            ✓ Documents received · Estimated processing: 5-7 business days · Track status in Bookings
+            ✓ Documents received · Estimated processing: 5-7 business days · Track status in
+            Bookings
           </p>
         </div>
 

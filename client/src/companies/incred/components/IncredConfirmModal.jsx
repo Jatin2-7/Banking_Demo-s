@@ -3,7 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { OrangeButton } from './IncredFormFields.jsx';
 import { INCRED } from '../theme.js';
 
-export default function IncredConfirmModal({ open, title, subtitle, rows, checkboxes, onClose, onEdit, onConfirm }) {
+export default function IncredConfirmModal({
+  open,
+  title,
+  subtitle,
+  rows,
+  checkboxes,
+  onClose,
+  onEdit,
+  onConfirm,
+}) {
   return (
     <AnimatePresence>
       {open && (
@@ -25,10 +34,24 @@ export default function IncredConfirmModal({ open, title, subtitle, rows, checkb
             <div className="mb-4 flex items-start justify-between">
               <div>
                 <h2 className="text-[17px] font-bold text-incred-ink">{title}</h2>
-                {subtitle && <p className="mt-1 text-[13px] font-semibold text-incred-ink">{subtitle}</p>}
+                {subtitle && (
+                  <p className="mt-1 text-[13px] font-semibold text-incred-ink">{subtitle}</p>
+                )}
               </div>
-              <button type="button" onClick={onClose} className="press text-incred-muted" aria-label="Close">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="press text-incred-muted"
+                aria-label="Close"
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
                 </svg>
               </button>
@@ -51,10 +74,20 @@ export default function IncredConfirmModal({ open, title, subtitle, rows, checkb
                   <label key={cb.id} className="flex items-start gap-2.5">
                     <span
                       className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm"
-                      style={{ backgroundColor: cb.checked ? INCRED.orange : 'white', border: cb.checked ? 'none' : `2px solid ${INCRED.border}` }}
+                      style={{
+                        backgroundColor: cb.checked ? INCRED.orange : 'white',
+                        border: cb.checked ? 'none' : `2px solid ${INCRED.border}`,
+                      }}
                     >
                       {cb.checked && (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="3"
+                        >
                           <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}

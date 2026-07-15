@@ -42,9 +42,24 @@ function formatDate(d) {
 }
 
 const MATURITY_OPTIONS = [
-  { id: 'renew', label: 'Renew Principal Amount', short: 'Renew Principal', desc: 'Your original deposit is renewed for the same tenure. Interest is credited separately.' },
-  { id: 'savings', label: 'Credit to Savings Account', short: 'Credit to Savings', desc: 'Principal and earned interest are credited to your savings account.' },
-  { id: 'linked', label: 'Transfer to Linked Account', short: 'Transfer to Linked', desc: 'The maturity amount is transferred to your linked bank account.' },
+  {
+    id: 'renew',
+    label: 'Renew Principal Amount',
+    short: 'Renew Principal',
+    desc: 'Your original deposit is renewed for the same tenure. Interest is credited separately.',
+  },
+  {
+    id: 'savings',
+    label: 'Credit to Savings Account',
+    short: 'Credit to Savings',
+    desc: 'Principal and earned interest are credited to your savings account.',
+  },
+  {
+    id: 'linked',
+    label: 'Transfer to Linked Account',
+    short: 'Transfer to Linked',
+    desc: 'The maturity amount is transferred to your linked bank account.',
+  },
 ];
 
 const PRODUCTS = [
@@ -105,7 +120,13 @@ function resolveDepositProduct(value) {
   return null;
 }
 
-export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrimer: aiPrimerProp, voiceAssist = false }) {
+export default function CreateDepositScreen({
+  onClose,
+  onNavigate,
+  lang,
+  aiPrimer: aiPrimerProp,
+  voiceAssist = false,
+}) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [phase, setPhase] = useState('select'); // select | form | returns | maturityInfo | mpin | success
   const [years, setYears] = useState(1);
@@ -336,7 +357,8 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
 
               {showRates && (
                 <div className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600">
-                  Up to <strong className="text-[#1A237E]">7.90% p.a.</strong> for 1-year tenure. Senior citizens may get additional benefits.
+                  Up to <strong className="text-[#1A237E]">7.90% p.a.</strong> for 1-year tenure.
+                  Senior citizens may get additional benefits.
                 </div>
               )}
 
@@ -347,9 +369,15 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
                       durationMode === 'duration' ? 'border-[#1A237E]' : 'border-slate-400'
                     }`}
                   >
-                    {durationMode === 'duration' && <span className="h-2 w-2 rounded-full bg-[#1A237E]" />}
+                    {durationMode === 'duration' && (
+                      <span className="h-2 w-2 rounded-full bg-[#1A237E]" />
+                    )}
                   </span>
-                  <button type="button" onClick={() => setDurationMode('duration')} className="text-[13px] font-semibold text-[#1A237E]">
+                  <button
+                    type="button"
+                    onClick={() => setDurationMode('duration')}
+                    className="text-[13px] font-semibold text-[#1A237E]"
+                  >
                     Deposit Duration
                   </button>
                 </label>
@@ -359,9 +387,15 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
                       durationMode === 'maturity' ? 'border-[#1A237E]' : 'border-slate-400'
                     }`}
                   >
-                    {durationMode === 'maturity' && <span className="h-2 w-2 rounded-full bg-[#1A237E]" />}
+                    {durationMode === 'maturity' && (
+                      <span className="h-2 w-2 rounded-full bg-[#1A237E]" />
+                    )}
                   </span>
-                  <button type="button" onClick={() => setDurationMode('maturity')} className="text-[13px] font-semibold text-[#1A237E]">
+                  <button
+                    type="button"
+                    onClick={() => setDurationMode('maturity')}
+                    className="text-[13px] font-semibold text-[#1A237E]"
+                  >
                     Maturity Date
                   </button>
                 </label>
@@ -379,7 +413,9 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
                       value={f.value}
                       min={0}
                       max={f.max}
-                      onChange={(e) => f.set(Math.min(f.max, Math.max(0, parseInt(e.target.value) || 0)))}
+                      onChange={(e) =>
+                        f.set(Math.min(f.max, Math.max(0, parseInt(e.target.value) || 0)))
+                      }
                       className={`${pinkField} text-center`}
                       aria-label={f.label}
                     />
@@ -395,7 +431,9 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
               {/* Estimated returns (shown after amount/tenure set) */}
               {phase === 'returns' || amount >= 1000 ? (
                 <div className="mb-3 rounded-xl bg-[#ECEFF5] px-3.5 py-3">
-                  <p className="text-[11px] font-bold tracking-wide text-[#5E35B1]">ESTIMATED RETURNS</p>
+                  <p className="text-[11px] font-bold tracking-wide text-[#5E35B1]">
+                    ESTIMATED RETURNS
+                  </p>
                   <div className="mt-2 space-y-1.5 text-[13px]">
                     <div className="flex justify-between text-[#1A237E]">
                       <span>Principal</span>
@@ -416,18 +454,24 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
                     <div className="my-1.5 border-t border-slate-300/80" />
                     <div className="flex justify-between">
                       <span className="text-[#1A237E]">Interest Earned</span>
-                      <span className="font-bold text-[#2E7D32]">{formatInr(Math.round(maturity.interest))}</span>
+                      <span className="font-bold text-[#2E7D32]">
+                        {formatInr(Math.round(maturity.interest))}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-semibold text-[#1A237E]">Maturity Value</span>
-                      <span className="font-bold text-[#2E7D32]">{formatInr(Math.round(maturity.amount))}</span>
+                      <span className="font-bold text-[#2E7D32]">
+                        {formatInr(Math.round(maturity.amount))}
+                      </span>
                     </div>
                   </div>
                 </div>
               ) : null}
 
               {/* Maturity instructions */}
-              <p className="mb-1 text-[12px] font-semibold text-[#1A237E]">Maturity Instructions*</p>
+              <p className="mb-1 text-[12px] font-semibold text-[#1A237E]">
+                Maturity Instructions*
+              </p>
               <div className="relative mb-2">
                 <button
                   type="button"
@@ -464,13 +508,17 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
 
               {phase === 'maturityInfo' && (
                 <div className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-3">
-                  <p className="text-[11px] font-bold tracking-wide text-[#1A237E]">WHAT HAPPENS AT MATURITY?</p>
+                  <p className="text-[11px] font-bold tracking-wide text-[#1A237E]">
+                    WHAT HAPPENS AT MATURITY?
+                  </p>
                   <div className="mt-2 grid grid-cols-[1fr_1.4fr] gap-x-2 gap-y-2 text-[10px]">
                     <p className="font-bold text-slate-500">OPTION</p>
                     <p className="font-bold text-slate-500">WHAT HAPPENS AT MATURITY</p>
                     {MATURITY_OPTIONS.map((opt) => (
                       <React.Fragment key={opt.id}>
-                        <p className={`font-bold ${maturityInstr === opt.id ? 'text-[#7C4DFF]' : 'text-[#1A237E]'}`}>
+                        <p
+                          className={`font-bold ${maturityInstr === opt.id ? 'text-[#7C4DFF]' : 'text-[#1A237E]'}`}
+                        >
                           {opt.short}
                         </p>
                         <p className="text-slate-600">{opt.desc}</p>
@@ -503,14 +551,21 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
               className="flex flex-col items-center px-6 pt-16 text-center"
             >
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#28A745] text-white shadow-lg">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
                   <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <h2 className="mt-5 text-[22px] font-bold text-[#1A237E]">Congratulations!</h2>
               <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
-                Your deposit request has been submitted successfully. You will receive a confirmation shortly. Thank
-                you for banking with DCB Bank.
+                Your deposit request has been submitted successfully. You will receive a
+                confirmation shortly. Thank you for banking with DCB Bank.
               </p>
               <button
                 type="button"
@@ -562,12 +617,19 @@ export default function CreateDepositScreen({ onClose, onNavigate, lang, aiPrime
                   }}
                 />
                 <div className="mt-5 border-t border-slate-100 pt-4">
-                  <p className="text-[11px] font-bold tracking-wide text-slate-500">DEPOSIT SUMMARY</p>
+                  <p className="text-[11px] font-bold tracking-wide text-slate-500">
+                    DEPOSIT SUMMARY
+                  </p>
                   <div className="mt-2 divide-y divide-slate-100">
                     {[
                       ['Amount', formatInr(amount)],
                       ['Interest Rate', `${rate.toFixed(2)}% p.a.`],
-                      ['Tenure', years === 1 && !months && !days ? '1 Year' : `${years}Y ${months}M ${days}D`],
+                      [
+                        'Tenure',
+                        years === 1 && !months && !days
+                          ? '1 Year'
+                          : `${years}Y ${months}M ${days}D`,
+                      ],
                       ['Maturity Value', formatInr(Math.round(maturity.amount))],
                     ].map(([k, v]) => (
                       <div key={k} className="flex justify-between py-2.5 text-[13px]">
@@ -691,7 +753,11 @@ function MpinInline({ onSuccess, onCancel }) {
           ),
         )}
       </div>
-      <button type="button" onClick={onCancel} className="mt-3 text-[12px] font-semibold text-slate-500">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="mt-3 text-[12px] font-semibold text-slate-500"
+      >
         Cancel
       </button>
     </div>

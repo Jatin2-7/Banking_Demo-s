@@ -55,7 +55,10 @@ function MoneyBagIllustration() {
 function SuccessIllustration() {
   return (
     <div className="relative mx-auto flex h-32 w-32 items-center justify-center">
-      <div className="absolute inset-0 rounded-full opacity-20" style={{ backgroundColor: INCRED.green }} />
+      <div
+        className="absolute inset-0 rounded-full opacity-20"
+        style={{ backgroundColor: INCRED.green }}
+      />
       <div
         className="flex h-24 w-24 items-center justify-center rounded-full"
         style={{ backgroundColor: INCRED.green }}
@@ -95,7 +98,10 @@ function EmploymentCard({ type, selected, onSelect }) {
           </svg>
         )}
       </div>
-      <span className="text-[13px] font-semibold" style={{ color: selected ? INCRED.orange : INCRED.muted }}>
+      <span
+        className="text-[13px] font-semibold"
+        style={{ color: selected ? INCRED.orange : INCRED.muted }}
+      >
         {type.label}
       </span>
     </button>
@@ -249,7 +255,11 @@ export default function IncredPersonalLoanScreen({
   }, [onRegisterApi]);
 
   const numOnly = (v, max) => v.replace(/\D/g, '').slice(0, max);
-  const panOnly = (v) => v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+  const panOnly = (v) =>
+    v
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 10);
 
   return (
     <motion.div
@@ -267,10 +277,14 @@ export default function IncredPersonalLoanScreen({
         <IncredProgressBar login={progress.login} basic={progress.basic} offer={progress.offer} />
       )}
 
-      <div className={`relative flex-1 overflow-y-auto no-scrollbar ${voicePanelOpen ? 'pb-36' : 'pb-28'}`}>
+      <div
+        className={`relative flex-1 overflow-y-auto no-scrollbar ${voicePanelOpen ? 'pb-36' : 'pb-28'}`}
+      >
         {form.phase === 'login_info' && (
           <div className="px-4 pt-4">
-            <h2 className="mb-4 text-[16px] font-bold text-incred-ink">Enter details to check your eligibility</h2>
+            <h2 className="mb-4 text-[16px] font-bold text-incred-ink">
+              Enter details to check your eligibility
+            </h2>
 
             <div className="mb-4">
               <FieldLabel>PAN card number</FieldLabel>
@@ -307,7 +321,11 @@ export default function IncredPersonalLoanScreen({
 
             <div className="mb-4">
               <FieldLabel>Gender</FieldLabel>
-              <GenderRadio value={form.gender} onChange={(v) => set({ gender: v })} options={GENDER_OPTIONS} />
+              <GenderRadio
+                value={form.gender}
+                onChange={(v) => set({ gender: v })}
+                options={GENDER_OPTIONS}
+              />
             </div>
 
             <div className="mb-4">
@@ -350,7 +368,11 @@ export default function IncredPersonalLoanScreen({
 
             <div className="mb-4">
               <FieldLabel>Gender</FieldLabel>
-              <GenderRadio value={form.gender} onChange={(v) => set({ gender: v })} options={GENDER_OPTIONS} />
+              <GenderRadio
+                value={form.gender}
+                onChange={(v) => set({ gender: v })}
+                options={GENDER_OPTIONS}
+              />
             </div>
 
             <div className="mb-4">
@@ -366,7 +388,8 @@ export default function IncredPersonalLoanScreen({
 
             <div className="mb-4 space-y-3">
               <CheckboxRow checked={form.ndncConsent} onChange={(v) => set({ ndncConsent: v })}>
-                I, hereby authorise InCred to contact me via Calls overriding my registry on the NDNC/NCPR.
+                I, hereby authorise InCred to contact me via Calls overriding my registry on the
+                NDNC/NCPR.
               </CheckboxRow>
               <CheckboxRow checked={form.smsConsent} onChange={(v) => set({ smsConsent: v })}>
                 <span>
@@ -421,7 +444,9 @@ export default function IncredPersonalLoanScreen({
 
         {form.phase === 'eligibility' && (
           <div className="px-4 pt-4">
-            <h2 className="mb-4 text-[16px] font-bold text-incred-ink">Enter details to check your eligibility</h2>
+            <h2 className="mb-4 text-[16px] font-bold text-incred-ink">
+              Enter details to check your eligibility
+            </h2>
 
             <div className="mb-4">
               <FieldLabel>Marital status</FieldLabel>
@@ -477,19 +502,24 @@ export default function IncredPersonalLoanScreen({
               <SuccessIllustration />
               <h2 className="mt-6 text-[22px] font-bold text-incred-ink">Application Submitted!</h2>
               <p className="mt-3 text-[14px] leading-relaxed text-incred-muted">
-                Your personal loan application has been successfully submitted for review. We will get back to you
-                shortly.
+                Your personal loan application has been successfully submitted for review. We will
+                get back to you shortly.
               </p>
 
-              <div className="mt-6 w-full rounded-2xl p-5 text-left" style={{ backgroundColor: INCRED.peach }}>
+              <div
+                className="mt-6 w-full rounded-2xl p-5 text-left"
+                style={{ backgroundColor: INCRED.peach }}
+              >
                 <p className="text-[14px] font-bold text-incred-ink">What happens next?</p>
                 <p className="mt-2 text-[13px] leading-relaxed text-incred-ink">
                   Application Reference:{' '}
-                  <span className="font-bold">{form.applicationRef || generateApplicationRef()}</span>
+                  <span className="font-bold">
+                    {form.applicationRef || generateApplicationRef()}
+                  </span>
                 </p>
                 <p className="mt-2 text-[13px] leading-relaxed text-incred-muted">
-                  Our team is reviewing your documents. You can track your application status in the InCred mobile
-                  app. Approval typically takes 24–48 hours.
+                  Our team is reviewing your documents. You can track your application status in the
+                  InCred mobile app. Approval typically takes 24–48 hours.
                 </p>
               </div>
             </div>
@@ -539,7 +569,10 @@ export default function IncredPersonalLoanScreen({
         title="Please confirm your details"
         rows={[
           { label: 'PAN Card', value: form.pan || '—' },
-          { label: 'Date of birth', value: formatDobLong(form.dobDay, form.dobMonth, form.dobYear) || '—' },
+          {
+            label: 'Date of birth',
+            value: formatDobLong(form.dobDay, form.dobMonth, form.dobYear) || '—',
+          },
           { label: 'Pincode', value: form.pincode || '—' },
         ]}
         onClose={() => set({ confirmModal: null })}
@@ -552,17 +585,34 @@ export default function IncredPersonalLoanScreen({
         title="Please confirm your details"
         subtitle="You will not be able to edit this again"
         rows={[
-          { label: 'Employment type', value: form.employmentType === 'salaried' ? 'Salaried' : 'Business' },
+          {
+            label: 'Employment type',
+            value: form.employmentType === 'salaried' ? 'Salaried' : 'Business',
+          },
           { label: 'Company name', value: form.companyName || '—' },
           {
             label: 'Net Monthly Income',
-            value: form.netMonthlyIncome ? `₹${Number(form.netMonthlyIncome).toLocaleString('en-IN')}` : '—',
+            value: form.netMonthlyIncome
+              ? `₹${Number(form.netMonthlyIncome).toLocaleString('en-IN')}`
+              : '—',
           },
         ]}
         checkboxes={[
-          { id: 'ckyc', checked: form.ckycConsent, label: 'I authorize InCred to fetch my KYC data from CKYC registry.' },
-          { id: 'credit', checked: form.creditReportConsent, label: 'I authorize InCred to fetch my detailed credit report.' },
-          { id: 'household', checked: form.householdIncomeConsent, label: 'I confirm that my household income is more than 3 lakhs per year' },
+          {
+            id: 'ckyc',
+            checked: form.ckycConsent,
+            label: 'I authorize InCred to fetch my KYC data from CKYC registry.',
+          },
+          {
+            id: 'credit',
+            checked: form.creditReportConsent,
+            label: 'I authorize InCred to fetch my detailed credit report.',
+          },
+          {
+            id: 'household',
+            checked: form.householdIncomeConsent,
+            label: 'I confirm that my household income is more than 3 lakhs per year',
+          },
         ]}
         onClose={() => set({ confirmModal: null })}
         onEdit={() => set({ confirmModal: null })}

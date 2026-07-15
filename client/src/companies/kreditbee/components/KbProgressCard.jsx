@@ -50,7 +50,14 @@ export default function KbProgressCard({ progress = 25 }) {
                   style={step.status === 'active' ? { backgroundColor: KB.yellow } : undefined}
                 >
                   {step.status === 'done' ? (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="3"
+                    >
                       <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : step.status === 'active' ? (

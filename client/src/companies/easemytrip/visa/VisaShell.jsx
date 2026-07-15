@@ -59,7 +59,14 @@ export default function VisaShell({ title = 'Visa', onBack, children, showTabs =
       <header className="shrink-0 bg-white px-3 py-2.5">
         <div className="flex items-center justify-between">
           <button type="button" onClick={onBack} className="press flex items-center gap-1">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#000"
+              strokeWidth="2.5"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span className="text-[15px] font-semibold text-black">{title}</span>
@@ -89,9 +96,7 @@ export function OrangeButton({ children, onClick, className = '', disabled = fal
 
 export function PaymentLogos() {
   return (
-    <div
-      className="flex items-center gap-3 rounded-xl border border-emt-border bg-white px-4 py-3"
-    >
+    <div className="flex items-center gap-3 rounded-xl border border-emt-border bg-white px-4 py-3">
       <span className="text-[11px] font-medium text-emt-muted">We Accept:</span>
       <div className="flex flex-1 items-center justify-around gap-1">
         <span className="text-[9px] font-bold text-[#EB001B]">●●</span>

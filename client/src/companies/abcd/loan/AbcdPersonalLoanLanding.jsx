@@ -47,11 +47,7 @@ function BenefitTile({ icon, label }) {
   );
 }
 
-export default function AbcdPersonalLoanLanding({
-  pan,
-  onPanChange,
-  onOpenCalculators,
-}) {
+export default function AbcdPersonalLoanLanding({ pan, onPanChange, onOpenCalculators }) {
   return (
     <div className="pb-4">
       {/* Hero */}
@@ -74,8 +70,8 @@ export default function AbcdPersonalLoanLanding({
         </div>
 
         <p className="mt-4 text-[18px] font-bold leading-snug">
-          Apply for an Instant Personal Loan Up to{' '}
-          <span className="text-[#FFD54F]">₹15 Lakh</span>, in Minutes!
+          Apply for an Instant Personal Loan Up to <span className="text-[#FFD54F]">₹15 Lakh</span>,
+          in Minutes!
         </p>
 
         <p className="mt-4 text-[12px] font-semibold text-white/90">Benefits and Features</p>
@@ -119,12 +115,26 @@ export default function AbcdPersonalLoanLanding({
         </div>
 
         <SectionTitle>Rates and Charges</SectionTitle>
-        <RateRow icon={<IconLoanAmount />} title="Loan Amount" subtitle="Min. ₹5,000 and Max. 15 Lakhs" />
+        <RateRow
+          icon={<IconLoanAmount />}
+          title="Loan Amount"
+          subtitle="Min. ₹5,000 and Max. 15 Lakhs"
+        />
         <RateRow icon={<IconTenure />} title="Repayment Tenure" subtitle="6 months to 60 months" />
-        <RateRow icon={<IconRateTag />} title="Rate of Interest" subtitle="10.99% to 30 per annum" />
-        <RateRow icon={<IconProcessingFee />} title="Processing Fees:" subtitle="1.18% - 4.13% of Loan amount incl. GST." />
+        <RateRow
+          icon={<IconRateTag />}
+          title="Rate of Interest"
+          subtitle="10.99% to 30 per annum"
+        />
+        <RateRow
+          icon={<IconProcessingFee />}
+          title="Processing Fees:"
+          subtitle="1.18% - 4.13% of Loan amount incl. GST."
+        />
 
-        <h3 className="mt-4 text-[15px] font-bold text-[#1A1A1A]">Financial tools &amp; calculators</h3>
+        <h3 className="mt-4 text-[15px] font-bold text-[#1A1A1A]">
+          Financial tools &amp; calculators
+        </h3>
         <div
           className="mt-2 flex items-center gap-3 rounded-2xl px-3 py-3"
           style={{ background: 'linear-gradient(90deg, #FFF8E1 0%, #FFFDE7 100%)' }}
@@ -148,7 +158,9 @@ export default function AbcdPersonalLoanLanding({
           className="mt-3 flex w-full items-center gap-3 rounded-2xl bg-[#F3E5F5] px-3 py-3 text-left press"
         >
           <span className="text-[24px]">💬</span>
-          <span className="flex-1 text-[13px] font-semibold text-[#374151]">Frequently asked questions</span>
+          <span className="flex-1 text-[13px] font-semibold text-[#374151]">
+            Frequently asked questions
+          </span>
           <span className="text-[#C41E24]">›</span>
         </button>
 

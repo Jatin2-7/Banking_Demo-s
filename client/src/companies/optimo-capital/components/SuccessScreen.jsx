@@ -7,7 +7,10 @@ export default function SuccessScreen() {
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: OPTIMO.bg }}>
       <OptimoHeader />
 
-      <div className="relative mx-auto flex flex-1 flex-col items-center justify-center px-6 py-14" style={{ maxWidth: CONTENT_MAX_W }}>
+      <div
+        className="relative mx-auto flex flex-1 flex-col items-center justify-center px-6 py-14"
+        style={{ maxWidth: CONTENT_MAX_W }}
+      >
         <div className="relative mx-auto w-full max-w-xl text-center pt-2">
           <p style={{ fontFamily: FONTS.body, fontSize: 20, fontWeight: 500, color: OPTIMO.navy }}>
             Your Application for
@@ -46,9 +49,12 @@ export default function SuccessScreen() {
             </div>
           </div>
 
-          <p className="mt-10" style={{ fontFamily: FONTS.body, fontSize: 19, fontWeight: 500, color: OPTIMO.navy }}>
-            We will{' '}
-            <span style={{ color: OPTIMO.orange, fontWeight: 700 }}>call you</span> from this number
+          <p
+            className="mt-10"
+            style={{ fontFamily: FONTS.body, fontSize: 19, fontWeight: 500, color: OPTIMO.navy }}
+          >
+            We will <span style={{ color: OPTIMO.orange, fontWeight: 700 }}>call you</span> from
+            this number
           </p>
 
           <p
@@ -80,7 +86,12 @@ export default function SuccessScreen() {
 
           <p
             className="mt-10 text-center"
-            style={{ fontFamily: FONTS.body, fontSize: 12, lineHeight: 1.6, color: OPTIMO.disclaimer }}
+            style={{
+              fontFamily: FONTS.body,
+              fontSize: 12,
+              lineHeight: 1.6,
+              color: OPTIMO.disclaimer,
+            }}
           >
             *You can save this number or call for any queries regarding your inquiries.
           </p>

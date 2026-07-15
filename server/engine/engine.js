@@ -162,7 +162,11 @@ async function doTranscript(session, text) {
     session.lang = intent.language;
   }
 
-  if (intent?.error === 'llm_unavailable' || intent?.error === 'llm_quota' || intent?.error === 'llm_auth') {
+  if (
+    intent?.error === 'llm_unavailable' ||
+    intent?.error === 'llm_quota' ||
+    intent?.error === 'llm_auth'
+  ) {
     speak(session, tm(currentManifest(session), session.lang, intent.error));
     return session;
   }

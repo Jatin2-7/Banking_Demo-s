@@ -34,7 +34,10 @@ const NEXT_FIELD_PROMPTS = [
   { key: 'propertyType', label: 'property type' },
   { key: 'propertyStatus', label: 'property status' },
   { key: 'repaymentMode', label: 'repayment mode — SI or NACH' },
-  { key: 'capitaliseInterest', label: 'whether to capitalise interest during moratorium (yes or no)' },
+  {
+    key: 'capitaliseInterest',
+    label: 'whether to capitalise interest during moratorium (yes or no)',
+  },
 ];
 
 function normalize(text) {
@@ -50,7 +53,9 @@ function normalize(text) {
 }
 
 function parseIndianAmount(fragment) {
-  const s = String(fragment || '').toLowerCase().replace(/[,₹\s]/g, '');
+  const s = String(fragment || '')
+    .toLowerCase()
+    .replace(/[,₹\s]/g, '');
   if (!s) return null;
 
   const crore = s.match(/(\d+(?:\.\d+)?)\s*crore/);
@@ -87,7 +92,10 @@ function matchFromList(text, options) {
     if (t.includes(key) || key.includes(t)) return opt;
   }
   for (const opt of options) {
-    const tokens = opt.toLowerCase().split(/[\s/]+/).filter((w) => w.length > 3);
+    const tokens = opt
+      .toLowerCase()
+      .split(/[\s/]+/)
+      .filter((w) => w.length > 3);
     if (tokens.some((tok) => t.includes(tok))) return opt;
   }
   return null;
@@ -129,7 +137,11 @@ function matchPurposeOfLoan(t) {
   if (/\bplot\b/.test(t) && /\b(purchase|buy)\b/.test(t)) {
     return 'Purchase Of A Plot For Construction Of A House';
   }
-  if (/\bold\b/.test(t) && /\b(flat|house|property|home)\b/.test(t) && !/\bnew\s*\/?\s*old\b/.test(t)) {
+  if (
+    /\bold\b/.test(t) &&
+    /\b(flat|house|property|home)\b/.test(t) &&
+    !/\bnew\s*\/?\s*old\b/.test(t)
+  ) {
     return 'Purchase Of Old House / Flat';
   }
   if (/\bnew\b/.test(t) && /\b(flat|house|property|home)\b/.test(t)) {
@@ -200,7 +212,9 @@ function describeFilled(fields) {
     grossIncome: 'gross income',
     netIncome: 'net income',
   };
-  return Object.keys(fields).map((k) => labels[k] || k).join(', ');
+  return Object.keys(fields)
+    .map((k) => labels[k] || k)
+    .join(', ');
 }
 
 /**
@@ -223,14 +237,22 @@ export function parseSbiHomeLoanInput(text, formState = {}) {
   }
 
   const purpose = matchPurposeOfLoan(t);
-  if (purpose && !merged.purposeOfLoan && (merged.loanPurposeCategory || fields.loanPurposeCategory)) {
+  if (
+    purpose &&
+    !merged.purposeOfLoan &&
+    (merged.loanPurposeCategory || fields.loanPurposeCategory)
+  ) {
     fields.purposeOfLoan = purpose;
     merged.purposeOfLoan = purpose;
   }
 
   const propertyValue =
-    extractLabeledAmount(raw, ['property value', 'property worth', 'property cost', 'value of property']) ||
-    (/\bproperty\b/.test(t) ? parseIndianAmount(t) : null);
+    extractLabeledAmount(raw, [
+      'property value',
+      'property worth',
+      'property cost',
+      'value of property',
+    ]) || (/\bproperty\b/.test(t) ? parseIndianAmount(t) : null);
   if (propertyValue && !merged.propertyValue) {
     fields.propertyValue = propertyValue;
     merged.propertyValue = propertyValue;
@@ -249,7 +271,11 @@ export function parseSbiHomeLoanInput(text, formState = {}) {
   }
 
   const propertyType = matchPropertyType(t);
-  if (propertyType && !merged.propertyType && /\b(builder|rera|tie[\s-]?up|self[\s-]?constructed|preferred)\b/.test(t)) {
+  if (
+    propertyType &&
+    !merged.propertyType &&
+    /\b(builder|rera|tie[\s-]?up|self[\s-]?constructed|preferred)\b/.test(t)
+  ) {
     fields.propertyType = propertyType;
     merged.propertyType = propertyType;
   }
@@ -281,7 +307,9 @@ export function parseSbiHomeLoanInput(text, formState = {}) {
     merged.employmentType = employmentType;
   }
 
-  const incomeMatch = raw.match(/(?:gross|net)\s*(?:monthly\s*)?income[^0-9]{0,12}(\d[\d.,\s]*(?:lakh|crore)?)/i);
+  const incomeMatch = raw.match(
+    /(?:gross|net)\s*(?:monthly\s*)?income[^0-9]{0,12}(\d[\d.,\s]*(?:lakh|crore)?)/i,
+  );
   if (incomeMatch) {
     const amt = parseIndianAmount(incomeMatch[1]);
     if (amt) {

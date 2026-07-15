@@ -7,7 +7,8 @@ export const dcbConfig = {
   shortName: 'DCB',
   platform: 'mobile',
   status: 'active',
-  description: 'DCB mobile banking — navy/light-blue home, service grid, voice concierge, and shared journeys.',
+  description:
+    'DCB mobile banking — navy/light-blue home, service grid, voice concierge, and shared journeys.',
   theme: {
     primary: '#1A237E',
     primaryDark: '#0D1642',

@@ -50,17 +50,20 @@ export function useSpeech({ lang = 'en-IN' } = {}) {
     }
   }, []);
 
-  const armStopTimer = useCallback((ms) => {
-    clearSilenceTimer();
-    silenceTimerRef.current = setTimeout(() => {
-      silenceTimerRef.current = null;
-      try {
-        if (recRef.current && onFinalRef.current) recRef.current.stop();
-      } catch {
-        /* noop */
-      }
-    }, ms);
-  }, [clearSilenceTimer]);
+  const armStopTimer = useCallback(
+    (ms) => {
+      clearSilenceTimer();
+      silenceTimerRef.current = setTimeout(() => {
+        silenceTimerRef.current = null;
+        try {
+          if (recRef.current && onFinalRef.current) recRef.current.stop();
+        } catch {
+          /* noop */
+        }
+      }, ms);
+    },
+    [clearSilenceTimer],
+  );
 
   const beginCapture = useCallback(
     (onFinal) => {

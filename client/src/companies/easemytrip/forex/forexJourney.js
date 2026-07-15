@@ -10,7 +10,16 @@ export const EXCHANGE_RATES = {
 
 export const CARD_RATE = 96.4144;
 
-export const CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad', 'Pune', 'Ahmedabad'];
+export const CITIES = [
+  'Mumbai',
+  'Delhi',
+  'Bangalore',
+  'Chennai',
+  'Kolkata',
+  'Hyderabad',
+  'Pune',
+  'Ahmedabad',
+];
 
 export const CURRENCIES = [
   { code: 'USD', label: 'USD', flag: '🇺🇸', spoken: 'US dollars' },
@@ -46,13 +55,13 @@ export const INITIAL_FOREX_FORM = {
 
 export function calcInrAmount(foreignAmount, currency, isCard = false) {
   const amt = parseFloat(String(foreignAmount).replace(/,/g, '')) || 0;
-  const rate = isCard ? CARD_RATE : (EXCHANGE_RATES[currency] || EXCHANGE_RATES.USD);
+  const rate = isCard ? CARD_RATE : EXCHANGE_RATES[currency] || EXCHANGE_RATES.USD;
   return String(Math.round(amt * rate));
 }
 
 export function calcForeignAmount(inrAmount, currency, isCard = false) {
   const amt = parseFloat(String(inrAmount).replace(/,/g, '')) || 0;
-  const rate = isCard ? CARD_RATE : (EXCHANGE_RATES[currency] || EXCHANGE_RATES.USD);
+  const rate = isCard ? CARD_RATE : EXCHANGE_RATES[currency] || EXCHANGE_RATES.USD;
   return String(Math.round((amt / rate) * 100) / 100);
 }
 
@@ -93,7 +102,7 @@ export function recalcForexAmounts(form, patch = {}) {
 }
 
 export function getExchangeRate(currency, isCard = false) {
-  return isCard ? CARD_RATE : (EXCHANGE_RATES[currency] || EXCHANGE_RATES.USD);
+  return isCard ? CARD_RATE : EXCHANGE_RATES[currency] || EXCHANGE_RATES.USD;
 }
 
 export function generateOrderRef() {
@@ -105,7 +114,8 @@ export function getNextForexPrompt(form) {
   if (form.phase === 'success') return null;
   if (!form.city) return 'Which city do you need delivery in?';
   if (!form.foreignCurrency) return 'Which currency — US dollars, Singapore dollars, or euros?';
-  if (!form.foreignAmount && !form.inrAmount) return 'How much do you need? You can say amount in rupees or foreign currency.';
+  if (!form.foreignAmount && !form.inrAmount)
+    return 'How much do you need? You can say amount in rupees or foreign currency.';
   return 'Say order now to complete your order.';
 }
 

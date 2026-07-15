@@ -38,20 +38,33 @@ export default function RMHelpPrompt({ open, onHelp, onDismiss }) {
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0a3d62]/10">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="8" r="4" fill="#0a3d62" />
-                  <path d="M4 20c0-3.314 3.582-6 8-6s8 2.686 8 6" stroke="#0a3d62" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M4 20c0-3.314 3.582-6 8-6s8 2.686 8 6"
+                    stroke="#0a3d62"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                   <circle cx="19" cy="5" r="3" fill="#f5a623" />
-                  <path d="M19 4v2M19 7h.01" stroke="white" strokeWidth="1.4" strokeLinecap="round" />
+                  <path
+                    d="M19 4v2M19 7h.01"
+                    stroke="white"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </div>
               <div>
                 <p className="text-[15px] font-bold text-slate-900">Need a little help?</p>
-                <p className="text-[12px] text-slate-500">Your RM assistant can fill this for you.</p>
+                <p className="text-[12px] text-slate-500">
+                  Your RM assistant can fill this for you.
+                </p>
               </div>
             </div>
 
             {/* tagline */}
             <p className="mb-5 rounded-xl bg-[#0a3d62]/5 px-3 py-2.5 text-[12px] leading-relaxed text-slate-700">
-              Looks like you hit a snag. Want me to take over and guide you through this step by step — just speak or type?
+              Looks like you hit a snag. Want me to take over and guide you through this step by
+              step — just speak or type?
             </p>
 
             {/* actions */}

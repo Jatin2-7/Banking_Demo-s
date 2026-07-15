@@ -1,12 +1,6 @@
 /** InCred personal loan journey — phases, form state, and field metadata. */
 
-export const PHASE_ORDER = [
-  'login_info',
-  'basic_details',
-  'employment',
-  'eligibility',
-  'success',
-];
+export const PHASE_ORDER = ['login_info', 'basic_details', 'employment', 'eligibility', 'success'];
 
 export const INITIAL_FORM = {
   phase: 'login_info',
@@ -90,9 +84,29 @@ export function formatDobDisplay(day, month, year) {
   const m = String(month).padStart(2, '0');
   const y = String(year);
   if (!day || !month || !year) return '';
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   const mi = parseInt(m, 10) - 1;
-  const suffix = d.endsWith('1') && d !== '11' ? 'st' : d.endsWith('2') && d !== '12' ? 'nd' : d.endsWith('3') && d !== '13' ? 'rd' : 'th';
+  const suffix =
+    d.endsWith('1') && d !== '11'
+      ? 'st'
+      : d.endsWith('2') && d !== '12'
+        ? 'nd'
+        : d.endsWith('3') && d !== '13'
+          ? 'rd'
+          : 'th';
   return `${parseInt(d, 10)}${suffix} ${months[mi] || m} ${y}`;
 }
 
@@ -101,7 +115,20 @@ export function formatDobLong(day, month, year) {
   const m = parseInt(String(month), 10);
   const y = String(year);
   if (!d || !m || !y) return '';
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
   return `${d} ${months[m - 1] || month} ${y}`;
 }
 

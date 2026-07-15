@@ -16,9 +16,7 @@ function TrackCard({ title, desc, emoji, onClick, descNode }) {
       <div className="mt-2 flex flex-1 items-center justify-center text-[42px]" aria-hidden>
         {emoji}
       </div>
-      <div className="mt-auto text-[11px] leading-snug text-[#6B7280]">
-        {descNode || desc}
-      </div>
+      <div className="mt-auto text-[11px] leading-snug text-[#6B7280]">{descNode || desc}</div>
     </button>
   );
 }

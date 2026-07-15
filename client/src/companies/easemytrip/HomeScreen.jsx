@@ -18,7 +18,11 @@ import DemoPanel from '../../components/DemoPanel.jsx';
 import { useCompanyAgents } from '../../shared/lib/companyAgents.js';
 import { DEFAULT_LANG } from '../../i18n/strings.js';
 import { resolveEmtNavigation, inferEmtDestination } from './lib/navigation.js';
-import { parseForexVoiceInput, parseForexLandingVoice, parseForexIntent } from './lib/forexInputParser.js';
+import {
+  parseForexVoiceInput,
+  parseForexLandingVoice,
+  parseForexIntent,
+} from './lib/forexInputParser.js';
 import { parseVisaVoiceInput } from './lib/visaInputParser.js';
 import { parseAirportVoiceInput } from './lib/airportInputParser.js';
 import {
@@ -49,7 +53,13 @@ import {
 
 const VISA_VIEWS = ['visa_home', 'visa_destination', 'visa_wizard', 'visa_success'];
 const FOREX_FORM_VIEWS = ['forex_form', 'forex_success'];
-const AIRPORT_VIEWS = ['airport_home', 'airport_select', 'duty_free', 'duty_free_products', 'duty_free_success'];
+const AIRPORT_VIEWS = [
+  'airport_home',
+  'airport_select',
+  'duty_free',
+  'duty_free_products',
+  'duty_free_success',
+];
 
 /** EaseMyTrip demo — home + forex + visa + airport journeys with voice concierge. */
 export default function EasemytripHomeScreen() {
@@ -107,7 +117,8 @@ export default function EasemytripHomeScreen() {
         return { ...base, ...recalcForexAmounts(base, patch) };
       });
       setView('forex_form');
-      if (voiceAssistMode || opts.openVoice) setTimeout(() => openAssistant({ gestureListen: true }), 400);
+      if (voiceAssistMode || opts.openVoice)
+        setTimeout(() => openAssistant({ gestureListen: true }), 400);
     },
     [voiceAssistMode, openAssistant],
   );
@@ -116,7 +127,8 @@ export default function EasemytripHomeScreen() {
     (opts = {}) => {
       setVisaForm({ ...INITIAL_VISA_FORM, phase: 'home' });
       setView('visa_home');
-      if (voiceAssistMode || opts.openVoice) setTimeout(() => openAssistant({ gestureListen: true }), 400);
+      if (voiceAssistMode || opts.openVoice)
+        setTimeout(() => openAssistant({ gestureListen: true }), 400);
     },
     [voiceAssistMode, openAssistant],
   );
@@ -130,7 +142,8 @@ export default function EasemytripHomeScreen() {
         searchQuery: destinationId,
       }));
       setView('visa_destination');
-      if (voiceAssistMode || opts.openVoice) setTimeout(() => openAssistant({ gestureListen: true }), 400);
+      if (voiceAssistMode || opts.openVoice)
+        setTimeout(() => openAssistant({ gestureListen: true }), 400);
     },
     [voiceAssistMode, openAssistant],
   );
@@ -139,7 +152,8 @@ export default function EasemytripHomeScreen() {
     (opts = {}) => {
       setAirportForm({ ...INITIAL_AIRPORT_FORM, phase: 'home' });
       setView('airport_home');
-      if (voiceAssistMode || opts.openVoice) setTimeout(() => openAssistant({ gestureListen: true }), 400);
+      if (voiceAssistMode || opts.openVoice)
+        setTimeout(() => openAssistant({ gestureListen: true }), 400);
     },
     [voiceAssistMode, openAssistant],
   );
@@ -148,7 +162,8 @@ export default function EasemytripHomeScreen() {
     (opts = {}) => {
       setAirportForm((prev) => ({ ...prev, phase: 'select' }));
       setView('airport_select');
-      if (voiceAssistMode || opts.openVoice) setTimeout(() => openAssistant({ gestureListen: true }), 400);
+      if (voiceAssistMode || opts.openVoice)
+        setTimeout(() => openAssistant({ gestureListen: true }), 400);
     },
     [voiceAssistMode, openAssistant],
   );
@@ -157,7 +172,8 @@ export default function EasemytripHomeScreen() {
     (opts = {}) => {
       setAirportForm((prev) => ({ ...prev, phase: 'duty_free', activeNavTab: 'duty_free' }));
       setView('duty_free');
-      if (voiceAssistMode || opts.openVoice) setTimeout(() => openAssistant({ gestureListen: true }), 400);
+      if (voiceAssistMode || opts.openVoice)
+        setTimeout(() => openAssistant({ gestureListen: true }), 400);
     },
     [voiceAssistMode, openAssistant],
   );
@@ -172,7 +188,8 @@ export default function EasemytripHomeScreen() {
         activeNavTab: 'duty_free',
       }));
       setView('duty_free_products');
-      if (voiceAssistMode || opts.openVoice) setTimeout(() => openAssistant({ gestureListen: true }), 400);
+      if (voiceAssistMode || opts.openVoice)
+        setTimeout(() => openAssistant({ gestureListen: true }), 400);
     },
     [voiceAssistMode, openAssistant],
   );
@@ -180,9 +197,11 @@ export default function EasemytripHomeScreen() {
   const handleNavigate = useCallback(
     (destination) => {
       const nav = resolveEmtNavigation(destination);
-      if (nav.view === 'forex_landing' || nav.view === 'forex_form') return openForexForm('globalpay', {}, { openVoice: true });
+      if (nav.view === 'forex_landing' || nav.view === 'forex_form')
+        return openForexForm('globalpay', {}, { openVoice: true });
       if (nav.view === 'visa_home') return openVisaHome({ openVoice: true });
-      if (nav.view === 'visa_destination') return openVisaDestination(nav.destination || 'singapore', { openVoice: true });
+      if (nav.view === 'visa_destination')
+        return openVisaDestination(nav.destination || 'singapore', { openVoice: true });
       if (nav.view === 'visa_wizard') {
         setVisaForm((prev) => ({ ...prev, phase: 'wizard', currentStep: 'upload_picture' }));
         setView('visa_wizard');
@@ -192,12 +211,23 @@ export default function EasemytripHomeScreen() {
       if (nav.view === 'airport_select') return openAirportSelect({ openVoice: true });
       if (nav.view === 'duty_free') return openDutyFree({ openVoice: true });
       if (nav.view === 'duty_free_products') {
-        return openDutyFreeProducts({ category: nav.category || 'fragrances', airport: 'mumbai' }, { openVoice: true });
+        return openDutyFreeProducts(
+          { category: nav.category || 'fragrances', airport: 'mumbai' },
+          { openVoice: true },
+        );
       }
       if (nav.tab) setActiveTab(nav.tab);
       setView('dashboard');
     },
-    [openForexForm, openVisaHome, openVisaDestination, openAirportHome, openAirportSelect, openDutyFree, openDutyFreeProducts],
+    [
+      openForexForm,
+      openVisaHome,
+      openVisaDestination,
+      openAirportHome,
+      openAirportSelect,
+      openDutyFree,
+      openDutyFreeProducts,
+    ],
   );
 
   const handleServiceTap = useCallback(
@@ -232,40 +262,34 @@ export default function EasemytripHomeScreen() {
     setAirportForm((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  const handleAirportSelect = useCallback(
-    (airportId) => {
-      setAirportForm((prev) => ({
-        ...prev,
-        airport: airportId,
-        terminal: airportId === 'mumbai' ? 'T2' : 'T1',
-        phase: 'duty_free',
-      }));
-      setView('duty_free');
-    },
-    [],
-  );
+  const handleAirportSelect = useCallback((airportId) => {
+    setAirportForm((prev) => ({
+      ...prev,
+      airport: airportId,
+      terminal: airportId === 'mumbai' ? 'T2' : 'T1',
+      phase: 'duty_free',
+    }));
+    setView('duty_free');
+  }, []);
 
-  const handleAddToCart = useCallback(
-    (product, { announce = true } = {}) => {
-      const p = typeof product === 'string' ? getProductById(product) : product;
-      if (!p) return;
-      const reply = buildCartAddedReply(p);
-      setAirportForm((prev) => ({
-        ...prev,
-        cartCount: prev.cartCount + 1,
-        cartItems: [...(prev.cartItems || []), p.id],
-        lastAddedProductId: p.id,
-        phase: 'cart_prompt',
-      }));
-      if (announce) {
-        setAiOpen(true);
-        setAiPrimer(`Customer added "${p.name}" to cart. Say exactly: "${reply}"`);
-        setGestureListen(true);
-      }
-      return reply;
-    },
-    [],
-  );
+  const handleAddToCart = useCallback((product, { announce = true } = {}) => {
+    const p = typeof product === 'string' ? getProductById(product) : product;
+    if (!p) return;
+    const reply = buildCartAddedReply(p);
+    setAirportForm((prev) => ({
+      ...prev,
+      cartCount: prev.cartCount + 1,
+      cartItems: [...(prev.cartItems || []), p.id],
+      lastAddedProductId: p.id,
+      phase: 'cart_prompt',
+    }));
+    if (announce) {
+      setAiOpen(true);
+      setAiPrimer(`Customer added "${p.name}" to cart. Say exactly: "${reply}"`);
+      setGestureListen(true);
+    }
+    return reply;
+  }, []);
 
   const handlePlaceDutyFreeOrder = useCallback(() => {
     setAirportForm((prev) => ({
@@ -292,13 +316,24 @@ export default function EasemytripHomeScreen() {
         const max = airportRef.current.priceFilterMax;
         if (max) openDutyFreeProducts({ priceFilterMax: max, category: 'fragrances' });
         else openDutyFreeProducts({ category: 'fragrances' });
-      } else if (btn === 'clear_filters') applyAirportPatch({ priceFilterMax: null, searchQuery: '' });
-      else if (btn === 'add_to_cart') handleAddToCart(getProductById(airportRef.current.lastAddedProductId));
+      } else if (btn === 'clear_filters')
+        applyAirportPatch({ priceFilterMax: null, searchQuery: '' });
+      else if (btn === 'add_to_cart')
+        handleAddToCart(getProductById(airportRef.current.lastAddedProductId));
       else if (btn === 'place_order') handlePlaceDutyFreeOrder();
       else if (btn === 'shop_more') handleShopMore();
       else if (btn === 'back_to_home') goHome();
     },
-    [openAirportSelect, openDutyFree, openDutyFreeProducts, applyAirportPatch, handleAddToCart, handlePlaceDutyFreeOrder, handleShopMore, goHome],
+    [
+      openAirportSelect,
+      openDutyFree,
+      openDutyFreeProducts,
+      applyAirportPatch,
+      handleAddToCart,
+      handlePlaceDutyFreeOrder,
+      handleShopMore,
+      goHome,
+    ],
   );
 
   const processAirportVoice = useCallback(
@@ -329,7 +364,12 @@ export default function EasemytripHomeScreen() {
         if (AIRPORT_VIEWS.includes(view) && view === 'duty_free_products') {
           applyAirportPatch(patch);
         } else {
-          openDutyFreeProducts({ airport: 'mumbai', terminal: 'T2', category: 'fragrances', ...patch });
+          openDutyFreeProducts({
+            airport: 'mumbai',
+            terminal: 'T2',
+            category: 'fragrances',
+            ...patch,
+          });
         }
         return parsed.reply;
       }
@@ -372,7 +412,17 @@ export default function EasemytripHomeScreen() {
       if (parsed.patch) applyAirportPatch(parsed.patch);
       return parsed.reply || 'Updated.';
     },
-    [view, openAirportHome, openAirportSelect, openDutyFree, openDutyFreeProducts, applyAirportPatch, handleAddToCart, handlePlaceDutyFreeOrder, handleShopMore],
+    [
+      view,
+      openAirportHome,
+      openAirportSelect,
+      openDutyFree,
+      openDutyFreeProducts,
+      applyAirportPatch,
+      handleAddToCart,
+      handlePlaceDutyFreeOrder,
+      handleShopMore,
+    ],
   );
 
   const handleStartVisaApplication = useCallback(() => {
@@ -417,19 +467,32 @@ export default function EasemytripHomeScreen() {
       else if (btn === 'submit_application') handleVisaSubmit();
       else if (btn === 'search') {
         const q = visaRef.current.searchQuery || 'singapore';
-        openVisaDestination(q.includes('dubai') ? 'dubai' : q.includes('thai') ? 'thailand' : 'singapore');
+        openVisaDestination(
+          q.includes('dubai') ? 'dubai' : q.includes('thai') ? 'thailand' : 'singapore',
+        );
       } else if (btn === 'back_to_home') goHome();
     },
-    [handleStartVisaApplication, handleProceedDate, applyVisaPatch, handleVisaNextStep, handleVisaSubmit, openVisaDestination, goHome],
+    [
+      handleStartVisaApplication,
+      handleProceedDate,
+      applyVisaPatch,
+      handleVisaNextStep,
+      handleVisaSubmit,
+      openVisaDestination,
+      goHome,
+    ],
   );
 
   const processVisaVoice = useCallback(
     (text, { deferNav = false } = {}) => {
       const phase =
-        view === 'visa_home' ? 'home'
-        : view === 'visa_destination' ? 'destination'
-        : view === 'visa_wizard' ? 'wizard'
-        : visaRef.current.phase;
+        view === 'visa_home'
+          ? 'home'
+          : view === 'visa_destination'
+            ? 'destination'
+            : view === 'visa_wizard'
+              ? 'wizard'
+              : visaRef.current.phase;
       const parsed = parseVisaVoiceInput(phase, text, visaRef.current);
       if (!parsed.handled) return false;
 
@@ -457,7 +520,8 @@ export default function EasemytripHomeScreen() {
         return parsed.reply;
       }
       if (parsed.action === 'proceed_date') {
-        if (parsed.patch?.departureDate) setSelectedDateDay(parseInt(parsed.patch.departureDate, 10));
+        if (parsed.patch?.departureDate)
+          setSelectedDateDay(parseInt(parsed.patch.departureDate, 10));
         handleProceedDate();
         return parsed.reply;
       }
@@ -479,7 +543,16 @@ export default function EasemytripHomeScreen() {
       if (parsed.patch) applyVisaPatch(parsed.patch);
       return parsed.reply || 'Updated.';
     },
-    [view, openVisaHome, openVisaDestination, applyVisaPatch, handleStartVisaApplication, handleProceedDate, handleVisaNextStep, handleVisaSubmit],
+    [
+      view,
+      openVisaHome,
+      openVisaDestination,
+      applyVisaPatch,
+      handleStartVisaApplication,
+      handleProceedDate,
+      handleVisaNextStep,
+      handleVisaSubmit,
+    ],
   );
 
   const handleOrderNow = useCallback(() => {
@@ -548,7 +621,8 @@ export default function EasemytripHomeScreen() {
       const nav = next?.navigate_to;
       if (nav?.destination) {
         if (nav.destination === 'visa_home') return openVisaHome();
-        if (nav.destination === 'visa_destination') return openVisaDestination(visaRef.current.destination || 'singapore');
+        if (nav.destination === 'visa_destination')
+          return openVisaDestination(visaRef.current.destination || 'singapore');
         if (nav.destination === 'visa_wizard') {
           setView('visa_wizard');
           applyVisaPatch({ phase: 'wizard' });
@@ -588,7 +662,24 @@ export default function EasemytripHomeScreen() {
       else if (VISA_VIEWS.includes(view)) applyVisaPatch(visaAgentStateToFormPatch(next));
       else if (FOREX_FORM_VIEWS.includes(view)) applyForexPatch(agentStateToFormPatch(next));
     },
-    [view, handleNavigate, goHome, openVisaHome, openVisaDestination, openAirportHome, openAirportSelect, openDutyFree, openDutyFreeProducts, openForexForm, applyVisaPatch, applyAirportPatch, applyForexPatch, handleVisaAgentAction, handleAirportAgentAction, handleOrderNow],
+    [
+      view,
+      handleNavigate,
+      goHome,
+      openVisaHome,
+      openVisaDestination,
+      openAirportHome,
+      openAirportSelect,
+      openDutyFree,
+      openDutyFreeProducts,
+      openForexForm,
+      applyVisaPatch,
+      applyAirportPatch,
+      applyForexPatch,
+      handleVisaAgentAction,
+      handleAirportAgentAction,
+      handleOrderNow,
+    ],
   );
 
   const handleAgentToolCall = useCallback(
@@ -598,7 +689,8 @@ export default function EasemytripHomeScreen() {
           const p = pendingForexOpenRef.current;
           pendingForexOpenRef.current = null;
           openForexFormWithData(p.partner, p.patch);
-          if (p.formAction === 'complete_order' || p.formAction === 'order_now') setTimeout(() => handleOrderNow(), 0);
+          if (p.formAction === 'complete_order' || p.formAction === 'order_now')
+            setTimeout(() => handleOrderNow(), 0);
           return;
         }
         if (args.destination === 'airport_perfumes' && pendingAirportProductsRef.current) {
@@ -620,7 +712,14 @@ export default function EasemytripHomeScreen() {
       else if (VISA_VIEWS.includes(view)) visaToolHandlerRef.current?.(name, args);
       else if (view === 'forex_form') forexToolHandlerRef.current?.(name, args);
     },
-    [handleNavigate, view, openForexFormWithData, openDutyFreeProducts, openVisaDestination, handleOrderNow],
+    [
+      handleNavigate,
+      view,
+      openForexFormWithData,
+      openDutyFreeProducts,
+      openVisaDestination,
+      handleOrderNow,
+    ],
   );
 
   const NAV_REPLY_LABELS = {
@@ -646,7 +745,10 @@ export default function EasemytripHomeScreen() {
         const r = processAirportVoice(text);
         if (r !== false) return r;
       }
-      const visaIntent = /\bvisa\b|visa\s*application|apply\s*for\s*visa|singapore\s*visa|dubai\s*visa|thailand\s*visa/i.test(text);
+      const visaIntent =
+        /\bvisa\b|visa\s*application|apply\s*for\s*visa|singapore\s*visa|dubai\s*visa|thailand\s*visa/i.test(
+          text,
+        );
       if (VISA_VIEWS.includes(view) || visaIntent) {
         const r = processVisaVoice(text, { deferNav: view === 'dashboard' });
         if (r !== false) return r;
@@ -683,7 +785,9 @@ export default function EasemytripHomeScreen() {
 
   const handleAfterAssistantReply = useCallback(
     (userText) => {
-      const airportIntent = /airport|duty|perfume|fragrance|cologne|scent|under\s*\d/i.test(userText);
+      const airportIntent = /airport|duty|perfume|fragrance|cologne|scent|under\s*\d/i.test(
+        userText,
+      );
       if (AIRPORT_VIEWS.includes(view) || airportIntent) processAirportVoice(userText);
       else if (VISA_VIEWS.includes(view)) processVisaVoice(userText);
       else if (FOREX_FORM_VIEWS.includes(view)) processForexVoice(userText);
@@ -698,7 +802,15 @@ export default function EasemytripHomeScreen() {
         } else if (dest) handleNavigate(dest);
       }
     },
-    [view, processAirportVoice, processVisaVoice, processForexLandingVoice, processForexVoice, handleNavigate, openDutyFreeProducts],
+    [
+      view,
+      processAirportVoice,
+      processVisaVoice,
+      processForexLandingVoice,
+      processForexVoice,
+      handleNavigate,
+      openDutyFreeProducts,
+    ],
   );
 
   const isForexFormJourney = FOREX_FORM_VIEWS.includes(view);
@@ -717,18 +829,41 @@ export default function EasemytripHomeScreen() {
   const agentState = useMemo(() => {
     if (isAirportJourney) {
       const phase =
-        view === 'airport_home' ? 'home'
-        : view === 'airport_select' ? 'select'
-        : view === 'duty_free' ? 'duty_free'
-        : view === 'duty_free_success' ? 'success'
-        : airportForm.phase === 'cart_prompt' ? 'cart_prompt'
-        : 'products';
+        view === 'airport_home'
+          ? 'home'
+          : view === 'airport_select'
+            ? 'select'
+            : view === 'duty_free'
+              ? 'duty_free'
+              : view === 'duty_free_success'
+                ? 'success'
+                : airportForm.phase === 'cart_prompt'
+                  ? 'cart_prompt'
+                  : 'products';
       return formToAirportAgentState({ ...airportForm, phase });
     }
-    if (isVisaJourney) return formToVisaAgentState({ ...visaForm, phase: view === 'visa_home' ? 'home' : view === 'visa_destination' ? 'destination' : visaForm.phase });
+    if (isVisaJourney)
+      return formToVisaAgentState({
+        ...visaForm,
+        phase:
+          view === 'visa_home'
+            ? 'home'
+            : view === 'visa_destination'
+              ? 'destination'
+              : visaForm.phase,
+      });
     if (isForexFormJourney) return formToAgentState(forexForm);
     return { activeTab, view };
-  }, [isAirportJourney, isVisaJourney, isForexFormJourney, airportForm, visaForm, forexForm, activeTab, view]);
+  }, [
+    isAirportJourney,
+    isVisaJourney,
+    isForexFormJourney,
+    airportForm,
+    visaForm,
+    forexForm,
+    activeTab,
+    view,
+  ]);
 
   const homeGreeting = 'Namaste! Welcome to EaseMyTrip.';
   const forexGreeting = 'Tell me your city, currency, and amount — or say order now when ready.';
@@ -741,11 +876,19 @@ export default function EasemytripHomeScreen() {
     <div className="relative flex h-full min-h-0 flex-col bg-white">
       <AnimatePresence mode="wait">
         {view === 'dashboard' && (
-          <motion.div key="dash" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="dash"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <EmtHomeDashboard
               activeTab={activeTab}
               onTabChange={(tab) => {
-                if (tab === 'voice') { openAssistant({ gestureListen: true }); return; }
+                if (tab === 'voice') {
+                  openAssistant({ gestureListen: true });
+                  return;
+                }
                 setActiveTab(tab);
               }}
               onServiceTap={handleServiceTap}
@@ -755,37 +898,65 @@ export default function EasemytripHomeScreen() {
         )}
 
         {view === 'forex_form' && (
-          <motion.div key="forex-form" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="forex-form"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <ForexCashScreen
               form={forexForm}
               onChange={applyForexPatch}
               onBack={goHome}
               onOrderNow={handleOrderNow}
-              onRegisterToolHandler={(fn) => { forexToolHandlerRef.current = fn; }}
+              onRegisterToolHandler={(fn) => {
+                forexToolHandlerRef.current = fn;
+              }}
             />
           </motion.div>
         )}
 
         {view === 'forex_success' && (
-          <motion.div key="forex-success" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <ForexSuccessScreen form={forexForm} onBackHome={goHome} onNewOrder={() => openForexForm(forexForm.partner)} />
+          <motion.div
+            key="forex-success"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <ForexSuccessScreen
+              form={forexForm}
+              onBackHome={goHome}
+              onNewOrder={() => openForexForm(forexForm.partner)}
+            />
           </motion.div>
         )}
 
         {view === 'visa_home' && (
-          <motion.div key="visa-home" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="visa-home"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <VisaHomeScreen
               form={visaForm}
               onChange={applyVisaPatch}
               onBack={goHome}
               onSelectDestination={(id) => openVisaDestination(id)}
-              onSearch={() => openVisaDestination(visaForm.searchQuery?.includes('dubai') ? 'dubai' : 'singapore')}
+              onSearch={() =>
+                openVisaDestination(visaForm.searchQuery?.includes('dubai') ? 'dubai' : 'singapore')
+              }
             />
           </motion.div>
         )}
 
         {view === 'visa_destination' && (
-          <motion.div key="visa-dest" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="visa-dest"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <VisaDestinationScreen
               form={visaForm}
               onChange={applyVisaPatch}
@@ -796,58 +967,103 @@ export default function EasemytripHomeScreen() {
         )}
 
         {view === 'visa_wizard' && (
-          <motion.div key="visa-wizard" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="visa-wizard"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <VisaWizardScreen
               form={visaForm}
               onChange={applyVisaPatch}
               onBack={() => setView('visa_destination')}
               onNextStep={handleVisaNextStep}
               onSubmit={handleVisaSubmit}
-              onRegisterToolHandler={(fn) => { visaToolHandlerRef.current = fn; }}
+              onRegisterToolHandler={(fn) => {
+                visaToolHandlerRef.current = fn;
+              }}
             />
           </motion.div>
         )}
 
         {view === 'visa_success' && (
-          <motion.div key="visa-success" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="visa-success"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <VisaSuccessScreen
               form={visaForm}
               onBackHome={goHome}
-              onTrackApplication={() => { setActiveTab('bookings'); goHome(); }}
+              onTrackApplication={() => {
+                setActiveTab('bookings');
+                goHome();
+              }}
             />
           </motion.div>
         )}
 
         {view === 'airport_home' && (
-          <motion.div key="airport-home" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="airport-home"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <AirportHomeScreen
               onBack={goHome}
               onDutyFree={openAirportSelect}
-              onMeetGreet={() => openAssistant({ gestureListen: true, primer: 'Customer tapped Meet & Greet. Explain service.' })}
+              onMeetGreet={() =>
+                openAssistant({
+                  gestureListen: true,
+                  primer: 'Customer tapped Meet & Greet. Explain service.',
+                })
+              }
             />
           </motion.div>
         )}
 
         {view === 'airport_select' && (
-          <motion.div key="airport-select" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <AirportSelectScreen onBack={() => setView('airport_home')} onSelect={handleAirportSelect} />
+          <motion.div
+            key="airport-select"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <AirportSelectScreen
+              onBack={() => setView('airport_home')}
+              onSelect={handleAirportSelect}
+            />
           </motion.div>
         )}
 
         {view === 'duty_free' && (
-          <motion.div key="duty-free" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="duty-free"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <DutyFreeScreen
               form={airportForm}
               onChange={applyAirportPatch}
               onBack={() => setView('airport_select')}
               onOpenFragrances={() => openDutyFreeProducts({ category: 'fragrances' })}
-              onOpenCategory={(catId) => openDutyFreeProducts({ category: catId === 'beauty' ? 'fragrances' : catId })}
+              onOpenCategory={(catId) =>
+                openDutyFreeProducts({ category: catId === 'beauty' ? 'fragrances' : catId })
+              }
             />
           </motion.div>
         )}
 
         {view === 'duty_free_products' && (
-          <motion.div key="duty-free-products" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="duty-free-products"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <DutyFreeProductsScreen
               form={airportForm}
               onChange={applyAirportPatch}
@@ -858,7 +1074,12 @@ export default function EasemytripHomeScreen() {
         )}
 
         {view === 'duty_free_success' && (
-          <motion.div key="duty-free-success" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="duty-free-success"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <DutyFreeOrderSuccessScreen
               form={airportForm}
               onBackHome={goHome}
@@ -884,7 +1105,10 @@ export default function EasemytripHomeScreen() {
         key={`emt-ai-${panelKey}-${voiceAssistMode ? 'assist' : 'chat'}`}
         agentId={agentId}
         open={aiOpen}
-        onClose={() => { setAiOpen(false); setAiPrimer(null); }}
+        onClose={() => {
+          setAiOpen(false);
+          setAiPrimer(null);
+        }}
         onAutoHide={() => setAiOpen(false)}
         formValues={agentState}
         onFormChange={handleAgentFormChange}
@@ -898,11 +1122,33 @@ export default function EasemytripHomeScreen() {
         gestureListen={gestureListen}
         onGestureListenHandled={() => setGestureListen(false)}
         primer={aiPrimer}
-        greeting={isForexFormJourney ? forexGreeting : isAirportJourney ? airportGreeting : isVisaJourney ? visaGreeting : homeGreeting}
-        assistTitle={isForexFormJourney ? 'EaseMyTrip Forex Assistant' : isAirportJourney ? 'EaseMyTrip Airport Assistant' : isVisaJourney ? 'EaseMyTrip Visa Assistant' : 'EaseMyTrip Assistant'}
-        assistHint={voiceAssistMode ? 'Hands-free — speak after I finish. Form fills live.' : 'Voice or text — your choice'}
+        greeting={
+          isForexFormJourney
+            ? forexGreeting
+            : isAirportJourney
+              ? airportGreeting
+              : isVisaJourney
+                ? visaGreeting
+                : homeGreeting
+        }
+        assistTitle={
+          isForexFormJourney
+            ? 'EaseMyTrip Forex Assistant'
+            : isAirportJourney
+              ? 'EaseMyTrip Airport Assistant'
+              : isVisaJourney
+                ? 'EaseMyTrip Visa Assistant'
+                : 'EaseMyTrip Assistant'
+        }
+        assistHint={
+          voiceAssistMode
+            ? 'Hands-free — speak after I finish. Form fills live.'
+            : 'Voice or text — your choice'
+        }
         showReasoning={view === 'dashboard'}
-        dockClassName={view === 'dashboard' ? 'bottom-[5.5rem] left-3 right-3' : 'bottom-0 left-0 right-0'}
+        dockClassName={
+          view === 'dashboard' ? 'bottom-[5.5rem] left-3 right-3' : 'bottom-0 left-0 right-0'
+        }
         lang={lang}
       />
 

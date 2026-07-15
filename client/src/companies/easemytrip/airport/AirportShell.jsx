@@ -1,13 +1,25 @@
 import React from 'react';
 import { EMT } from '../theme.js';
 
-export default function AirportShell({ title = 'Airport Services', onBack, children, headerExtra }) {
+export default function AirportShell({
+  title = 'Airport Services',
+  onBack,
+  children,
+  headerExtra,
+}) {
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
       <header className="shrink-0 px-3 py-3 text-white" style={{ backgroundColor: '#1A8ADB' }}>
         <div className="flex items-center gap-2">
           <button type="button" onClick={onBack} className="press p-0.5" aria-label="Back">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -36,7 +48,11 @@ export function DutyFreeBottomNav({ active = 'duty_free' }) {
         {tabs.map((tab) => {
           const isActive = active === tab.id;
           return (
-            <button key={tab.id} type="button" className="press flex flex-col items-center gap-0.5 px-2">
+            <button
+              key={tab.id}
+              type="button"
+              className="press flex flex-col items-center gap-0.5 px-2"
+            >
               <span
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm"
                 style={{
@@ -66,7 +82,14 @@ export function PreOrderPill() {
       className="flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold"
       style={{ borderColor: '#EF6614', color: '#EF6614' }}
     >
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
         <circle cx="12" cy="12" r="9" />
         <path d="M12 7v5l3 2" strokeLinecap="round" />
       </svg>
@@ -84,7 +107,9 @@ export function ProductCard({ product, onAdd }) {
       >
         <div
           className="h-20 w-12 rounded-lg shadow-md"
-          style={{ background: `linear-gradient(180deg, ${product.color} 0%, ${product.color}99 100%)` }}
+          style={{
+            background: `linear-gradient(180deg, ${product.color} 0%, ${product.color}99 100%)`,
+          }}
         />
         <button
           type="button"
@@ -95,8 +120,12 @@ export function ProductCard({ product, onAdd }) {
           ADD
         </button>
       </div>
-      <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-emt-ink">{product.name}</p>
-      <p className="mt-1 text-[8px] font-medium uppercase tracking-wide text-emt-muted">Pre-order Price</p>
+      <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-emt-ink">
+        {product.name}
+      </p>
+      <p className="mt-1 text-[8px] font-medium uppercase tracking-wide text-emt-muted">
+        Pre-order Price
+      </p>
       <div className="mt-0.5 flex flex-wrap items-center gap-1">
         <span className="text-[13px] font-bold text-emt-ink">{`₹${product.price.toLocaleString('en-IN')}`}</span>
         <span className="text-[10px] text-emt-muted line-through">{`₹${product.original.toLocaleString('en-IN')}`}</span>

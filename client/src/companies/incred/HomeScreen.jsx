@@ -3,7 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import IncredBottomNav from './components/IncredBottomNav.jsx';
 import IncredAiFab from './components/IncredAiFab.jsx';
 import { IncredHomeHeader } from './components/IncredHeader.jsx';
-import IncredPersonalLoanScreen, { IncredWelcomeScreen, INITIAL_FORM } from './loan/IncredPersonalLoanScreen.jsx';
+import IncredPersonalLoanScreen, {
+  IncredWelcomeScreen,
+  INITIAL_FORM,
+} from './loan/IncredPersonalLoanScreen.jsx';
 import LoanAguiPanel from '../../components/LoanAguiPanel.jsx';
 import DemoPanel from '../../components/DemoPanel.jsx';
 import { useCompanyAgents } from '../../shared/lib/companyAgents.js';
@@ -128,7 +131,9 @@ export default function IncredHomeScreen() {
   const processLoanVoice = useCallback(
     (text) => {
       const form = formRef.current;
-      const n = String(text || '').trim().toLowerCase();
+      const n = String(text || '')
+        .trim()
+        .toLowerCase();
       if (/^(yes|yeah|yep|haan|ha|ok|okay|sure|proceed|continue|confirm|theek|bilkul)/.test(n)) {
         if (form.confirmModal === 'basic') {
           loanToolHandlerRef.current?.('click_button', { button: 'confirm_yes' });
@@ -188,10 +193,9 @@ export default function IncredHomeScreen() {
     [view, form, activeTab],
   );
 
-  const homeGreeting =
-    'Namaste! Welcome to InCred Finance. How may I help you today?';
+  const homeGreeting = 'Namaste! Welcome to InCred Finance. How may I help you today?';
   const loanGreeting =
-    'Namaste! I\'m your InCred relationship manager. May I have your PAN number to begin your personal loan application?';
+    "Namaste! I'm your InCred relationship manager. May I have your PAN number to begin your personal loan application?";
 
   const showFab = !aiOpen;
 
@@ -199,9 +203,16 @@ export default function IncredHomeScreen() {
     <div className="relative flex h-full min-h-0 flex-col bg-white">
       <AnimatePresence mode="wait">
         {view === 'dashboard' && (
-          <motion.div key="dash" className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            key="dash"
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <IncredHomeHeader />
-            {activeTab === 'home' && <IncredWelcomeScreen onApply={() => openLoan({ openVoice: true })} />}
+            {activeTab === 'home' && (
+              <IncredWelcomeScreen onApply={() => openLoan({ openVoice: true })} />
+            )}
             {activeTab === 'loans' && <PlaceholderTab title="My Loans" />}
             {activeTab === 'profile' && <PlaceholderTab title="Profile" />}
             <IncredBottomNav
@@ -269,9 +280,15 @@ export default function IncredHomeScreen() {
         primer={aiPrimer}
         greeting={view === 'loan' ? loanGreeting : homeGreeting}
         assistTitle={view === 'loan' ? 'InCred Assistant' : 'InCred Assistant'}
-        assistHint={voiceAssistMode ? 'Speak after I finish — one question at a time.' : 'Type or speak your answer'}
+        assistHint={
+          voiceAssistMode
+            ? 'Speak after I finish — one question at a time.'
+            : 'Type or speak your answer'
+        }
         showReasoning={view === 'dashboard'}
-        dockClassName={view === 'loan' ? 'bottom-0 left-0 right-0' : 'bottom-[5.5rem] left-3 right-3'}
+        dockClassName={
+          view === 'loan' ? 'bottom-0 left-0 right-0' : 'bottom-[5.5rem] left-3 right-3'
+        }
         lang={lang}
       />
 

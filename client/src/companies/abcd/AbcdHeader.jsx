@@ -116,7 +116,14 @@ export function AbcdHomeHeader({
             className="flex h-9 w-9 items-center justify-center rounded-full border border-white/35 text-white press"
             aria-label="Notifications"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M6 9a6 6 0 0112 0c0 7 3 7 3 7H3s3 0 3-7" strokeLinecap="round" />
               <path d="M10 20a2 2 0 004 0" strokeLinecap="round" />
             </svg>
@@ -140,7 +147,14 @@ export function AbcdHomeHeader({
         >
           <PillIcon kind={pill.icon} />
           <span className="truncate text-[13px] font-semibold text-[#1A1A1A]">{label}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2.2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#6B7280"
+            strokeWidth="2.2"
+          >
             <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -161,14 +175,23 @@ export function AbcdAppHeader({ title, onBack, onHome, showBack = true }) {
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white press"
             aria-label="Back"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         ) : (
           <span className="w-9" />
         )}
-        <h1 className="min-w-0 flex-1 truncate text-center text-[16px] font-bold text-white">{title}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-center text-[16px] font-bold text-white">
+          {title}
+        </h1>
         <button
           type="button"
           onClick={onHome}

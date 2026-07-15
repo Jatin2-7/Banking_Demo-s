@@ -11,7 +11,14 @@ const TABS = [
 
 function TabIcon({ type, active }) {
   const color = active ? EMT.blue : EMT.muted;
-  const props = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8 };
+  const props = {
+    width: 22,
+    height: 22,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: color,
+    strokeWidth: 1.8,
+  };
 
   switch (type) {
     case 'home':

@@ -82,9 +82,7 @@ export default function MpinSheet({ open, lang, onCancel, onSuccess }) {
             >
               🔒
             </div>
-            <div className="text-[15px] font-bold text-ink mt-3">
-              {L.mpinTitle || 'Enter MPIN'}
-            </div>
+            <div className="text-[15px] font-bold text-ink mt-3">{L.mpinTitle || 'Enter MPIN'}</div>
             <div className="text-[12px] text-muted mt-0.5 text-center">
               {L.mpinSubtitle || 'Authorise this payment with your 4-digit MPIN.'}
             </div>

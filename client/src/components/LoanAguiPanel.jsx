@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { applyStateDelta, runAgent, LOAN_AGUI_AGENT_ID, resolveApiBase } from '../lib/aguiClient.js';
+import {
+  applyStateDelta,
+  runAgent,
+  LOAN_AGUI_AGENT_ID,
+  resolveApiBase,
+} from '../lib/aguiClient.js';
 import ArmLiveDataFeed from '../companies/kreditbee/arm/components/ArmLiveDataFeed.jsx';
 // LOAN_AGUI_AGENT_ID is the default; callers may pass a different agentId prop.
 import { useSpeech } from '../hooks/useSpeech.js';
@@ -141,14 +146,16 @@ export default function LoanAguiPanel({
   const panelRef = useRef(null);
   const dragRef = useRef({ dragging: false, startY: 0, startH: 0 });
   const MIN_PANEL_H = 120;
-  const MAX_PANEL_H = typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.50) : 360;
+  const MAX_PANEL_H = typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.5) : 360;
   const [panelH, setPanelH] = useState(null); // null = use CSS default
 
   // Ref to the currently playing Cartesia audio so we can stop it on demand
   const currentAudioRef = useRef(null);
 
   // STT — always use ElevenSpeech (proven reliable); fall back to browser STT only if unavailable
-  const elevenSpeech = useElevenSpeech({ lang: String(lang || 'en').startsWith('hi') ? 'hi-IN' : 'en-IN' });
+  const elevenSpeech = useElevenSpeech({
+    lang: String(lang || 'en').startsWith('hi') ? 'hi-IN' : 'en-IN',
+  });
   const browserSpeech = useSpeech({ lang });
   const browserSpeechRef = useRef(browserSpeech);
   browserSpeechRef.current = browserSpeech;
@@ -187,7 +194,6 @@ export default function LoanAguiPanel({
     if (!open) stopAudio();
   }, [open, stopAudio]);
 
-
   useEffect(() => {
     valuesRef.current = formValues;
   }, [formValues]);
@@ -195,8 +201,16 @@ export default function LoanAguiPanel({
   useEffect(() => {
     if (open) return undefined;
     setVoiceBanner(null);
-    try { elevenSpeech.abort(); } catch { /* ignore */ }
-    try { browserSpeechRef.current.abort(); } catch { /* ignore */ }
+    try {
+      elevenSpeech.abort();
+    } catch {
+      /* ignore */
+    }
+    try {
+      browserSpeechRef.current.abort();
+    } catch {
+      /* ignore */
+    }
     return undefined;
   }, [open, elevenSpeech]);
 
@@ -218,47 +232,59 @@ export default function LoanAguiPanel({
     }
   }, []);
 
-  const armMic = useCallback((opts = {}) => {
-    if (!open || runningRef.current) return;
-    stopAudio();
-    if (useActiveEleven) {
-      if (elevenSpeech.listening) return;
-      elevenSpeech.start((text) => {
-        const t = String(text || '').trim();
-        if (t) {
-          setVoiceBanner(null);
-          void sendRef.current(t);
-        } else {
-          setVoiceBanner('No speech detected — speak clearly, then pause for 2 seconds.');
-          if (autoMicMode) {
+  const armMic = useCallback(
+    (opts = {}) => {
+      if (!open || runningRef.current) return;
+      stopAudio();
+      if (useActiveEleven) {
+        if (elevenSpeech.listening) return;
+        elevenSpeech.start((text) => {
+          const t = String(text || '').trim();
+          if (t) {
+            setVoiceBanner(null);
+            void sendRef.current(t);
+          } else {
+            setVoiceBanner('No speech detected — speak clearly, then pause for 2 seconds.');
+            if (autoMicMode) {
+              clearRearmMicTimer();
+              rearmMicTimerRef.current = setTimeout(() => {
+                rearmMicTimerRef.current = null;
+                armMic();
+              }, 1400);
+            }
+          }
+        });
+        return;
+      }
+      if (useActiveBrowser) {
+        if (browserSpeech.listening) return;
+        browserSpeech.start((text) => {
+          const t = String(text || '').trim();
+          if (t) {
+            setVoiceBanner(null);
+            void sendRef.current(t);
+          } else if (autoMicMode) {
+            setVoiceBanner('No speech detected — try again.');
             clearRearmMicTimer();
             rearmMicTimerRef.current = setTimeout(() => {
               rearmMicTimerRef.current = null;
               armMic();
             }, 1400);
           }
-        }
-      });
-      return;
-    }
-    if (useActiveBrowser) {
-      if (browserSpeech.listening) return;
-      browserSpeech.start((text) => {
-        const t = String(text || '').trim();
-        if (t) {
-          setVoiceBanner(null);
-          void sendRef.current(t);
-        } else if (autoMicMode) {
-          setVoiceBanner('No speech detected — try again.');
-          clearRearmMicTimer();
-          rearmMicTimerRef.current = setTimeout(() => {
-            rearmMicTimerRef.current = null;
-            armMic();
-          }, 1400);
-        }
-      });
-    }
-  }, [open, useActiveEleven, useActiveBrowser, elevenSpeech, browserSpeech, autoMicMode, clearRearmMicTimer, stopAudio]);
+        });
+      }
+    },
+    [
+      open,
+      useActiveEleven,
+      useActiveBrowser,
+      elevenSpeech,
+      browserSpeech,
+      autoMicMode,
+      clearRearmMicTimer,
+      stopAudio,
+    ],
+  );
 
   useEffect(() => {
     if (!useEleven || !elevenSpeech.error) return;
@@ -270,15 +296,21 @@ export default function LoanAguiPanel({
           ? 'Allow microphone in Chrome (lock icon in address bar), then tap the bot again.'
           : err === 'backend_unreachable'
             ? 'Cannot reach the backend — run npm run dev from the project root, then refresh.'
-          : err === 'stt_not_configured'
-            ? 'Speech API not configured on the server — check ELEVENLABS_API_KEY in .env.'
-          : err === 'stt_payment_required'
-            ? 'ElevenLabs speech billing issue — complete payment on elevenlabs.io, or type your commands in the chat box. The AGUI assistant still works via text.'
-          : err.startsWith('stt_') || err === 'stt_failed'
-            ? 'Server speech-to-text failed — type your command below. The AGUI assistant still works via text.'
-            : `Voice error: ${err}`;
+            : err === 'stt_not_configured'
+              ? 'Speech API not configured on the server — check ELEVENLABS_API_KEY in .env.'
+              : err === 'stt_payment_required'
+                ? 'ElevenLabs speech billing issue — complete payment on elevenlabs.io, or type your commands in the chat box. The AGUI assistant still works via text.'
+                : err.startsWith('stt_') || err === 'stt_failed'
+                  ? 'Server speech-to-text failed — type your command below. The AGUI assistant still works via text.'
+                  : `Voice error: ${err}`;
     setVoiceBanner(friendly);
-    if (autoMicMode && open && !runningRef.current && err !== 'not-allowed' && err !== 'stt_payment_required') {
+    if (
+      autoMicMode &&
+      open &&
+      !runningRef.current &&
+      err !== 'not-allowed' &&
+      err !== 'stt_payment_required'
+    ) {
       clearRearmMicTimer();
       rearmMicTimerRef.current = setTimeout(() => {
         rearmMicTimerRef.current = null;
@@ -305,11 +337,15 @@ export default function LoanAguiPanel({
         }
       } catch {
         if (!cancelled) {
-          setVoiceBanner('Cannot reach backend — start the server (npm run dev) and refresh this page.');
+          setVoiceBanner(
+            'Cannot reach backend — start the server (npm run dev) and refresh this page.',
+          );
         }
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [open, navOnly]);
 
   useEffect(() => {
@@ -334,7 +370,10 @@ export default function LoanAguiPanel({
         await waitUntilTtsIdle();
         if (!cancelled && !primer) speakText(greeting || "Let's fill this form together.");
       }, 300);
-      return () => { cancelled = true; clearTimeout(t); };
+      return () => {
+        cancelled = true;
+        clearTimeout(t);
+      };
     }
     return undefined;
   }, [open, greeting, speakText, suppressGreeting, autoMicMode, primer]);
@@ -413,7 +452,12 @@ export default function LoanAguiPanel({
             valuesRef.current = next;
             onFormChange?.(next);
             onToolCall?.(slot.name, { field_id: data.field_id, value: data.value });
-          } else if (slot?.name === 'click_button' || slot?.name === 'validate_form' || slot?.name === 'submit_transfer' || slot?.name === 'submit_deposit') {
+          } else if (
+            slot?.name === 'click_button' ||
+            slot?.name === 'validate_form' ||
+            slot?.name === 'submit_transfer' ||
+            slot?.name === 'submit_deposit'
+          ) {
             onToolCall?.(slot.name, { tool_call_id: ev.tool_call_id, ...data });
           }
         } catch {
@@ -426,7 +470,9 @@ export default function LoanAguiPanel({
       } else if (ev.type === 'RUN_ERROR') {
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === asstId ? { ...m, content: `${m.content}\n\n_${ev.message}_`, pending: false } : m,
+            m.id === asstId
+              ? { ...m, content: `${m.content}\n\n_${ev.message}_`, pending: false }
+              : m,
           ),
         );
       }
@@ -471,7 +517,9 @@ export default function LoanAguiPanel({
         matched = Boolean(match);
         if (match) {
           reply =
-            match.destination === 'home' ? 'Taking you back to the home screen.' : `Opening ${match.label}.`;
+            match.destination === 'home'
+              ? 'Taking you back to the home screen.'
+              : `Opening ${match.label}.`;
         } else {
           reply =
             'I can open: Transaction history, Fund transfer, Loan application, Create deposit, UPI payment, Hotel booking, Flight booking, Debit card, or Credit card statement. Which one?';
@@ -535,8 +583,7 @@ export default function LoanAguiPanel({
           valuesRef.current = next;
           onFormChange?.(next);
         } else if (handled) {
-          const handledText =
-            typeof handled === 'string' && handled.trim() ? handled.trim() : '';
+          const handledText = typeof handled === 'string' && handled.trim() ? handled.trim() : '';
           // Date-filter path returns a period label; navigation intercepts return a full reply.
           const looksLikeNavReply =
             directHandledReplyRef.current ||
@@ -578,7 +625,10 @@ export default function LoanAguiPanel({
       setRunning(true);
       setStatusSteps([]); // clear previous reasoning steps for this new turn
       const asstId = tid();
-      setMessages((prev) => [...prev, { id: asstId, role: 'assistant', content: '', pending: true }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: asstId, role: 'assistant', content: '', pending: true },
+      ]);
       const collected = { text: '' };
 
       try {
@@ -731,7 +781,9 @@ export default function LoanAguiPanel({
       armMic();
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [autoMicMode, open, running, micActive, ttsPlayingLocal, messages.length]);
 
   // Voice Assist: if greeting TTS never starts (or finishes instantly), still
@@ -779,52 +831,67 @@ export default function LoanAguiPanel({
           }
         >
           {!chatFullscreen && (
-          <>
-          {/* Drag-to-resize handle */}
-          <div
-            className="flex shrink-0 cursor-ns-resize items-center justify-center py-1 touch-none select-none"
-            onPointerDown={(e) => {
-              e.preventDefault();
-              const h = panelRef.current?.offsetHeight ?? (panelH ?? 300);
-              dragRef.current = { dragging: true, startY: e.clientY, startH: h };
-              e.currentTarget.setPointerCapture(e.pointerId);
-            }}
-            onPointerMove={(e) => {
-              if (!dragRef.current.dragging) return;
-              const delta = dragRef.current.startY - e.clientY; // drag up = bigger, drag down = smaller
-              const newH = Math.min(MAX_PANEL_H, Math.max(MIN_PANEL_H, dragRef.current.startH + delta));
-              setPanelH(newH);
-            }}
-            onPointerUp={() => { dragRef.current.dragging = false; }}
-            onPointerCancel={() => { dragRef.current.dragging = false; }}
-            aria-label="Drag to resize"
-            title="Drag up/down to resize"
-          >
-            <div className="h-1 w-10 rounded-full bg-zinc-300" />
-          </div>
-          {/* Title bar */}
-          <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 px-2.5 py-2">
-            <LoanAssistAvatar size={26} />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 leading-tight">
-                <span
-                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                    showListening ? 'animate-pulse bg-bank-gold' : running ? 'bg-amber-400' : handsFreeActive ? 'bg-emerald-400' : 'bg-emerald-400'
-                  }`}
-                />
-                <span className="truncate text-[12px] font-semibold text-black">silversuits.ai</span>
+            <>
+              {/* Drag-to-resize handle */}
+              <div
+                className="flex shrink-0 cursor-ns-resize items-center justify-center py-1 touch-none select-none"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  const h = panelRef.current?.offsetHeight ?? panelH ?? 300;
+                  dragRef.current = { dragging: true, startY: e.clientY, startH: h };
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!dragRef.current.dragging) return;
+                  const delta = dragRef.current.startY - e.clientY; // drag up = bigger, drag down = smaller
+                  const newH = Math.min(
+                    MAX_PANEL_H,
+                    Math.max(MIN_PANEL_H, dragRef.current.startH + delta),
+                  );
+                  setPanelH(newH);
+                }}
+                onPointerUp={() => {
+                  dragRef.current.dragging = false;
+                }}
+                onPointerCancel={() => {
+                  dragRef.current.dragging = false;
+                }}
+                aria-label="Drag to resize"
+                title="Drag up/down to resize"
+              >
+                <div className="h-1 w-10 rounded-full bg-zinc-300" />
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-lg leading-none text-black ring-1 ring-zinc-300 hover:bg-zinc-200"
-              aria-label="Close assistant"
-            >
-              ×
-            </button>
-          </div>
-          </>
+              {/* Title bar */}
+              <div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 px-2.5 py-2">
+                <LoanAssistAvatar size={26} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 leading-tight">
+                    <span
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                        showListening
+                          ? 'animate-pulse bg-bank-gold'
+                          : running
+                            ? 'bg-amber-400'
+                            : handsFreeActive
+                              ? 'bg-emerald-400'
+                              : 'bg-emerald-400'
+                      }`}
+                    />
+                    <span className="truncate text-[12px] font-semibold text-black">
+                      silversuits.ai
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-lg leading-none text-black ring-1 ring-zinc-300 hover:bg-zinc-200"
+                  aria-label="Close assistant"
+                >
+                  ×
+                </button>
+              </div>
+            </>
           )}
 
           {/* Scrollable transcript — user + assistant, rubber-band on iOS */}
@@ -843,10 +910,13 @@ export default function LoanAguiPanel({
               const rawText = String(m.content ?? '');
               const text = showReasoning
                 ? rawText
-                    .replace(/💭[^\n]*/g, '')          // remove 💭 reasoning lines
+                    .replace(/💭[^\n]*/g, '') // remove 💭 reasoning lines
                     .replace(/functions?\.\w+\s*\([^)]*\)/gs, '') // remove functions.navigate_to(...)
                     .replace(/navigate_to\s*\(\s*\{[\s\S]*?\}\s*\)/gs, '') // alternate format
-                    .replace(/\{\s*"destination"\s*:\s*"[^"]+"\s*(?:,\s*"context"\s*:\s*"[^"]*")?\s*\}/g, '')
+                    .replace(
+                      /\{\s*"destination"\s*:\s*"[^"]+"\s*(?:,\s*"context"\s*:\s*"[^"]*")?\s*\}/g,
+                      '',
+                    )
                     .trim()
                 : rawText.trim();
               const show = isUser ? text : text || (m.pending ? '…' : '');
@@ -872,7 +942,9 @@ export default function LoanAguiPanel({
             {liveFeed?.active ? (
               <ArmLiveDataFeed {...liveFeed} variant="chat" />
             ) : messages.length <= 1 ? (
-              <p className={`text-[10px] leading-snug ${chatFullscreen ? 'text-white/55' : 'text-black'}`}>
+              <p
+                className={`text-[10px] leading-snug ${chatFullscreen ? 'text-white/55' : 'text-black'}`}
+              >
                 {assistHint}
               </p>
             ) : null}
@@ -893,7 +965,9 @@ export default function LoanAguiPanel({
                       />
                     ))}
                   </span>
-                  <span className="text-[10px] font-medium text-amber-700">Analyzing your request…</span>
+                  <span className="text-[10px] font-medium text-amber-700">
+                    Analyzing your request…
+                  </span>
                 </div>
               )}
               {/* Emitted status steps */}
@@ -913,9 +987,13 @@ export default function LoanAguiPanel({
                     <span className="mt-0.5 text-[11px] leading-none">
                       {i === statusSteps.length - 1 && running ? '⚡' : '✓'}
                     </span>
-                    <span className={`text-[10px] leading-snug font-medium ${
-                      i === statusSteps.length - 1 && running ? 'text-[#0a3d62]' : 'text-slate-500'
-                    }`}>
+                    <span
+                      className={`text-[10px] leading-snug font-medium ${
+                        i === statusSteps.length - 1 && running
+                          ? 'text-[#0a3d62]'
+                          : 'text-slate-500'
+                      }`}
+                    >
                       {step.text}
                     </span>
                   </motion.div>
@@ -937,11 +1015,13 @@ export default function LoanAguiPanel({
           )}
 
           {autoMicMode && !navOnly && (
-            <p className={`mx-2 shrink-0 rounded-lg border px-2 py-1 text-center text-[10px] leading-snug ${
-              chatFullscreen
-                ? 'border-violet-400/40 bg-violet-500/15 text-violet-100'
-                : 'border-violet-300/80 bg-violet-50 text-violet-900'
-            }`}>
+            <p
+              className={`mx-2 shrink-0 rounded-lg border px-2 py-1 text-center text-[10px] leading-snug ${
+                chatFullscreen
+                  ? 'border-violet-400/40 bg-violet-500/15 text-violet-100'
+                  : 'border-violet-300/80 bg-violet-50 text-violet-900'
+              }`}
+            >
               {micActive
                 ? 'Listening — speak your answer…'
                 : ttsPlayingLocal
@@ -953,11 +1033,13 @@ export default function LoanAguiPanel({
           )}
 
           {voiceBanner ? (
-            <p className={`mx-2 shrink-0 rounded-lg border px-2 py-1 text-center text-[10px] leading-snug ${
-              chatFullscreen
-                ? 'border-amber-300/40 bg-amber-500/15 text-amber-100'
-                : 'border-amber-300/80 bg-amber-100/95 text-black'
-            }`}>
+            <p
+              className={`mx-2 shrink-0 rounded-lg border px-2 py-1 text-center text-[10px] leading-snug ${
+                chatFullscreen
+                  ? 'border-amber-300/40 bg-amber-500/15 text-amber-100'
+                  : 'border-amber-300/80 bg-amber-100/95 text-black'
+              }`}
+            >
               {voiceBanner}
             </p>
           ) : null}
@@ -968,12 +1050,16 @@ export default function LoanAguiPanel({
             </div>
           ) : null}
 
-          <div className={`shrink-0 px-2 pb-2 pt-1.5 ${chatFullscreen ? 'px-3 pb-4' : 'border-t border-zinc-200'}`}>
-            <div className={`flex items-center gap-2 rounded-xl p-1.5 ${
-              chatFullscreen
-                ? 'bg-white/10 ring-1 ring-white/20 backdrop-blur-xl'
-                : 'border border-zinc-200 bg-zinc-50 shadow-inner'
-            }`}>
+          <div
+            className={`shrink-0 px-2 pb-2 pt-1.5 ${chatFullscreen ? 'px-3 pb-4' : 'border-t border-zinc-200'}`}
+          >
+            <div
+              className={`flex items-center gap-2 rounded-xl p-1.5 ${
+                chatFullscreen
+                  ? 'bg-white/10 ring-1 ring-white/20 backdrop-blur-xl'
+                  : 'border border-zinc-200 bg-zinc-50 shadow-inner'
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => void toggleMic()}
@@ -1022,7 +1108,9 @@ export default function LoanAguiPanel({
                 }}
                 placeholder="Type or say something…"
                 className={`min-w-0 flex-1 bg-transparent px-1 text-[13px] outline-none ${
-                  chatFullscreen ? 'text-white placeholder:text-white/40' : 'text-black placeholder:text-black/40'
+                  chatFullscreen
+                    ? 'text-white placeholder:text-white/40'
+                    : 'text-black placeholder:text-black/40'
                 }`}
               />
               {input.trim() ? (
@@ -1030,7 +1118,9 @@ export default function LoanAguiPanel({
                   type="button"
                   onClick={() => setInput('')}
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm hover:bg-zinc-200 ${
-                    chatFullscreen ? 'text-white/55 hover:text-white hover:bg-white/10' : 'text-black/55 hover:text-black'
+                    chatFullscreen
+                      ? 'text-white/55 hover:text-white hover:bg-white/10'
+                      : 'text-black/55 hover:text-black'
                   }`}
                   aria-label="Clear"
                 >

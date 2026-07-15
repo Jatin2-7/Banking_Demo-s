@@ -76,7 +76,9 @@ export async function streamLoanAguiRun(res, agentId, inputData, { signal } = {}
 
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -116,8 +118,13 @@ export async function streamLoanAguiRun(res, agentId, inputData, { signal } = {}
       }
     }
     const systemTail =
-      systemNotes.length > 0 ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
-    const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+      systemNotes.length > 0
+        ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+        : '';
+    const messages = [
+      { role: 'system', content: buildSystemPrompt(state) + systemTail },
+      ...history,
+    ];
 
     const tools = loanOpenAiTools();
 
@@ -260,7 +267,8 @@ export async function streamLoanAguiRun(res, agentId, inputData, { signal } = {}
       hint =
         'OpenAI returned 401 (invalid API key). Set a valid OPENAI_API_KEY in server/.env, restart the server, and try again.';
     } else if (status === 429) {
-      hint = 'OpenAI rate limit or quota exceeded. Wait a moment or check billing on your OpenAI account.';
+      hint =
+        'OpenAI rate limit or quota exceeded. Wait a moment or check billing on your OpenAI account.';
     }
     write({
       type: 'RUN_ERROR',

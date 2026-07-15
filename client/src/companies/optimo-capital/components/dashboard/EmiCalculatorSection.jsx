@@ -74,10 +74,15 @@ export default function EmiCalculatorSection({ values, onChange, onApply, onScro
                 backgroundBlendMode: 'overlay',
               }}
             >
-              <p style={{ fontFamily: FONTS.display, fontSize: 32, fontWeight: 700, color: '#fff' }}>
+              <p
+                style={{ fontFamily: FONTS.display, fontSize: 32, fontWeight: 700, color: '#fff' }}
+              >
                 EMI Calculator
               </p>
-              <p className="mt-2 max-w-xs" style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)' }}>
+              <p
+                className="mt-2 max-w-xs"
+                style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)' }}
+              >
                 Quickly estimate EMIs and plan your finances.
               </p>
             </div>
@@ -85,9 +90,13 @@ export default function EmiCalculatorSection({ values, onChange, onApply, onScro
             <div className="p-6 sm:p-8" style={{ backgroundColor: OPTIMO.orange }}>
               <div className="grid gap-5 sm:grid-cols-3">
                 <div>
-                  <label className="mb-2 block text-[13px] font-semibold text-white">Preferred loan amount</label>
+                  <label className="mb-2 block text-[13px] font-semibold text-white">
+                    Preferred loan amount
+                  </label>
                   <div className="flex overflow-hidden rounded-[10px] bg-white">
-                    <span className="flex items-center px-3 text-[15px] font-medium text-[#64748B]">₹</span>
+                    <span className="flex items-center px-3 text-[15px] font-medium text-[#64748B]">
+                      ₹
+                    </span>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -100,22 +109,30 @@ export default function EmiCalculatorSection({ values, onChange, onApply, onScro
                   </div>
                 </div>
                 <div>
-                  <label className="mb-2 block text-[13px] font-semibold text-white">Interest rate (per annum)</label>
+                  <label className="mb-2 block text-[13px] font-semibold text-white">
+                    Interest rate (per annum)
+                  </label>
                   <div className="flex overflow-hidden rounded-[10px] bg-white">
                     <input
                       type="text"
                       inputMode="decimal"
                       value={interestRate}
-                      onChange={(e) => setField('interestRate', e.target.value.replace(/[^\d.]/g, ''))}
+                      onChange={(e) =>
+                        setField('interestRate', e.target.value.replace(/[^\d.]/g, ''))
+                      }
                       placeholder="e.g 10%"
                       className="min-w-0 flex-1 px-4 py-3 text-[15px] outline-none"
                       style={{ fontFamily: FONTS.body, color: OPTIMO.navy }}
                     />
-                    <span className="flex items-center px-3 text-[15px] font-medium text-[#64748B]">%</span>
+                    <span className="flex items-center px-3 text-[15px] font-medium text-[#64748B]">
+                      %
+                    </span>
                   </div>
                 </div>
                 <div>
-                  <label className="mb-2 block text-[13px] font-semibold text-white">Loan tenure (in years)</label>
+                  <label className="mb-2 block text-[13px] font-semibold text-white">
+                    Loan tenure (in years)
+                  </label>
                   <select
                     value={tenureYears}
                     onChange={(e) => setField('tenureYears', e.target.value)}
@@ -138,8 +155,12 @@ export default function EmiCalculatorSection({ values, onChange, onApply, onScro
                   <p style={{ fontSize: 12, color: OPTIMO.navySoft }}>per month</p>
                 </div>
                 <div className="text-right">
-                  <p style={{ fontSize: 28, fontWeight: 700, color: OPTIMO.navy }}>{formatInrFull(emi)}</p>
-                  <p style={{ fontSize: 12, color: OPTIMO.navySoft }}>Interest payable {formatInrFull(totalInterest)}</p>
+                  <p style={{ fontSize: 28, fontWeight: 700, color: OPTIMO.navy }}>
+                    {formatInrFull(emi)}
+                  </p>
+                  <p style={{ fontSize: 12, color: OPTIMO.navySoft }}>
+                    Interest payable {formatInrFull(totalInterest)}
+                  </p>
                 </div>
               </div>
 

@@ -10,10 +10,7 @@ import { EMT } from '../theme.js';
 
 function ProcessStep({ step, title, description, icon }) {
   return (
-    <div
-      className="relative flex gap-3 rounded-xl p-4"
-      style={{ backgroundColor: '#F0F7FF' }}
-    >
+    <div className="relative flex gap-3 rounded-xl p-4" style={{ backgroundColor: '#F0F7FF' }}>
       <span
         className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold text-white"
         style={{ backgroundColor: EMT.brandBlue }}
@@ -45,7 +42,9 @@ function TimelineItem({ date, title, description, active }) {
       <div className="flex-1 pb-4">
         {date && <p className="text-[10px] text-emt-muted">{date}</p>}
         <p className="text-[12px] font-bold text-emt-ink">{title}</p>
-        {description && <p className="mt-1 text-[10px] leading-relaxed text-emt-muted">{description}</p>}
+        {description && (
+          <p className="mt-1 text-[10px] leading-relaxed text-emt-muted">{description}</p>
+        )}
       </div>
     </div>
   );
@@ -61,8 +60,19 @@ export default function VisaDestinationScreen({ form, onChange, onBack, onStartA
         className="px-4 py-5 text-white"
         style={{ background: 'linear-gradient(180deg, #4A5568 0%, #2D3748 100%)' }}
       >
-        <button type="button" onClick={onBack} className="press mb-3 flex items-center gap-1 text-[12px]">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+        <button
+          type="button"
+          onClick={onBack}
+          className="press mb-3 flex items-center gap-1 text-[12px]"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2.5"
+          >
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" />
           </svg>
           Back
@@ -71,7 +81,10 @@ export default function VisaDestinationScreen({ form, onChange, onBack, onStartA
       </div>
 
       <div className="space-y-4 px-4 py-4">
-        <div className="overflow-hidden rounded-2xl border-2 shadow-sm" style={{ borderColor: EMT.brandBlue }}>
+        <div
+          className="overflow-hidden rounded-2xl border-2 shadow-sm"
+          style={{ borderColor: EMT.brandBlue }}
+        >
           <EstimatedDateBanner dateLabel={estimated} />
           <div className="space-y-3 bg-white p-4">
             <TravellerStepper
@@ -79,7 +92,10 @@ export default function VisaDestinationScreen({ form, onChange, onBack, onStartA
               onChange={(n) => onChange({ travellers: n })}
             />
             <OrangeButton onClick={onStartApplication}>Start Application</OrangeButton>
-            <p className="flex items-center justify-center gap-1 text-[10px]" style={{ color: '#00A651' }}>
+            <p
+              className="flex items-center justify-center gap-1 text-[10px]"
+              style={{ color: '#00A651' }}
+            >
               <span>✓</span> Best Price Guaranteed
             </p>
           </div>
@@ -141,14 +157,20 @@ export default function VisaDestinationScreen({ form, onChange, onBack, onStartA
           <div className="flex gap-3">
             <span className="text-xl">🕐</span>
             <div>
-              <p className="text-[12px] font-bold text-emt-ink">Validity Period: {form.duration} Days</p>
-              <p className="text-[10px] text-emt-muted">This number presents the validity of your visa.</p>
+              <p className="text-[12px] font-bold text-emt-ink">
+                Validity Period: {form.duration} Days
+              </p>
+              <p className="text-[10px] text-emt-muted">
+                This number presents the validity of your visa.
+              </p>
             </div>
           </div>
           <div className="flex gap-3">
             <span className="text-xl">🚪</span>
             <div>
-              <p className="text-[12px] font-bold text-emt-ink">Entry Type: {form.entryType} Entry</p>
+              <p className="text-[12px] font-bold text-emt-ink">
+                Entry Type: {form.entryType} Entry
+              </p>
               <p className="text-[10px] text-emt-muted">You can enter the country only once.</p>
             </div>
           </div>
@@ -160,7 +182,8 @@ export default function VisaDestinationScreen({ form, onChange, onBack, onStartA
         >
           <span className="text-sm">ℹ️</span>
           <p className="text-[10px] leading-relaxed text-emt-ink">
-            <strong>Disclaimer:</strong> Visa fees and required documents may change at any time without prior notice.
+            <strong>Disclaimer:</strong> Visa fees and required documents may change at any time
+            without prior notice.
           </p>
         </div>
 
@@ -170,16 +193,38 @@ export default function VisaDestinationScreen({ form, onChange, onBack, onStartA
             Check-out all the steps that are involved in visa application processing.
           </p>
           <div className="mt-3 space-y-3">
-            <ProcessStep step="01" title="Apply Online" description="Visit our exclusive platform and fill in the required details hassle-free to meet criteria." icon="📋" />
-            <ProcessStep step="02" title="Get An Appointment" description="Receive an appointment schedule & meet our professionals for guidance." icon="📅" />
-            <ProcessStep step="03" title="Submit Document" description="Send us all the relevant documents to verify and process your visa application." icon="📤" />
-            <ProcessStep step="04" title="Receive Your Visa" description="Once approved, you'll receive your visas instantly with our efficient procedure." icon="🛂" />
+            <ProcessStep
+              step="01"
+              title="Apply Online"
+              description="Visit our exclusive platform and fill in the required details hassle-free to meet criteria."
+              icon="📋"
+            />
+            <ProcessStep
+              step="02"
+              title="Get An Appointment"
+              description="Receive an appointment schedule & meet our professionals for guidance."
+              icon="📅"
+            />
+            <ProcessStep
+              step="03"
+              title="Submit Document"
+              description="Send us all the relevant documents to verify and process your visa application."
+              icon="📤"
+            />
+            <ProcessStep
+              step="04"
+              title="Receive Your Visa"
+              description="Once approved, you'll receive your visas instantly with our efficient procedure."
+              icon="🛂"
+            />
           </div>
         </div>
 
         <div className="rounded-2xl border border-emt-border bg-white p-4">
           <h3 className="text-[15px] font-bold text-emt-ink">Track Your Visa Timeline</h3>
-          <p className="mt-1 text-[11px] text-emt-muted">Stay updated on your Visa application progress right here.</p>
+          <p className="mt-1 text-[11px] text-emt-muted">
+            Stay updated on your Visa application progress right here.
+          </p>
           <div className="mt-4">
             <TimelineItem
               date="15 Jul 2026 (Today)"

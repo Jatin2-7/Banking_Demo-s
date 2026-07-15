@@ -20,19 +20,28 @@ export function SbiGradientBanner({ title, subtitle, cta, variant = 'purple', on
       className="press mx-4 mt-3 overflow-hidden rounded-2xl text-left shadow-sm"
       style={{ background: bg }}
     >
-      <div className={`flex items-center justify-between px-4 py-3.5 ${isLight ? 'text-slate-800' : 'text-white'}`}>
+      <div
+        className={`flex items-center justify-between px-4 py-3.5 ${isLight ? 'text-slate-800' : 'text-white'}`}
+      >
         <div className="min-w-0 flex-1 pr-3">
           <p className={`text-[13px] font-bold leading-snug ${isLight ? 'text-slate-900' : ''}`}>
             {title}
             {!isLight && <span className="ml-1 opacity-80">&#8250;</span>}
           </p>
           {subtitle && (
-            <p className={`mt-0.5 text-[10px] leading-snug ${isLight ? 'text-slate-600' : 'opacity-90'}`}>{subtitle}</p>
+            <p
+              className={`mt-0.5 text-[10px] leading-snug ${isLight ? 'text-slate-600' : 'opacity-90'}`}
+            >
+              {subtitle}
+            </p>
           )}
           {cta && (
             <span
               className="mt-2 inline-block rounded-full px-3 py-1 text-[10px] font-bold"
-              style={{ backgroundColor: isLight ? '#D32F2F' : 'rgba(255,255,255,0.2)', color: '#fff' }}
+              style={{
+                backgroundColor: isLight ? '#D32F2F' : 'rgba(255,255,255,0.2)',
+                color: '#fff',
+              }}
             >
               {cta}
             </span>

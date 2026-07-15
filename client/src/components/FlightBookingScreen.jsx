@@ -133,7 +133,14 @@ export default function FlightBookingScreen({ onClose }) {
               className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/10"
               aria-label="Menu"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
               </svg>
             </button>
@@ -200,7 +207,14 @@ export default function FlightBookingScreen({ onClose }) {
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white hover:bg-white/10"
             aria-label="Back"
           >
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <svg
+              width="21"
+              height="21"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -214,7 +228,14 @@ export default function FlightBookingScreen({ onClose }) {
             ₹ 0
           </button>
           <HeaderIcon label="Settings">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="12" cy="12" r="3" />
               <path d="M19 12a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -238,7 +259,9 @@ export default function FlightBookingScreen({ onClose }) {
             className="relative flex w-full items-center gap-3 pb-3 text-left"
           >
             <span className="h-2 w-2 rounded-full bg-[#1452a5]" />
-            <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500">{from.code}</span>
+            <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500">
+              {from.code}
+            </span>
             <span className="text-sm font-bold text-slate-900">{from.city}</span>
           </button>
           <button
@@ -247,7 +270,9 @@ export default function FlightBookingScreen({ onClose }) {
             className="relative flex w-full items-center gap-3 pt-3 text-left"
           >
             <span className="h-2 w-2 rounded-full bg-[#1452a5]" />
-            <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500">{to.code}</span>
+            <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500">
+              {to.code}
+            </span>
             <span className="text-sm font-bold text-slate-900">{to.city}</span>
           </button>
           <button
@@ -279,8 +304,12 @@ export default function FlightBookingScreen({ onClose }) {
             className="px-5 py-4 text-left"
           >
             <span className="block text-[11px] text-slate-500">Return</span>
-            <span className="block text-sm font-bold text-slate-900">{returnLabel ? returnLabel.date : 'Add Return'}</span>
-            <span className="block text-[11px] text-slate-500">{returnLabel ? returnLabel.day : 'and save more!'}</span>
+            <span className="block text-sm font-bold text-slate-900">
+              {returnLabel ? returnLabel.date : 'Add Return'}
+            </span>
+            <span className="block text-[11px] text-slate-500">
+              {returnLabel ? returnLabel.day : 'and save more!'}
+            </span>
           </button>
         </section>
 
@@ -292,7 +321,9 @@ export default function FlightBookingScreen({ onClose }) {
           >
             <span>
               <span className="block text-[11px] text-slate-500">Class</span>
-              <span className="block text-sm font-bold text-slate-900">{CABIN_CLASSES[classIndex]}</span>
+              <span className="block text-sm font-bold text-slate-900">
+                {CABIN_CLASSES[classIndex]}
+              </span>
             </span>
             <span className="text-lg text-slate-800">⌄</span>
           </button>
@@ -327,8 +358,8 @@ export default function FlightBookingScreen({ onClose }) {
             <p className="font-bold">Flights ready to search</p>
             <p className="mt-1 text-xs leading-snug">
               {from.city} to {to.city} · {departureLabel.date}
-              {returnLabel ? ` to ${returnLabel.date}` : ''} · {CABIN_CLASSES[classIndex]} · {travellers}{' '}
-              {travellers === 1 ? 'traveller' : 'travellers'}
+              {returnLabel ? ` to ${returnLabel.date}` : ''} · {CABIN_CLASSES[classIndex]} ·{' '}
+              {travellers} {travellers === 1 ? 'traveller' : 'travellers'}
               {nonStop ? ' · non-stop only' : ''}
             </p>
           </div>

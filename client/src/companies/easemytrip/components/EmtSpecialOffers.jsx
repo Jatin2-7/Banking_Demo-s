@@ -16,7 +16,11 @@ export default function EmtSpecialOffers() {
     <div className="px-3 pb-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[15px] font-bold text-emt-ink">Special Offers</h2>
-        <button type="button" className="text-[12px] font-semibold press" style={{ color: EMT.blue }}>
+        <button
+          type="button"
+          className="text-[12px] font-semibold press"
+          style={{ color: EMT.blue }}
+        >
           View All →
         </button>
       </div>

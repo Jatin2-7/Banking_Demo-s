@@ -5,8 +5,19 @@ export default function ArmChatHeader({ onClose }) {
   return (
     <header className="shrink-0 border-b border-kb-border bg-white px-3 pb-2.5 pt-2">
       <div className="flex items-center justify-between gap-2">
-        <button type="button" className="flex h-9 w-9 items-center justify-center text-kb-muted press" aria-label="Language">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <button
+          type="button"
+          className="flex h-9 w-9 items-center justify-center text-kb-muted press"
+          aria-label="Language"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
             <circle cx="12" cy="12" r="10" />
             <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
           </svg>
@@ -19,8 +30,19 @@ export default function ArmChatHeader({ onClose }) {
           </p>
         </div>
         <div className="flex items-center gap-0.5">
-          <button type="button" className="flex h-9 w-9 items-center justify-center text-kb-muted press" aria-label="New">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button
+            type="button"
+            className="flex h-9 w-9 items-center justify-center text-kb-muted press"
+            aria-label="New"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
           </button>
@@ -30,7 +52,14 @@ export default function ArmChatHeader({ onClose }) {
             className="flex h-9 w-9 items-center justify-center text-kb-muted press"
             aria-label="Close"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
             </svg>
           </button>

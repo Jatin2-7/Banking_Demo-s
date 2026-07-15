@@ -66,7 +66,9 @@ export function handleLoanAguiPost(req, res) {
   const agentId = req.params.agentId;
   const runner = RUNNERS[agentId];
   if (!runner) {
-    return res.status(404).json({ error: 'unknown_agent', agentId, supported: Object.keys(RUNNERS) });
+    return res
+      .status(404)
+      .json({ error: 'unknown_agent', agentId, supported: Object.keys(RUNNERS) });
   }
 
   const body = req.body || {};

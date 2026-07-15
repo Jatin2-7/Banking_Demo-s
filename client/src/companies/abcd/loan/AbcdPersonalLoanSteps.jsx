@@ -6,8 +6,20 @@ const DEMO_MPIN = '1234';
 function LoanHeader({ title = 'Personal Loan', onBack, onHelp }) {
   return (
     <header className="flex shrink-0 items-center gap-2 border-b border-[#EEEEEE] bg-white px-3 py-2.5">
-      <button type="button" onClick={onBack} className="flex h-9 w-9 items-center justify-center press" aria-label="Back">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2.2">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex h-9 w-9 items-center justify-center press"
+        aria-label="Back"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#1A1A1A"
+          strokeWidth="2.2"
+        >
           <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
@@ -57,21 +69,53 @@ function ProgressBlock({ step, total = 5, label = 'Basic details' }) {
 
 export function AbcdLoanJourneyIntro({ onGotIt, onClose }) {
   const steps = [
-    { n: 1, title: 'Check Your Eligibility', desc: 'Check your eligibility and see your estimated loan amount.', status: 'done' },
-    { n: 2, title: 'Build Your Application', desc: 'Add details to match with the right lenders.', status: 'active' },
-    { n: 3, title: 'Lender Assessment', desc: 'Your application is being reviewed by the lender.', time: 'About 5 min' },
-    { n: 4, title: 'Lender offer Generated', desc: 'Your loan details are finalised.', time: 'About 4 min' },
-    { n: 5, title: 'Agreement & Disbursal', desc: 'Funds are credited to your bank account.', time: 'About 5 min' },
+    {
+      n: 1,
+      title: 'Check Your Eligibility',
+      desc: 'Check your eligibility and see your estimated loan amount.',
+      status: 'done',
+    },
+    {
+      n: 2,
+      title: 'Build Your Application',
+      desc: 'Add details to match with the right lenders.',
+      status: 'active',
+    },
+    {
+      n: 3,
+      title: 'Lender Assessment',
+      desc: 'Your application is being reviewed by the lender.',
+      time: 'About 5 min',
+    },
+    {
+      n: 4,
+      title: 'Lender offer Generated',
+      desc: 'Your loan details are finalised.',
+      time: 'About 4 min',
+    },
+    {
+      n: 5,
+      title: 'Agreement & Disbursal',
+      desc: 'Funds are credited to your bank account.',
+      time: 'About 5 min',
+    },
   ];
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <button type="button" onClick={onClose} className="absolute right-3 top-3 z-10 text-[#9CA3AF] press" aria-label="Close">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-3 top-3 z-10 text-[#9CA3AF] press"
+        aria-label="Close"
+      >
         ✕
       </button>
       <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-5 pb-4 pt-8 text-center">
         <div className="mx-auto mb-3 text-[48px]">🪙</div>
-        <h2 className="text-[18px] font-bold text-[#1A1A1A]">Complete your personal loan application</h2>
+        <h2 className="text-[18px] font-bold text-[#1A1A1A]">
+          Complete your personal loan application
+        </h2>
         <p className="mt-2 text-[12px] leading-snug text-[#6B7280]">
           To comply with regulations, we need to collect and verify your information.
         </p>
@@ -91,7 +135,9 @@ export function AbcdLoanJourneyIntro({ onGotIt, onClose }) {
                   {s.status === 'done' ? '✓' : s.n}
                 </div>
                 {i < steps.length - 1 && (
-                  <div className={`mt-1 w-0.5 flex-1 min-h-[24px] ${s.status === 'done' ? 'bg-[#43A047]' : 'bg-[#E5E7EB]'}`} />
+                  <div
+                    className={`mt-1 w-0.5 flex-1 min-h-[24px] ${s.status === 'done' ? 'bg-[#43A047]' : 'bg-[#E5E7EB]'}`}
+                  />
                 )}
               </div>
               <div className="pb-2">
@@ -162,9 +208,9 @@ function Chip({ active, children, onClick }) {
 }
 
 const PIN_LOCATIONS = {
-  '413001': 'Solapur, Maharashtra',
-  '400001': 'Mumbai, Maharashtra',
-  '110001': 'New Delhi, Delhi',
+  413001: 'Solapur, Maharashtra',
+  400001: 'Mumbai, Maharashtra',
+  110001: 'New Delhi, Delhi',
 };
 
 export function AbcdLoanBasicDetails({
@@ -207,7 +253,8 @@ export function AbcdLoanBasicDetails({
       <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-4 pb-4 pt-4">
         <h2 className="text-[18px] font-bold text-[#1A1A1A]">Verify your personal details</h2>
         <p className="mt-1 text-[11px] leading-snug text-[#6B7280]">
-          For your loan application please enter accurate information that matches your KYC document.
+          For your loan application please enter accurate information that matches your KYC
+          document.
         </p>
 
         <div className="mt-4">
@@ -320,7 +367,9 @@ export function AbcdLoanOffers({ onBack, onApply }) {
     <div className="flex h-full flex-col bg-[#FAFAFA]">
       <LoanHeader onBack={onBack} />
       <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-4 pb-4 pt-3">
-        <p className="text-[11px] text-[#6B7280]">ⓘ Ranking based on loan amount provided by lenders</p>
+        <p className="text-[11px] text-[#6B7280]">
+          ⓘ Ranking based on loan amount provided by lenders
+        </p>
         <div className="mt-3 flex items-center justify-between">
           <h2 className="text-[16px] font-bold text-[#1A1A1A]">Loan offers for you</h2>
           <button type="button" className="text-[12px] font-bold text-[#C41E24] press">
@@ -352,7 +401,10 @@ export function AbcdLoanOffers({ onBack, onApply }) {
             </div>
           </div>
           <div className="mt-4 flex gap-2">
-            <button type="button" className="flex-1 rounded-full bg-[#F3F4F6] py-2.5 text-[12px] font-bold text-[#C41E24] press">
+            <button
+              type="button"
+              className="flex-1 rounded-full bg-[#F3F4F6] py-2.5 text-[12px] font-bold text-[#C41E24] press"
+            >
               View KFS →
             </button>
             <button
@@ -367,9 +419,16 @@ export function AbcdLoanOffers({ onBack, onApply }) {
 
         <div className="mx-auto mt-3 h-1 w-8 rounded-full bg-[#C41E24]" />
 
-        <button type="button" className="mt-4 flex w-full items-center gap-2 rounded-xl border border-[#EEEEEE] bg-white px-3 py-3 text-left press">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFF8E1] text-[14px]">?</span>
-          <span className="flex-1 text-[12px] font-semibold text-[#374151]">What are KFS &amp; APR?</span>
+        <button
+          type="button"
+          className="mt-4 flex w-full items-center gap-2 rounded-xl border border-[#EEEEEE] bg-white px-3 py-3 text-left press"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFF8E1] text-[14px]">
+            ?
+          </span>
+          <span className="flex-1 text-[12px] font-semibold text-[#374151]">
+            What are KFS &amp; APR?
+          </span>
           <span className="text-[#C41E24]">›</span>
         </button>
         <p className="mt-2 text-[10px] text-[#6B7280]">*Amount is indicative</p>
@@ -380,7 +439,10 @@ export function AbcdLoanOffers({ onBack, onApply }) {
           </p>
           <div className="flex -space-x-1">
             {['ABCL', 'L&T', 'P'].map((x) => (
-              <span key={x} className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[8px] font-bold shadow-sm">
+              <span
+                key={x}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[8px] font-bold shadow-sm"
+              >
                 {x}
               </span>
             ))}
@@ -457,10 +519,13 @@ export function AbcdLoanMpinStep({ onBack, onSuccess }) {
       <LoanHeader title="Confirm with MPIN" onBack={onBack} />
       <ProgressBlock step={5} label="Agreement & Disbursal" />
       <div className="flex flex-1 flex-col items-center px-4 pt-6">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF8E1] text-[28px]">🔐</div>
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF8E1] text-[28px]">
+          🔐
+        </div>
         <h2 className="mt-4 text-[18px] font-bold text-[#1A1A1A]">Enter MPIN to complete</h2>
         <p className="mt-2 max-w-[280px] text-center text-[12px] text-[#6B7280]">
-          Authorise your personal loan application with the 4-digit MPIN you set during registration.
+          Authorise your personal loan application with the 4-digit MPIN you set during
+          registration.
         </p>
         <div className="mt-6 flex gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -504,10 +569,13 @@ export function AbcdLoanMpinStep({ onBack, onSuccess }) {
 export function AbcdLoanSuccess({ onDone }) {
   return (
     <div className="flex h-full flex-col items-center justify-center bg-white px-6 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#E8F5E9] text-[40px]">✓</div>
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#E8F5E9] text-[40px]">
+        ✓
+      </div>
       <h2 className="mt-4 text-[20px] font-bold text-[#1A1A1A]">Application submitted!</h2>
       <p className="mt-2 text-[13px] leading-snug text-[#6B7280]">
-        Your personal loan application has been sent to Fibe. Funds will be credited after final lender approval.
+        Your personal loan application has been sent to Fibe. Funds will be credited after final
+        lender approval.
       </p>
       <p className="mt-4 rounded-xl bg-[#FFF8E1] px-4 py-3 text-[12px] font-semibold text-[#5D4037]">
         Reference: PL-{Date.now().toString().slice(-8)}

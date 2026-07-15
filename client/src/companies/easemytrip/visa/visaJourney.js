@@ -45,7 +45,20 @@ export function generateVisaRef() {
 }
 
 export function formatVisaDate(day, month = 6, year = 2026) {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   const h = new Date().getHours();
   const m = String(new Date().getMinutes()).padStart(2, '0');
   const ampm = h >= 12 ? 'PM' : 'AM';

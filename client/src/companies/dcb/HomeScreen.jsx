@@ -18,13 +18,19 @@ function ServiceTile({ icon, label, onClick }) {
       onClick={onClick}
       className="press flex min-h-[5.25rem] flex-col items-center justify-center gap-1.5 rounded-xl px-1 py-2.5 text-center transition"
       style={{ backgroundColor: DCB.tileBg, color: DCB.navy }}
-      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = DCB.tileHover; }}
-      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = DCB.tileBg; }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = DCB.tileHover;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = DCB.tileBg;
+      }}
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center [&>svg]:h-[22px] [&>svg]:w-[22px]">
         {icon}
       </div>
-      <span className="line-clamp-2 w-full px-0.5 text-[10px] font-semibold leading-tight">{label}</span>
+      <span className="line-clamp-2 w-full px-0.5 text-[10px] font-semibold leading-tight">
+        {label}
+      </span>
     </button>
   );
 }
@@ -129,19 +135,40 @@ export default function DcbHomeScreen({
   };
 
   return (
-    <div className="relative flex min-h-full flex-col pb-6" style={{ backgroundColor: DCB.bg }} {...homeRageProps}>
+    <div
+      className="relative flex min-h-full flex-col pb-6"
+      style={{ backgroundColor: DCB.bg }}
+      {...homeRageProps}
+    >
       <DcbHomeHeader />
 
       <section className="shrink-0 px-3 pt-3">
-        <div className="relative overflow-hidden rounded-xl px-8 py-4 text-center shadow-sm" style={{ backgroundColor: DCB.promo }}>
-          <button type="button" className="absolute left-1.5 top-1/2 -translate-y-1/2 press" style={{ color: `${DCB.navy}B3` }} aria-label="Previous promo">
+        <div
+          className="relative overflow-hidden rounded-xl px-8 py-4 text-center shadow-sm"
+          style={{ backgroundColor: DCB.promo }}
+        >
+          <button
+            type="button"
+            className="absolute left-1.5 top-1/2 -translate-y-1/2 press"
+            style={{ color: `${DCB.navy}B3` }}
+            aria-label="Previous promo"
+          >
             &#8249;
           </button>
-          <button type="button" className="absolute right-1.5 top-1/2 -translate-y-1/2 press" style={{ color: `${DCB.navy}B3` }} aria-label="Next promo">
+          <button
+            type="button"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 press"
+            style={{ color: `${DCB.navy}B3` }}
+            aria-label="Next promo"
+          >
             &#8250;
           </button>
-          <p className="text-[9px] font-bold tracking-wide" style={{ color: `${DCB.navy}CC` }}>DCB BANK</p>
-          <p className="mt-0.5 text-[15px] font-bold" style={{ color: DCB.navy }}>DCB Fixed Deposit</p>
+          <p className="text-[9px] font-bold tracking-wide" style={{ color: `${DCB.navy}CC` }}>
+            DCB BANK
+          </p>
+          <p className="mt-0.5 text-[15px] font-bold" style={{ color: DCB.navy }}>
+            DCB Fixed Deposit
+          </p>
           <p className="mt-0.5 text-[13px] font-semibold" style={{ color: DCB.navy }}>
             Earn upto <span className="text-[18px] font-black">7.90%</span> p.a.
           </p>
@@ -153,13 +180,18 @@ export default function DcbHomeScreen({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <p className="text-[11px] font-semibold text-slate-500">Last Login</p>
-              <p className="mt-0.5 text-[12px] font-medium leading-snug" style={{ color: DCB.navy }}>
+              <p
+                className="mt-0.5 text-[12px] font-medium leading-snug"
+                style={{ color: DCB.navy }}
+              >
                 21 Apr, 2026, 10:25 AM
               </p>
             </div>
             <div className="text-right">
               <p className="text-[11px] font-semibold text-slate-500">Savings Account</p>
-              <p className="mt-0.5 text-[12px] font-bold" style={{ color: DCB.navy }}>{maskedAcct}</p>
+              <p className="mt-0.5 text-[12px] font-bold" style={{ color: DCB.navy }}>
+                {maskedAcct}
+              </p>
               <button
                 type="button"
                 onClick={() => setBalanceVisible((v) => !v)}
@@ -174,7 +206,10 @@ export default function DcbHomeScreen({
       </section>
 
       <section className="shrink-0 px-3 pt-3">
-        <div className="grid grid-cols-3 gap-2.5 rounded-2xl p-2.5" style={{ backgroundColor: DCB.gridBg }}>
+        <div
+          className="grid grid-cols-3 gap-2.5 rounded-2xl p-2.5"
+          style={{ backgroundColor: DCB.gridBg }}
+        >
           <ServiceTile
             label="My Accounts"
             onClick={() => (onOpenTxnHistory ? onOpenTxnHistory() : onQuickAction('check_balance'))}
@@ -188,7 +223,9 @@ export default function DcbHomeScreen({
           />
           <ServiceTile
             label="Transfer"
-            onClick={() => (onFundTransferImps ? onFundTransferImps() : onQuickAction('internal_transfer'))}
+            onClick={() =>
+              onFundTransferImps ? onFundTransferImps() : onQuickAction('internal_transfer')
+            }
             icon={
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
                 <path d="M7 10h13l-3-3M17 14H4l3 3" strokeLinecap="round" strokeLinejoin="round" />
@@ -205,25 +242,37 @@ export default function DcbHomeScreen({
               </svg>
             }
           />
-          <ServiceTile label="Credit Card" onClick={() => onNavigate?.('credit_card')} icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-              <rect x="2" y="5" width="20" height="14" rx="2" />
-              <path d="M2 10h20M6 15h4" strokeLinecap="round" />
-            </svg>
-          } />
-          <ServiceTile label="Debit Card" onClick={() => onNavigate?.('debit_card')} icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-              <rect x="2" y="5" width="20" height="14" rx="2" />
-              <path d="M2 10h20" />
-              <circle cx="17" cy="15" r="1.5" fill="currentColor" />
-            </svg>
-          } />
-          <ServiceTile label="Apply IPO" onClick={() => onQuickAction('check_balance')} icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-              <path d="M4 18l5-6 4 3 6-8" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M15 7h4v4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          } />
+          <ServiceTile
+            label="Credit Card"
+            onClick={() => onNavigate?.('credit_card')}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20M6 15h4" strokeLinecap="round" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Debit Card"
+            onClick={() => onNavigate?.('debit_card')}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20" />
+                <circle cx="17" cy="15" r="1.5" fill="currentColor" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Apply IPO"
+            onClick={() => onQuickAction('check_balance')}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <path d="M4 18l5-6 4 3 6-8" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M15 7h4v4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+          />
           <ServiceTile
             label="Gold Loan"
             onClick={() => (onApplyNewLoan ? onApplyNewLoan() : onQuickAction('check_balance'))}
@@ -234,19 +283,30 @@ export default function DcbHomeScreen({
               </svg>
             }
           />
-          <ServiceTile label="Bharat Connect" onClick={() => onQuickAction('pay_bill')} icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
-            </svg>
-          } />
-          <ServiceTile label="Services" onClick={() => onQuickAction('check_balance')} icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 16v-1.5a2.5 2.5 0 011.5-2.3A2.5 2.5 0 0012 7.5" strokeLinecap="round" />
-              <circle cx="12" cy="18.5" r="0.8" fill="currentColor" />
-            </svg>
-          } />
+          <ServiceTile
+            label="Bharat Connect"
+            onClick={() => onQuickAction('pay_bill')}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
+              </svg>
+            }
+          />
+          <ServiceTile
+            label="Services"
+            onClick={() => onQuickAction('check_balance')}
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <circle cx="12" cy="12" r="9" />
+                <path
+                  d="M12 16v-1.5a2.5 2.5 0 011.5-2.3A2.5 2.5 0 0012 7.5"
+                  strokeLinecap="round"
+                />
+                <circle cx="12" cy="18.5" r="0.8" fill="currentColor" />
+              </svg>
+            }
+          />
         </div>
       </section>
 

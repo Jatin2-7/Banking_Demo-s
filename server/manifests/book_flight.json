@@ -38,7 +38,12 @@
       "type": "string",
       "required": true,
       "description": "10-digit mobile for the booking.",
-      "extraction": { "from_voice": true, "llm": true, "regex": "^\\d{10}$", "accept_freetext": true }
+      "extraction": {
+        "from_voice": true,
+        "llm": true,
+        "regex": "^\\d{10}$",
+        "accept_freetext": true
+      }
     }
   },
 

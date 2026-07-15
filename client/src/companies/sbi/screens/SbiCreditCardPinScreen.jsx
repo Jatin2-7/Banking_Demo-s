@@ -72,7 +72,9 @@ function CardPreview() {
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-white/75">SBI Credit Card</p>
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-white/75">
+            SBI Credit Card
+          </p>
           <p className="mt-1 text-[11px] font-bold">YONO SBI Card</p>
         </div>
         <div className="rounded bg-white/20 px-2 py-0.5 text-[8px] font-bold">VISA</div>
@@ -138,9 +140,18 @@ export default function SbiCreditCardPinScreen({ onBack }) {
   if (pinStep === 'success') {
     return (
       <div className="flex min-h-full flex-col bg-white">
-        <header className="flex items-center gap-2 border-b px-3 py-3" style={{ borderColor: SBI.border }}>
+        <header
+          className="flex items-center gap-2 border-b px-3 py-3"
+          style={{ borderColor: SBI.border }}
+        >
           <button type="button" onClick={onBack} className="press -ml-1 p-1" aria-label="Back">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke={SBI.purple} strokeWidth="2">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke={SBI.purple}
+              strokeWidth="2"
+            >
               <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -158,7 +169,13 @@ export default function SbiCreditCardPinScreen({ onBack }) {
             className="flex h-20 w-20 items-center justify-center rounded-full"
             style={{ backgroundColor: SBI.successBg }}
           >
-            <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke={SBI.success} strokeWidth="2.5">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-10 w-10"
+              fill="none"
+              stroke={SBI.success}
+              strokeWidth="2.5"
+            >
               <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -167,7 +184,8 @@ export default function SbiCreditCardPinScreen({ onBack }) {
               PIN Changed Successfully!
             </p>
             <p className="mt-2 text-[12px] text-slate-500">
-              Your SBI credit card PIN has been updated. Use your new PIN for ATM and POS transactions.
+              Your SBI credit card PIN has been updated. Use your new PIN for ATM and POS
+              transactions.
             </p>
           </div>
           <button
@@ -185,9 +203,18 @@ export default function SbiCreditCardPinScreen({ onBack }) {
 
   return (
     <div className="flex min-h-full flex-col bg-white">
-      <header className="flex items-center gap-2 border-b px-3 py-3" style={{ borderColor: SBI.border }}>
+      <header
+        className="flex items-center gap-2 border-b px-3 py-3"
+        style={{ borderColor: SBI.border }}
+      >
         <button type="button" onClick={onBack} className="press -ml-1 p-1" aria-label="Back">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke={SBI.purple} strokeWidth="2">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke={SBI.purple}
+            strokeWidth="2"
+          >
             <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -207,13 +234,18 @@ export default function SbiCreditCardPinScreen({ onBack }) {
             exit={{ opacity: 0, x: -12 }}
             className={`mt-8 flex flex-col items-center ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
           >
-            <p className="text-[16px] font-bold" style={{ color: SBI.ink }}>{title}</p>
+            <p className="text-[16px] font-bold" style={{ color: SBI.ink }}>
+              {title}
+            </p>
             <p className="mt-1 text-center text-[11px] text-slate-500">{subtitle}</p>
             <div className="mt-6">
               <PinDots value={entry} len={PIN_LEN} />
             </div>
             {error && (
-              <p className="mt-3 text-center text-[11px] font-medium" style={{ color: SBI.alertText }}>
+              <p
+                className="mt-3 text-center text-[11px] font-medium"
+                style={{ color: SBI.alertText }}
+              >
                 {error}
               </p>
             )}

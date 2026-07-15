@@ -20,14 +20,14 @@ export default function ConfirmCard({ session, onConfirm, onCancel, lang }) {
   const { details = [] } = session.pending;
 
   const action = session.action;
-  const accent = {
-    send_money: '#3D2666',
-    internal_transfer: '#5B3D8A',
-    pay_bill: '#C9A227',
-    book_flight: '#0288D1',
-  }[action] || '#3D2666';
-  const confirmTitle =
-    action === 'internal_transfer' ? 'Confirm transfer' : L.confirmTitle;
+  const accent =
+    {
+      send_money: '#3D2666',
+      internal_transfer: '#5B3D8A',
+      pay_bill: '#C9A227',
+      book_flight: '#0288D1',
+    }[action] || '#3D2666';
+  const confirmTitle = action === 'internal_transfer' ? 'Confirm transfer' : L.confirmTitle;
 
   // Pull out the primary fields so we can render them as hero rows. Anything
   // left over is shown as a subtle "more details" list at the bottom.

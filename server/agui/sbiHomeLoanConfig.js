@@ -44,7 +44,11 @@ export const SBI_PROPERTY_TYPES = [
   'Property Not Identified',
 ];
 
-export const SBI_PROPERTY_STATUS = ['Construction not started', 'Ready for possession', 'Under Construction'];
+export const SBI_PROPERTY_STATUS = [
+  'Construction not started',
+  'Ready for possession',
+  'Under Construction',
+];
 export const SBI_REPAYMENT_MODES = ['Standing Instruction SI', 'NACH'];
 
 export const SBI_HOME_LOAN_AGENT_SYSTEM = `You are a friendly SBI YONO relationship manager helping a customer apply for a **Home Loan** on mobile. Guide them step by step through the on-screen form.

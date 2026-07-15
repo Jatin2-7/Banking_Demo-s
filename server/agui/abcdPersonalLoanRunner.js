@@ -67,7 +67,9 @@ export async function streamAbcdPersonalLoanRun(res, agentId, inputData, { signa
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -102,7 +104,10 @@ export async function streamAbcdPersonalLoanRun(res, agentId, inputData, { signa
     const systemTail =
       systemNotes.length > 0 ? `\n\n## Context from the app\n${systemNotes.join('\n---\n')}` : '';
 
-    const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+    const messages = [
+      { role: 'system', content: buildSystemPrompt(state) + systemTail },
+      ...history,
+    ];
     const tools = abcdPersonalLoanOpenAiTools();
 
     for (let step = 0; step < 14; step++) {
@@ -149,7 +154,11 @@ export async function streamAbcdPersonalLoanRun(res, agentId, inputData, { signa
               });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -199,7 +208,11 @@ export async function streamAbcdPersonalLoanRun(res, agentId, inputData, { signa
           role: 'tool',
         });
 
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+        });
       }
 
       messages[0] = { role: 'system', content: buildSystemPrompt(state) + systemTail };

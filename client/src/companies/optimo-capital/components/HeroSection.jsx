@@ -16,7 +16,13 @@ function ConsentCheckbox({ checked, onChange }) {
     >
       {checked && (
         <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-          <path d="M2.5 6l2.5 2.5 4.5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M2.5 6l2.5 2.5 4.5-5"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       )}
     </button>
@@ -58,11 +64,8 @@ export default function HeroSection({ showConsent = true, consent, onConsentChan
           color: OPTIMO.headlineDark,
         }}
       >
-        Use{' '}
-        <span style={{ color: OPTIMO.orange, fontWeight: 600 }}>
-          house, office or shop
-        </span>{' '}
-        as collateral.
+        Use <span style={{ color: OPTIMO.orange, fontWeight: 600 }}>house, office or shop</span> as
+        collateral.
       </p>
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
@@ -77,8 +80,7 @@ export default function HeroSection({ showConsent = true, consent, onConsentChan
             color: OPTIMO.pillText,
           }}
         >
-          Loan Amount:{' '}
-          <span style={{ color: OPTIMO.orange, fontWeight: 600 }}>₹10L - ₹5Cr</span>
+          Loan Amount: <span style={{ color: OPTIMO.orange, fontWeight: 600 }}>₹10L - ₹5Cr</span>
         </div>
         <div
           className="rounded-full px-6 py-2"

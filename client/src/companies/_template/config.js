@@ -36,13 +36,6 @@ export const templateConfig = {
     txnHistory: 'indian_bank_txn_history',
     loanLos: 'indian_bank_loan_los',
   },
-  journeys: [
-    'home',
-    'loan',
-    'deposit',
-    'fund-transfer',
-    'txn-history',
-    'upi',
-  ],
+  journeys: ['home', 'loan', 'deposit', 'fund-transfer', 'txn-history', 'upi'],
   homeVariant: 'company-slug',
 };

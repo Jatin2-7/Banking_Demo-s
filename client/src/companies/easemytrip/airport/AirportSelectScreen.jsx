@@ -26,9 +26,9 @@ export default function AirportSelectScreen({ onBack, onSelect }) {
           Choose <strong>Your Airport</strong>
         </h2>
         <p className="mt-3 text-[12px] leading-relaxed text-emt-muted">
-          Select your departure airport now and unlock exclusive deals on top duty-free products from
-          premium brands. Enjoy extra savings on luxury products and make your travel experience more
-          rewarding.
+          Select your departure airport now and unlock exclusive deals on top duty-free products
+          from premium brands. Enjoy extra savings on luxury products and make your travel
+          experience more rewarding.
         </p>
         <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
           {AIRPORTS.map((a) => (

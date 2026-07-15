@@ -5,7 +5,10 @@ import { formatPrice, getAirport, getCartTotal, getProductById } from './airport
 function SuccessIllustration() {
   return (
     <div className="relative mx-auto mb-6 flex h-28 w-28 items-center justify-center">
-      <div className="absolute inset-0 rounded-full opacity-15" style={{ backgroundColor: '#7C3AED' }} />
+      <div
+        className="absolute inset-0 rounded-full opacity-15"
+        style={{ backgroundColor: '#7C3AED' }}
+      />
       <div
         className="flex h-20 w-20 items-center justify-center rounded-full"
         style={{ backgroundColor: '#7C3AED' }}
@@ -28,7 +31,14 @@ export default function DutyFreeOrderSuccessScreen({ form, onBackHome, onShopAga
       <header className="shrink-0 px-3 py-3 text-white" style={{ backgroundColor: '#1A8ADB' }}>
         <div className="flex items-center gap-2">
           <button type="button" onClick={onBackHome} className="press">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" />
             </svg>
           </button>
@@ -38,7 +48,9 @@ export default function DutyFreeOrderSuccessScreen({ form, onBackHome, onShopAga
 
       <div className="flex flex-1 flex-col overflow-y-auto px-6 py-8">
         <SuccessIllustration />
-        <h2 className="text-center text-[20px] font-bold text-emt-ink">Order Placed Successfully!</h2>
+        <h2 className="text-center text-[20px] font-bold text-emt-ink">
+          Order Placed Successfully!
+        </h2>
         <p className="mt-2 text-center text-[13px] leading-relaxed text-emt-muted">
           Your duty-free pre-order is confirmed. Collect at{' '}
           <strong>
@@ -69,7 +81,9 @@ export default function DutyFreeOrderSuccessScreen({ form, onBackHome, onShopAga
               {items.map((p) => (
                 <li key={p.id} className="flex justify-between gap-2 text-[11px]">
                   <span className="line-clamp-1 text-emt-ink">{p.brand}</span>
-                  <span className="shrink-0 font-semibold text-emt-ink">{formatPrice(p.price)}</span>
+                  <span className="shrink-0 font-semibold text-emt-ink">
+                    {formatPrice(p.price)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -78,7 +92,8 @@ export default function DutyFreeOrderSuccessScreen({ form, onBackHome, onShopAga
 
         <div className="mt-4 w-full rounded-xl px-4 py-3" style={{ backgroundColor: '#F3E8FF' }}>
           <p className="text-[11px] leading-relaxed" style={{ color: '#5B21B6' }}>
-            ✓ Pre-order confirmed · Collect at duty-free counter · Up to 10% pre-order discount applied
+            ✓ Pre-order confirmed · Collect at duty-free counter · Up to 10% pre-order discount
+            applied
           </p>
         </div>
 

@@ -187,11 +187,7 @@
           "type": "max_path",
           "path": "slots.from_account.balance",
           "msg_key": "insufficient_balance_offer_switch",
-          "msg_args": [
-            "{slots.from_account.label}",
-            "$slots.from_account.balance",
-            "$slots.amount"
-          ]
+          "msg_args": ["{slots.from_account.label}", "$slots.from_account.balance", "$slots.amount"]
         }
       ],
       "on_fail_goto": "switch_source_account",

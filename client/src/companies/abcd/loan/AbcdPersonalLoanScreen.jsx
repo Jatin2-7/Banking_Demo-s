@@ -57,7 +57,9 @@ export default function AbcdPersonalLoanScreen({
   voiceAssist = false,
 }) {
   const agents = useCompanyAgents();
-  const entryContext = String(aiPrimerProp || '').trim().toLowerCase();
+  const entryContext = String(aiPrimerProp || '')
+    .trim()
+    .toLowerCase();
   const isCalculatorEntry =
     entryContext === 'open_emi_calculator' || entryContext === 'open_loan_amount_calculator';
   const initialView = viewFromEntryContext(entryContext);
@@ -189,7 +191,14 @@ export default function AbcdPersonalLoanScreen({
               className="absolute left-3 top-2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/20 text-white press"
               aria-label="Back"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
                 <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>

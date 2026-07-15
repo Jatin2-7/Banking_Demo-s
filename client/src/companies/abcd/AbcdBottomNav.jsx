@@ -28,7 +28,14 @@ function TabIcon({ id, active }) {
   }
   if (id === 'myTrack') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2">
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="2"
+      >
         <path d="M4 18V10M10 18V6M16 18v-8M20 18H3" strokeLinecap="round" />
         <path d="M14 8l4-3 3 2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -36,22 +43,46 @@ function TabIcon({ id, active }) {
   }
   if (id === 'loans') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.8">
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.8"
+      >
         <circle cx="12" cy="12" r="8" />
-        <path d="M12 8v8M9.5 10.5c.6-1 1.5-1.5 2.5-1.5s2 .6 2 1.5-1 1.5-2.5 1.8S9.5 13 9.5 14s1.2 1.5 2.5 1.5 2-.5 2.5-1.2" strokeLinecap="round" />
+        <path
+          d="M12 8v8M9.5 10.5c.6-1 1.5-1.5 2.5-1.5s2 .6 2 1.5-1 1.5-2.5 1.8S9.5 13 9.5 14s1.2 1.5 2.5 1.5 2-.5 2.5-1.2"
+          strokeLinecap="round"
+        />
       </svg>
     );
   }
   if (id === 'insure') {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.8">
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.8"
+      >
         <path d="M12 3l8 4v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V7l8-4z" />
         <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.8">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={stroke}
+      strokeWidth="1.8"
+    >
       <rect x="4" y="8" width="16" height="10" rx="2" />
       <path d="M8 8V7a4 4 0 018 0v1M8 13h4" strokeLinecap="round" />
     </svg>
@@ -74,10 +105,7 @@ export default function AbcdBottomNav({ active = 'home', onChange }) {
         style={{ height: '28px', width: '100%' }}
         aria-hidden
       >
-        <path
-          d="M0 28 C 70 4, 130 0, 195 0 C 260 0, 320 4, 390 28 Z"
-          fill="#F7F0E8"
-        />
+        <path d="M0 28 C 70 4, 130 0, 195 0 C 260 0, 320 4, 390 28 Z" fill="#F7F0E8" />
       </svg>
 
       <div
@@ -99,7 +127,13 @@ export default function AbcdBottomNav({ active = 'home', onChange }) {
               {tab.id === 'myTrack' && !isActive ? (
                 <span
                   className="absolute text-[8px] font-bold text-white"
-                  style={{ top: '-2px', right: '18%', background: '#C41E24', borderRadius: '4px', padding: '1px 4px' }}
+                  style={{
+                    top: '-2px',
+                    right: '18%',
+                    background: '#C41E24',
+                    borderRadius: '4px',
+                    padding: '1px 4px',
+                  }}
                 >
                   New
                 </span>

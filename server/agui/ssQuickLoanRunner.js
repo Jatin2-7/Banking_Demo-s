@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { SS_QUICKLOAN_AGENT_ID, SS_QUICKLOAN_AGENT_SYSTEM } from './ssQuickLoanConfig.js';
-import { executeSSQuickLoanTool, runValidateForm, ssQuickLoanOpenAiTools } from './ssQuickLoanTools.js';
+import {
+  executeSSQuickLoanTool,
+  runValidateForm,
+  ssQuickLoanOpenAiTools,
+} from './ssQuickLoanTools.js';
 import { module_ } from '../lib/log.js';
 import { getOpenAIClient, getChatModel, hasLlmConfigured } from '../lib/openaiClient.js';
 
@@ -68,7 +72,9 @@ export async function streamSSQuickLoanRun(res, agentId, inputData, { signal } =
 
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -81,7 +87,13 @@ export async function streamSSQuickLoanRun(res, agentId, inputData, { signal } =
     if (!res.writableEnded) res.write(sseEncode(obj));
   };
 
-  const onAbort = () => { try { res.end(); } catch { /* ignore */ } };
+  const onAbort = () => {
+    try {
+      res.end();
+    } catch {
+      /* ignore */
+    }
+  };
   signal?.addEventListener('abort', onAbort);
 
   write({ type: 'RUN_STARTED', thread_id: threadId, run_id: runId });
@@ -95,9 +107,7 @@ export async function streamSSQuickLoanRun(res, agentId, inputData, { signal } =
       else history.push(m);
     }
     const systemTail =
-      systemNotes.length > 0
-        ? `\n\n## Context from the app\n${systemNotes.join('\n---\n')}`
-        : '';
+      systemNotes.length > 0 ? `\n\n## Context from the app\n${systemNotes.join('\n---\n')}` : '';
 
     const messages = [
       { role: 'system', content: buildSystemPrompt(state) + systemTail },
@@ -156,7 +166,11 @@ export async function streamSSQuickLoanRun(res, agentId, inputData, { signal } =
               });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -186,7 +200,11 @@ export async function streamSSQuickLoanRun(res, agentId, inputData, { signal } =
       for (const slot of toolCallBuf.values()) {
         if (!slot.id) continue;
         let args = {};
-        try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
+        try {
+          args = slot.args ? JSON.parse(slot.args) : {};
+        } catch {
+          args = {};
+        }
 
         const exec = executeSSQuickLoanTool(slot.name, args, state);
 
@@ -220,13 +238,18 @@ export async function streamSSQuickLoanRun(res, agentId, inputData, { signal } =
     const code = err?.code;
     let hint = `${err?.name || 'Error'}: ${err?.message || String(err)}`;
     if (status === 401 || code === 'invalid_api_key') {
-      hint = 'OpenAI returned 401. Set a valid OPENAI_API_KEY in server/.env, restart, and try again.';
+      hint =
+        'OpenAI returned 401. Set a valid OPENAI_API_KEY in server/.env, restart, and try again.';
     } else if (status === 429) {
       hint = 'OpenAI rate limit exceeded. Wait a moment or check your billing dashboard.';
     }
     write({ type: 'RUN_ERROR', message: hint });
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try { res.end(); } catch { /* ignore */ }
+    try {
+      res.end();
+    } catch {
+      /* ignore */
+    }
   }
 }

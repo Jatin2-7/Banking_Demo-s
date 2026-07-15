@@ -54,7 +54,14 @@ function ScreenHeader({ title, onBack, onHome }) {
           className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
           aria-label="Back"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+          >
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -98,7 +105,9 @@ function DetailRow({ label, value, bold }) {
   return (
     <div className="flex items-center justify-between border-b border-slate-100 py-2.5 last:border-0">
       <span className="text-xs text-slate-600">{label}</span>
-      <span className={`text-xs ${bold ? 'font-bold text-slate-900' : 'text-slate-800'}`}>{value}</span>
+      <span className={`text-xs ${bold ? 'font-bold text-slate-900' : 'text-slate-800'}`}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -107,8 +116,8 @@ function DetailRow({ label, value, bold }) {
 
 const PIN_STEPS = {
   current: { title: 'Enter Current PIN', subtitle: 'Enter your 4-digit credit card PIN' },
-  new:     { title: 'Enter New PIN',     subtitle: 'Choose a new 4-digit PIN' },
-  confirm: { title: 'Confirm New PIN',   subtitle: 'Re-enter your new PIN to confirm' },
+  new: { title: 'Enter New PIN', subtitle: 'Choose a new 4-digit PIN' },
+  confirm: { title: 'Confirm New PIN', subtitle: 'Re-enter your new PIN to confirm' },
 };
 
 function PinKeypad({ value, maxLen, onPress, onBack }) {
@@ -247,7 +256,10 @@ function ChangePinScreen({ onDone, onCancel }) {
           <p className="mt-1 text-xs text-white/60">{subtitle}</p>
         </div>
 
-        <motion.div animate={shake ? { x: [0, -8, 8, -8, 8, 0] } : {}} transition={{ duration: 0.4 }}>
+        <motion.div
+          animate={shake ? { x: [0, -8, 8, -8, 8, 0] } : {}}
+          transition={{ duration: 0.4 }}
+        >
           <PinDots value={entry} len={PIN_LEN} />
         </motion.div>
 
@@ -298,7 +310,9 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
       setHighlightStatement(false);
       setFlow('statement');
     }, AUTO_STATEMENT_MS);
-    return () => { if (autoNavRef.current) clearTimeout(autoNavRef.current); };
+    return () => {
+      if (autoNavRef.current) clearTimeout(autoNavRef.current);
+    };
   }, [autoStatement]);
 
   useEffect(() => {
@@ -312,7 +326,9 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
       setHighlightPin(false);
       setFlow('change_pin');
     }, AUTO_PIN_MS);
-    return () => { if (autoNavRef.current) clearTimeout(autoNavRef.current); };
+    return () => {
+      if (autoNavRef.current) clearTimeout(autoNavRef.current);
+    };
   }, [autoPin]);
 
   const openStatement = () => {
@@ -410,7 +426,9 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
 
             <div className="mx-4 mt-4 flex items-center gap-2">
               <div className="flex-1">
-                <label className="text-[10px] font-medium text-slate-500">Enter Amount to Pay</label>
+                <label className="text-[10px] font-medium text-slate-500">
+                  Enter Amount to Pay
+                </label>
                 <input
                   type="text"
                   value={payAmount}
@@ -428,7 +446,9 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
             </div>
 
             <div className="mx-4 mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="bg-[#003D7C] px-3 py-2 text-center text-xs font-bold text-white">Card Actions</div>
+              <div className="bg-[#003D7C] px-3 py-2 text-center text-xs font-bold text-white">
+                Card Actions
+              </div>
               <div className="flex justify-around p-4">
                 <button
                   type="button"
@@ -516,7 +536,9 @@ export default function CreditCardDashboardScreen({ onClose, initialSubFlow = nu
             </div>
 
             <div className="mx-4 mt-4 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Statement summary</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                Statement summary
+              </p>
               <DetailRow label="Bill Date" value={card.billDate} />
               <DetailRow label="Last Billed Amount" value={card.lastBilled} bold />
               <DetailRow label="Minimum Due" value={card.minDue} />

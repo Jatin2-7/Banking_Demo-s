@@ -7,7 +7,10 @@ function PartnerCard({ logo, title, description, onBook }) {
     <div className="overflow-hidden rounded-2xl border border-emt-border bg-white shadow-sm">
       <div
         className="flex h-16 items-center justify-center border-b border-emt-borderLight px-4"
-        style={{ background: 'repeating-linear-gradient(45deg, #f9f9f9 0, #f9f9f9 2px, #fff 2px, #fff 8px)' }}
+        style={{
+          background:
+            'repeating-linear-gradient(45deg, #f9f9f9 0, #f9f9f9 2px, #fff 2px, #fff 8px)',
+        }}
       >
         {logo}
       </div>
@@ -21,7 +24,14 @@ function PartnerCard({ logo, title, description, onBook }) {
           style={{ borderColor: EMT.blue, color: EMT.blue }}
         >
           Book Now
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
             <path d="M7 17L17 7M17 7H9M17 7v8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -67,7 +77,7 @@ export default function ForexLandingScreen({ onBack, onBookGlobalPay, onBookExTr
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage:
-              'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 400 200\'%3E%3Cpath fill=\'%23fff\' d=\'M0 150 Q100 100 200 130 T400 120 L400 200 L0 200Z\'/%3E%3C/svg%3E")',
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'%3E%3Cpath fill='%23fff' d='M0 150 Q100 100 200 130 T400 120 L400 200 L0 200Z'/%3E%3C/svg%3E\")",
             backgroundSize: 'cover',
           }}
         />
@@ -85,7 +95,8 @@ export default function ForexLandingScreen({ onBack, onBookGlobalPay, onBookExTr
             <>
               Ease your Forex with GlobalPay,
               <br />
-              Get your <strong>Zero-markup Free forex card</strong> and home delivery of currency today
+              Get your <strong>Zero-markup Free forex card</strong> and home delivery of currency
+              today
             </>
           }
           onBook={onBookGlobalPay}

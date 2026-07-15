@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { OPTIMO_HOME_AGENT_ID, OPTIMO_HOME_AGENT_SYSTEM, OPTIMO_HOME_EMI_FIELDS } from './optimoHomeAguiConfig.js';
+import {
+  OPTIMO_HOME_AGENT_ID,
+  OPTIMO_HOME_AGENT_SYSTEM,
+  OPTIMO_HOME_EMI_FIELDS,
+} from './optimoHomeAguiConfig.js';
 import { module_ } from '../lib/log.js';
 import { getOpenAIClient, getChatModel, hasLlmConfigured } from '../lib/openaiClient.js';
 
@@ -47,19 +51,23 @@ function buildRoutingStatus(destination) {
 }
 
 function resolveNavigationIntentFromSpeech(text) {
-  const t = String(text || '').toLowerCase().trim();
+  const t = String(text || '')
+    .toLowerCase()
+    .trim();
   if (!t) return null;
-  if (/calculate\s+emi|emi\s+calculat|monthly\s+instal|check\s+emi/.test(t)) return 'emi_calculator';
+  if (/calculate\s+emi|emi\s+calculat|monthly\s+instal|check\s+emi/.test(t))
+    return 'emi_calculator';
   if (/check\s+eligibility/.test(t)) return 'check_eligibility';
   if (/balance\s+transfer/.test(t)) return 'lap_balance_transfer';
   if (/top[\s-]?up|additional\s+loan/.test(t)) return 'lap_top_up';
   if (
-    /apply\s+(for\s+)?(a\s+)?loan/.test(t)
-    || /loan\s+application/.test(t)
-    || /open\s+(the\s+)?(loan\s+)?application/.test(t)
-    || /start\s+(the\s+)?(loan\s+)?application/.test(t)
-    || /(want|need)\s+(to\s+)?apply/.test(t)
-    || /(loan\s+against\s+property|business\s+loan|lap\b)/.test(t) && /apply|want|need|open|start/.test(t)
+    /apply\s+(for\s+)?(a\s+)?loan/.test(t) ||
+    /loan\s+application/.test(t) ||
+    /open\s+(the\s+)?(loan\s+)?application/.test(t) ||
+    /start\s+(the\s+)?(loan\s+)?application/.test(t) ||
+    /(want|need)\s+(to\s+)?apply/.test(t) ||
+    (/(loan\s+against\s+property|business\s+loan|lap\b)/.test(t) &&
+      /apply|want|need|open|start/.test(t))
   ) {
     return 'lap_application';
   }
@@ -69,7 +77,9 @@ function resolveNavigationIntentFromSpeech(text) {
 
 function parseNavigationDestinationFromText(text) {
   const raw = String(text || '');
-  const jsonMatch = raw.match(/\{\s*"destination"\s*:\s*"([^"]+)"\s*(?:,\s*"context"\s*:\s*"[^"]*")?\s*\}/i);
+  const jsonMatch = raw.match(
+    /\{\s*"destination"\s*:\s*"([^"]+)"\s*(?:,\s*"context"\s*:\s*"[^"]*")?\s*\}/i,
+  );
   if (jsonMatch) return jsonMatch[1];
   const fnMatch = raw.match(/navigate_to\s*\(\s*\{[^}]*"destination"\s*:\s*"([^"]+)"/i);
   if (fnMatch) return fnMatch[1];
@@ -111,7 +121,8 @@ function validateEmiField(fieldId, raw) {
   }
   if (fieldId === 'interest_rate') {
     const n = Number(value);
-    if (!value || Number.isNaN(n) || n <= 0 || n > 50) return 'Interest rate must be between 0 and 50.';
+    if (!value || Number.isNaN(n) || n <= 0 || n > 50)
+      return 'Interest rate must be between 0 and 50.';
     return null;
   }
   if (fieldId === 'tenure_years') {
@@ -201,7 +212,9 @@ export async function streamOptimoHomeAguiRun(res, agentId, inputData, { signal 
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -213,7 +226,13 @@ export async function streamOptimoHomeAguiRun(res, agentId, inputData, { signal 
   const write = (obj) => {
     if (!res.writableEnded) res.write(sseEncode(obj));
   };
-  const onAbort = () => { try { res.end(); } catch { /* ignore */ } };
+  const onAbort = () => {
+    try {
+      res.end();
+    } catch {
+      /* ignore */
+    }
+  };
   signal?.addEventListener('abort', onAbort);
 
   write({ type: 'RUN_STARTED', thread_id: threadId, run_id: runId });
@@ -222,7 +241,10 @@ export async function streamOptimoHomeAguiRun(res, agentId, inputData, { signal 
     const raw = agUiMessagesToOpenAI(inputData.messages);
     const history = raw.filter((m) => m.role !== 'system');
     const stateNote = `\n\n## Current screen state\n${JSON.stringify(state, null, 2)}`;
-    const messages = [{ role: 'system', content: OPTIMO_HOME_AGENT_SYSTEM + stateNote }, ...history];
+    const messages = [
+      { role: 'system', content: OPTIMO_HOME_AGENT_SYSTEM + stateNote },
+      ...history,
+    ];
 
     for (let step = 0; step < 8; step++) {
       if (signal?.aborted) break;
@@ -247,11 +269,19 @@ export async function streamOptimoHomeAguiRun(res, agentId, inputData, { signal 
 
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
           if (!statusEmitted && assistantText.includes('💭')) {
             const lineEnd = assistantText.indexOf('\n', assistantText.indexOf('💭'));
             if (lineEnd !== -1) {
-              const reasonLine = assistantText.slice(assistantText.indexOf('💭'), lineEnd).replace('💭', '').trim();
+              const reasonLine = assistantText
+                .slice(assistantText.indexOf('💭'), lineEnd)
+                .replace('💭', '')
+                .trim();
               if (reasonLine) {
                 write({ type: 'STATUS_UPDATE', status: reasonLine });
                 statusEmitted = true;
@@ -270,10 +300,19 @@ export async function streamOptimoHomeAguiRun(res, agentId, inputData, { signal 
             if (tc.function?.arguments) slot.args += tc.function.arguments;
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -286,8 +325,8 @@ export async function streamOptimoHomeAguiRun(res, agentId, inputData, { signal 
       if (toolCallBuf.size === 0) {
         const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
         const fallbackDest =
-          parseNavigationDestinationFromText(assistantText)
-          || resolveNavigationIntentFromSpeech(lastUser);
+          parseNavigationDestinationFromText(assistantText) ||
+          resolveNavigationIntentFromSpeech(lastUser);
         if (fallbackDest) emitNavigateFallback(write, fallbackDest);
         messages.push({ role: 'assistant', content: assistantText || '' });
         break;
@@ -298,37 +337,76 @@ export async function streamOptimoHomeAguiRun(res, agentId, inputData, { signal 
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
         if (!slot.id) continue;
         let args = {};
-        try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
+        try {
+          args = slot.args ? JSON.parse(slot.args) : {};
+        } catch {
+          args = {};
+        }
 
         if (slot.name === 'navigate_to') {
           write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination) });
-          write({ type: 'STATE_DELTA', delta: [{ op: 'replace', path: '/navigate_to', value: args }] });
+          write({
+            type: 'STATE_DELTA',
+            delta: [{ op: 'replace', path: '/navigate_to', value: args }],
+          });
           const result = { ok: true, destination: args.destination };
-          write({ type: 'TOOL_CALL_RESULT', message_id: randomUUID(), tool_call_id: slot.id, content: JSON.stringify(result), role: 'tool' });
+          write({
+            type: 'TOOL_CALL_RESULT',
+            message_id: randomUUID(),
+            tool_call_id: slot.id,
+            content: JSON.stringify(result),
+            role: 'tool',
+          });
           messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(result) });
         } else {
           const exec = executeHomeTool(slot.name, args, state);
           if (exec.statePatches?.length) write({ type: 'STATE_DELTA', delta: exec.statePatches });
-          write({ type: 'TOOL_CALL_RESULT', message_id: randomUUID(), tool_call_id: slot.id, content: JSON.stringify(exec.result), role: 'tool' });
-          messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+          write({
+            type: 'TOOL_CALL_RESULT',
+            message_id: randomUUID(),
+            tool_call_id: slot.id,
+            content: JSON.stringify(exec.result),
+            role: 'tool',
+          });
+          messages.push({
+            role: 'tool',
+            tool_call_id: slot.id,
+            content: JSON.stringify(exec.result),
+          });
         }
       }
 
-      messages[0] = { role: 'system', content: OPTIMO_HOME_AGENT_SYSTEM + `\n\n## Current screen state\n${JSON.stringify(state, null, 2)}` };
+      messages[0] = {
+        role: 'system',
+        content:
+          OPTIMO_HOME_AGENT_SYSTEM +
+          `\n\n## Current screen state\n${JSON.stringify(state, null, 2)}`,
+      };
     }
 
     write({ type: 'RUN_FINISHED', thread_id: threadId, run_id: runId });
   } catch (err) {
     log.error({ err: err?.message || String(err) }, 'optimo home agui error');
-    write({ type: 'RUN_ERROR', message: `${err?.name || 'Error'}: ${err?.message || String(err)}` });
+    write({
+      type: 'RUN_ERROR',
+      message: `${err?.name || 'Error'}: ${err?.message || String(err)}`,
+    });
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try { res.end(); } catch { /* ignore */ }
+    try {
+      res.end();
+    } catch {
+      /* ignore */
+    }
   }
 }

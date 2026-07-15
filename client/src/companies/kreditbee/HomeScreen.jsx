@@ -15,7 +15,14 @@ function PlaceholderTab({ title, onBack }) {
     <div className="flex min-h-0 flex-1 flex-col bg-kb-page">
       <div className="flex items-center gap-3 bg-white px-4 py-3">
         <button type="button" onClick={onBack} className="press text-kb-muted" aria-label="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -82,13 +89,16 @@ export default function KreditbeeHomeScreen() {
     }
   }, [form.journeyStep]);
 
-  const openArm = useCallback((product = 'two_wheeler') => {
-    setLoanProduct(product);
-    setView('arm');
-    if (voiceAssistMode) {
-      setTimeout(() => setHomeAiOpen(true), 400);
-    }
-  }, [voiceAssistMode]);
+  const openArm = useCallback(
+    (product = 'two_wheeler') => {
+      setLoanProduct(product);
+      setView('arm');
+      if (voiceAssistMode) {
+        setTimeout(() => setHomeAiOpen(true), 400);
+      }
+    },
+    [voiceAssistMode],
+  );
 
   const goHome = useCallback(() => {
     setView('dashboard');
@@ -214,7 +224,7 @@ export default function KreditbeeHomeScreen() {
     'Hi! I\'m your KreditBee AI assistant. Say "continue my application" for KYC, or tell me which loan you\'d like — personal, business, two wheeler, or loan against property.';
 
   const armGreeting =
-    'Hi! I\'m your AI Relationship Manager. Tell me your answers naturally — I\'ll fill the form and guide you through KYC.';
+    "Hi! I'm your AI Relationship Manager. Tell me your answers naturally — I'll fill the form and guide you through KYC.";
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-kb-page">
@@ -237,8 +247,16 @@ export default function KreditbeeHomeScreen() {
         )}
 
         {view === 'dashboard' && activeTab !== 'home' && (
-          <motion.div key={`tab-${activeTab}`} className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <PlaceholderTab title={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} onBack={() => setActiveTab('home')} />
+          <motion.div
+            key={`tab-${activeTab}`}
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <PlaceholderTab
+              title={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              onBack={() => setActiveTab('home')}
+            />
             <KbBottomNav activeTab={activeTab} onTabChange={setActiveTab} onMicTap={openVoice} />
           </motion.div>
         )}
@@ -259,8 +277,12 @@ export default function KreditbeeHomeScreen() {
               voicePanelOpen={homeAiOpen && voiceAssistMode}
               lang={lang}
               onClose={goHome}
-              onRegisterToolHandler={(fn) => { armToolHandlerRef.current = fn; }}
-              onRegisterArmApi={(api) => { armApiRef.current = api; }}
+              onRegisterToolHandler={(fn) => {
+                armToolHandlerRef.current = fn;
+              }}
+              onRegisterArmApi={(api) => {
+                armApiRef.current = api;
+              }}
               onLiveFeedChange={setArmLiveFeed}
               loanProduct={loanProduct}
             />
@@ -285,10 +307,16 @@ export default function KreditbeeHomeScreen() {
         overlayPeek={view === 'arm'}
         greeting={view === 'arm' ? armGreeting : homeGreeting}
         assistTitle={view === 'arm' ? 'AI Relationship Manager' : 'KreditBee Assistant'}
-        assistHint={voiceAssistMode ? 'Voice or text — live Aadhaar feed appears while entering your number' : 'Voice or text — your choice'}
+        assistHint={
+          voiceAssistMode
+            ? 'Voice or text — live Aadhaar feed appears while entering your number'
+            : 'Voice or text — your choice'
+        }
         showReasoning={view === 'dashboard'}
         liveFeed={view === 'arm' ? armLiveFeed : null}
-        dockClassName={view === 'arm' ? 'bottom-0 left-0 right-0' : 'bottom-[5.5rem] left-3 right-3'}
+        dockClassName={
+          view === 'arm' ? 'bottom-0 left-0 right-0' : 'bottom-[5.5rem] left-3 right-3'
+        }
         lang={lang}
       />
 

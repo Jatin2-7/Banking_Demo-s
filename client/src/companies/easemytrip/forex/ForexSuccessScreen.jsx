@@ -6,7 +6,10 @@ import { CURRENCIES } from './forexJourney.js';
 function SuccessIllustration() {
   return (
     <div className="relative mx-auto mb-6 flex h-28 w-28 items-center justify-center">
-      <div className="absolute inset-0 rounded-full opacity-15" style={{ backgroundColor: EMT.green }} />
+      <div
+        className="absolute inset-0 rounded-full opacity-15"
+        style={{ backgroundColor: EMT.green }}
+      />
       <div
         className="flex h-20 w-20 items-center justify-center rounded-full"
         style={{ backgroundColor: EMT.green }}
@@ -27,7 +30,9 @@ export default function ForexSuccessScreen({ form, onBackHome, onNewOrder }) {
       <EmtForexHeader onBack={onBackHome} />
       <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 py-8">
         <SuccessIllustration />
-        <h2 className="text-center text-[20px] font-bold text-emt-ink">Order Placed Successfully!</h2>
+        <h2 className="text-center text-[20px] font-bold text-emt-ink">
+          Order Placed Successfully!
+        </h2>
         <p className="mt-2 text-center text-[13px] leading-relaxed text-emt-muted">
           Your forex order has been confirmed. Our partner will contact you shortly for delivery in{' '}
           <strong>{form.city}</strong>.
@@ -74,12 +79,10 @@ export default function ForexSuccessScreen({ form, onBackHome, onNewOrder }) {
           </div>
         </div>
 
-        <div
-          className="mt-4 w-full rounded-xl px-4 py-3"
-          style={{ backgroundColor: '#E8F5E9' }}
-        >
+        <div className="mt-4 w-full rounded-xl px-4 py-3" style={{ backgroundColor: '#E8F5E9' }}>
           <p className="text-[11px] leading-relaxed" style={{ color: '#2E7D32' }}>
-            ✓ OTP verified · Home delivery within 24–48 hours · Zero markup forex card benefits applied
+            ✓ OTP verified · Home delivery within 24–48 hours · Zero markup forex card benefits
+            applied
           </p>
         </div>
 

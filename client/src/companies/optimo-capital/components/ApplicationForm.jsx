@@ -53,14 +53,29 @@ export function agentStateToFormPatch(values, userContext = '') {
   if (values.mobile != null) patch.mobile = String(values.mobile).replace(/\D/g, '').slice(0, 10);
   if (values.name != null) patch.name = String(values.name);
   if (values.business_name != null) patch.businessName = String(values.business_name);
-  if (values.loan_amount != null) patch.loanAmount = normalizeLapMoneyField('loan_amount', values.loan_amount, userContext);
-  if (values.property_value != null) patch.propertyValue = normalizeLapMoneyField('property_value', values.property_value, userContext);
-  if (values.property_pincode != null) patch.propertyPincode = String(values.property_pincode).replace(/\D/g, '').slice(0, 6);
+  if (values.loan_amount != null)
+    patch.loanAmount = normalizeLapMoneyField('loan_amount', values.loan_amount, userContext);
+  if (values.property_value != null)
+    patch.propertyValue = normalizeLapMoneyField(
+      'property_value',
+      values.property_value,
+      userContext,
+    );
+  if (values.property_pincode != null)
+    patch.propertyPincode = String(values.property_pincode).replace(/\D/g, '').slice(0, 6);
   if (values.business_revenue != null) {
-    patch.businessRevenue = normalizeLapMoneyField('business_revenue', values.business_revenue, userContext);
+    patch.businessRevenue = normalizeLapMoneyField(
+      'business_revenue',
+      values.business_revenue,
+      userContext,
+    );
   }
   if (values.business_profit != null) {
-    patch.businessProfit = normalizeLapMoneyField('business_profit', values.business_profit, userContext);
+    patch.businessProfit = normalizeLapMoneyField(
+      'business_profit',
+      values.business_profit,
+      userContext,
+    );
   }
   return patch;
 }
@@ -139,7 +154,10 @@ export default function ApplicationForm({
         </div>
 
         {errors?.length > 0 && (
-          <ul className="mt-5 space-y-1 text-[13px] font-medium text-red-600" style={{ fontFamily: FONTS.body }}>
+          <ul
+            className="mt-5 space-y-1 text-[13px] font-medium text-red-600"
+            style={{ fontFamily: FONTS.body }}
+          >
             {errors.map((e) => (
               <li key={e}>{e}</li>
             ))}

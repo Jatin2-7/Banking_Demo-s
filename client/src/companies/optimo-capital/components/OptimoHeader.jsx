@@ -23,10 +23,7 @@ export default function OptimoHeader() {
   const [langOpen, setLangOpen] = useState(false);
 
   return (
-    <header
-      className="relative z-30 w-full bg-white"
-      style={{ borderBottom: '1px solid #ECEEF2' }}
-    >
+    <header className="relative z-30 w-full bg-white" style={{ borderBottom: '1px solid #ECEEF2' }}>
       <div className="flex w-full items-center justify-between px-6 py-5 sm:px-8 sm:py-6">
         <OptimoLogo />
         <div className="relative">
@@ -44,7 +41,14 @@ export default function OptimoHeader() {
           >
             <TranslateIcon />
             English
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.5">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#64748B"
+              strokeWidth="2.5"
+            >
               <path d="M6 9l6 6 6-6" strokeLinecap="round" />
             </svg>
           </button>

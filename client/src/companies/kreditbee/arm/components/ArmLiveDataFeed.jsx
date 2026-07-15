@@ -63,7 +63,9 @@ export default function ArmLiveDataFeed({
         isChat ? 'mx-0 mb-1.5' : 'mx-3 mb-2'
       }`}
     >
-      <div className={`flex items-center gap-2 border-b border-kb-yellow/30 bg-kb-yellow/15 ${isChat ? 'px-2 py-1.5' : 'px-3 py-2'}`}>
+      <div
+        className={`flex items-center gap-2 border-b border-kb-yellow/30 bg-kb-yellow/15 ${isChat ? 'px-2 py-1.5' : 'px-3 py-2'}`}
+      >
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
@@ -74,12 +76,16 @@ export default function ArmLiveDataFeed({
       </div>
       <div className={isChat ? 'px-2 py-2' : 'px-3 py-3'}>
         {spokenText && (
-          <p className={`mb-1.5 truncate italic text-kb-muted ${isChat ? 'text-[10px]' : 'text-[11px]'}`}>
+          <p
+            className={`mb-1.5 truncate italic text-kb-muted ${isChat ? 'text-[10px]' : 'text-[11px]'}`}
+          >
             Hearing: &ldquo;{spokenText}&rdquo;
           </p>
         )}
         {grouped}
-        <p className={`mt-1.5 text-center font-medium text-kb-yellowDark ${isChat ? 'text-[9px]' : 'text-[10px]'}`}>
+        <p
+          className={`mt-1.5 text-center font-medium text-kb-yellowDark ${isChat ? 'text-[9px]' : 'text-[10px]'}`}
+        >
           Filling form as you speak…
         </p>
       </div>

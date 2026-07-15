@@ -5,7 +5,8 @@ import { buildCartAddedReply, FRAGRANCE_PRODUCTS } from '../airport/airportJourn
 function findProduct(query) {
   const q = String(query || '').toLowerCase();
   return FRAGRANCE_PRODUCTS.find(
-    (p) => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.id.includes(q),
+    (p) =>
+      p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.id.includes(q),
   );
 }
 
@@ -13,14 +14,22 @@ export function parseAirportVoiceInput(text, form) {
   const t = String(text).toLowerCase().trim();
 
   if (form.phase === 'cart_prompt' || form.cartCount > 0) {
-    if (/place\s*(the\s*)?order|checkout|confirm\s*order|proceed\s*to\s*pay|order\s*now|complete\s*order/.test(t)) {
+    if (
+      /place\s*(the\s*)?order|checkout|confirm\s*order|proceed\s*to\s*pay|order\s*now|complete\s*order/.test(
+        t,
+      )
+    ) {
       return {
         handled: true,
         action: 'place_order',
         reply: 'Your duty-free order has been placed.',
       };
     }
-    if (/shop\s*more|continue\s*shopping|add\s*more|browse\s*more|more\s*items|keep\s*shopping/.test(t)) {
+    if (
+      /shop\s*more|continue\s*shopping|add\s*more|browse\s*more|more\s*items|keep\s*shopping/.test(
+        t,
+      )
+    ) {
       return {
         handled: true,
         action: 'shop_more',
@@ -33,7 +42,10 @@ export function parseAirportVoiceInput(text, form) {
     return { handled: true, action: 'open_airport', reply: 'Opening Airport Services.' };
   }
 
-  if (/purchase|buy|shop\s*for|want|need|looking\s*for|show\s*me/.test(t) && /perfume|fragrance|cologne|scent/.test(t)) {
+  if (
+    /purchase|buy|shop\s*for|want|need|looking\s*for|show\s*me/.test(t) &&
+    /perfume|fragrance|cologne|scent/.test(t)
+  ) {
     const priceMatch = t.match(/under\s*(\d[\d,]*)\s*(?:rs|rupees?|₹)?/);
     const patch = { category: 'fragrances', searchQuery: '' };
     let reply = 'Opening fragrances — navigating to duty-free perfumes.';
@@ -72,10 +84,20 @@ export function parseAirportVoiceInput(text, form) {
   }
 
   if (/\bmumbai\b/.test(t)) {
-    return { handled: true, patch: { airport: 'mumbai', terminal: 'T2' }, action: 'select_airport', reply: 'Selected Mumbai airport.' };
+    return {
+      handled: true,
+      patch: { airport: 'mumbai', terminal: 'T2' },
+      action: 'select_airport',
+      reply: 'Selected Mumbai airport.',
+    };
   }
   if (/\bamritsar\b/.test(t)) {
-    return { handled: true, patch: { airport: 'amritsar', terminal: 'T1' }, action: 'select_airport', reply: 'Selected Amritsar airport.' };
+    return {
+      handled: true,
+      patch: { airport: 'amritsar', terminal: 'T1' },
+      action: 'select_airport',
+      reply: 'Selected Amritsar airport.',
+    };
   }
 
   if (/duty\s*free|book\s*now|start\s*shopping/.test(t)) {
@@ -83,14 +105,26 @@ export function parseAirportVoiceInput(text, form) {
   }
 
   if (/collect\s*at\s*arrival|arrival/.test(t)) {
-    return { handled: true, patch: { collectionType: 'arrival' }, reply: 'Set to collect at arrival.' };
+    return {
+      handled: true,
+      patch: { collectionType: 'arrival' },
+      reply: 'Set to collect at arrival.',
+    };
   }
   if (/collect\s*at\s*departure|departure/.test(t)) {
-    return { handled: true, patch: { collectionType: 'departure' }, reply: 'Set to collect at departure.' };
+    return {
+      handled: true,
+      patch: { collectionType: 'departure' },
+      reply: 'Set to collect at departure.',
+    };
   }
 
   if (/clear\s*filter|show\s*all|remove\s*filter/.test(t)) {
-    return { handled: true, patch: { priceFilterMax: null, searchQuery: '' }, reply: 'Filters cleared.' };
+    return {
+      handled: true,
+      patch: { priceFilterMax: null, searchQuery: '' },
+      reply: 'Filters cleared.',
+    };
   }
 
   if (/add\s+(.+)/.test(t)) {
@@ -104,18 +138,30 @@ export function parseAirportVoiceInput(text, form) {
         reply: buildCartAddedReply(product),
       };
     }
-    return { handled: true, action: 'add_product', query: m[1].trim(), reply: `Searching for ${m[1]}.` };
+    return {
+      handled: true,
+      action: 'add_product',
+      query: m[1].trim(),
+      reply: `Searching for ${m[1]}.`,
+    };
   }
 
   if (/calvin|hugo|kenzo|polo|davidoff|armani|burberry|valentino/.test(t)) {
-    const brand = t.includes('calvin') ? 'calvin'
-      : t.includes('hugo') ? 'hugo'
-      : t.includes('kenzo') ? 'kenzo'
-      : t.includes('polo') ? 'polo'
-      : t.includes('davidoff') ? 'davidoff'
-      : t.includes('burberry') ? 'burberry'
-      : t.includes('valentino') ? 'valentino'
-      : 'armani';
+    const brand = t.includes('calvin')
+      ? 'calvin'
+      : t.includes('hugo')
+        ? 'hugo'
+        : t.includes('kenzo')
+          ? 'kenzo'
+          : t.includes('polo')
+            ? 'polo'
+            : t.includes('davidoff')
+              ? 'davidoff'
+              : t.includes('burberry')
+                ? 'burberry'
+                : t.includes('valentino')
+                  ? 'valentino'
+                  : 'armani';
     const product = findProduct(brand);
     if (product && /add|select|choose|want|buy|purchase|this|that/.test(t)) {
       return {
@@ -125,7 +171,12 @@ export function parseAirportVoiceInput(text, form) {
         reply: buildCartAddedReply(product),
       };
     }
-    return { handled: true, patch: { searchQuery: brand }, action: 'open_perfumes', reply: `Searching for ${brand} fragrances.` };
+    return {
+      handled: true,
+      patch: { searchQuery: brand },
+      action: 'open_perfumes',
+      reply: `Searching for ${brand} fragrances.`,
+    };
   }
 
   return { handled: false };

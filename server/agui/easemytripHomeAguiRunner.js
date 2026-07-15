@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { EASEMYTRIP_HOME_AGENT_ID, EASEMYTRIP_HOME_AGENT_SYSTEM } from './easemytripHomeAguiConfig.js';
+import {
+  EASEMYTRIP_HOME_AGENT_ID,
+  EASEMYTRIP_HOME_AGENT_SYSTEM,
+} from './easemytripHomeAguiConfig.js';
 import { module_ } from '../lib/log.js';
 import { getOpenAIClient, getChatModel, hasLlmConfigured } from '../lib/openaiClient.js';
 
@@ -43,7 +46,17 @@ const HOME_TOOLS = [
         properties: {
           destination: {
             type: 'string',
-            enum: ['forex_cash', 'forex_form', 'visa', 'flights', 'hotels', 'bookings', 'wallet', 'profile', 'home'],
+            enum: [
+              'forex_cash',
+              'forex_form',
+              'visa',
+              'flights',
+              'hotels',
+              'bookings',
+              'wallet',
+              'profile',
+              'home',
+            ],
           },
           context: { type: 'string' },
         },
@@ -70,7 +83,9 @@ export async function streamEasemytripHomeAguiRun(res, agentId, inputData, { sig
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -102,13 +117,26 @@ export async function streamEasemytripHomeAguiRun(res, agentId, inputData, { sig
       if (m.role === 'system') systemNotes.push(m.content);
       else history.push(m);
     }
-    const systemTail = systemNotes.length ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
-    const messages = [{ role: 'system', content: `${EASEMYTRIP_HOME_AGENT_SYSTEM}\n\n## Current state\n${JSON.stringify(state, null, 2)}${systemTail}` }, ...history];
+    const systemTail = systemNotes.length
+      ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+      : '';
+    const messages = [
+      {
+        role: 'system',
+        content: `${EASEMYTRIP_HOME_AGENT_SYSTEM}\n\n## Current state\n${JSON.stringify(state, null, 2)}${systemTail}`,
+      },
+      ...history,
+    ];
 
     for (let step = 0; step < 10; step++) {
       if (signal?.aborted) break;
 
-      const stream = await client.chat.completions.create({ model, messages, tools: HOME_TOOLS, stream: true });
+      const stream = await client.chat.completions.create({
+        model,
+        messages,
+        tools: HOME_TOOLS,
+        stream: true,
+      });
       const messageId = randomUUID();
       let assistantText = '';
       const toolCallBuf = new Map();
@@ -120,7 +148,12 @@ export async function streamEasemytripHomeAguiRun(res, agentId, inputData, { sig
         if (!delta) continue;
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
         if (delta.tool_calls) {
           for (const tc of delta.tool_calls) {
@@ -132,10 +165,19 @@ export async function streamEasemytripHomeAguiRun(res, agentId, inputData, { sig
             if (tc.function?.arguments) slot.args += tc.function.arguments;
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -155,7 +197,11 @@ export async function streamEasemytripHomeAguiRun(res, agentId, inputData, { sig
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
@@ -170,7 +216,13 @@ export async function streamEasemytripHomeAguiRun(res, agentId, inputData, { sig
         if (slot.name === 'navigate_to') {
           write({
             type: 'STATE_DELTA',
-            delta: [{ op: 'replace', path: '/navigate_to', value: { destination: args.destination, context: args.context || '' } }],
+            delta: [
+              {
+                op: 'replace',
+                path: '/navigate_to',
+                value: { destination: args.destination, context: args.context || '' },
+              },
+            ],
           });
         }
 
@@ -181,7 +233,11 @@ export async function streamEasemytripHomeAguiRun(res, agentId, inputData, { sig
           content: JSON.stringify({ ok: true, destination: args.destination }),
           role: 'tool',
         });
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify({ ok: true }) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify({ ok: true }),
+        });
       }
     }
 

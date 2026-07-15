@@ -1,15 +1,15 @@
 export const IMPS_AGENT_ID = 'indian_bank_imps_transfer';
 
 export const IMPS_FIELD_IDS = [
-  'transferType',   // 'within' | 'other'
-  'payeeType',      // 'account' | 'mobile'  (only for other-bank)
-  'payeeName',      // beneficiary name  (within bank)
+  'transferType', // 'within' | 'other'
+  'payeeType', // 'account' | 'mobile'  (only for other-bank)
+  'payeeName', // beneficiary name  (within bank)
   'payeeAccountNo', // account number  (within bank, or other+account)
-  'ifsc',           // IFSC code  (other bank + account type only)
-  'payeeBank',      // bank name  (other bank + MOBILE type only — do NOT set for account transfers)
-  'mobileNo',       // 10-digit mobile  (other bank + mobile type only)
-  'amount',         // transfer amount
-  'remarks',        // optional
+  'ifsc', // IFSC code  (other bank + account type only)
+  'payeeBank', // bank name  (other bank + MOBILE type only — do NOT set for account transfers)
+  'mobileNo', // 10-digit mobile  (other bank + mobile type only)
+  'amount', // transfer amount
+  'remarks', // optional
 ];
 
 export const IMPS_AGENT_SYSTEM = `You are a friendly DCB Bank relationship manager helping a customer fill an IMPS / fund transfer form step by step. Ask exactly ONE question at a time. Wait for the user's answer before moving on.

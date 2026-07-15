@@ -9,7 +9,8 @@ const PRODUCTS = [
     icon: '🏠',
     description: (
       <>
-        Get instant business loans from <strong style={{ color: OPTIMO.orange }}>10 Lakh - 2 Crore*</strong> with long{' '}
+        Get instant business loans from{' '}
+        <strong style={{ color: OPTIMO.orange }}>10 Lakh - 2 Crore*</strong> with long{' '}
         <strong style={{ color: OPTIMO.orange }}>7-15 years</strong> tenure.
       </>
     ),
@@ -33,8 +34,8 @@ const PRODUCTS = [
     icon: '📊',
     description: (
       <>
-        <strong style={{ color: OPTIMO.orange }}>Already have a LAP?</strong> Get an additional loan up to{' '}
-        <strong style={{ color: OPTIMO.orange }}>₹2 Crore*</strong> with long{' '}
+        <strong style={{ color: OPTIMO.orange }}>Already have a LAP?</strong> Get an additional loan
+        up to <strong style={{ color: OPTIMO.orange }}>₹2 Crore*</strong> with long{' '}
         <strong style={{ color: OPTIMO.orange }}>7-15 years</strong> tenure.
       </>
     ),
@@ -65,11 +66,19 @@ export default function ProductCards({ onApply }) {
             </div>
             <h3
               className="mb-3"
-              style={{ fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, color: OPTIMO.navy }}
+              style={{
+                fontFamily: FONTS.display,
+                fontSize: 20,
+                fontWeight: 700,
+                color: OPTIMO.navy,
+              }}
             >
               {p.title}
             </h3>
-            <p className="mb-8 flex-1 leading-relaxed" style={{ fontSize: 14, color: OPTIMO.navySoft }}>
+            <p
+              className="mb-8 flex-1 leading-relaxed"
+              style={{ fontSize: 14, color: OPTIMO.navySoft }}
+            >
               {p.description}
             </p>
             <button

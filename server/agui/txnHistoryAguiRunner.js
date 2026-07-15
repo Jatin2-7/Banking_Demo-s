@@ -48,7 +48,8 @@ const TXN_HISTORY_TOOLS = [
     type: 'function',
     function: {
       name: 'apply_date_filter',
-      description: 'Filter the on-screen transaction list to a date range (YYYY-MM-DD). Call this whenever the customer asks to see transactions for specific dates — the list updates on the main screen.',
+      description:
+        'Filter the on-screen transaction list to a date range (YYYY-MM-DD). Call this whenever the customer asks to see transactions for specific dates — the list updates on the main screen.',
       parameters: {
         type: 'object',
         properties: {
@@ -120,7 +121,13 @@ export async function streamTxnHistoryAguiRun(res, agentId, inputData, { signal 
     if (!res.writableEnded) res.write(sseEncode(obj));
   };
 
-  const onAbort = () => { try { res.end(); } catch { /* noop */ } };
+  const onAbort = () => {
+    try {
+      res.end();
+    } catch {
+      /* noop */
+    }
+  };
   signal?.addEventListener('abort', onAbort);
 
   write({ type: 'RUN_STARTED', thread_id: threadId, run_id: runId });
@@ -154,7 +161,12 @@ export async function streamTxnHistoryAguiRun(res, agentId, inputData, { signal 
 
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
 
           if (!statusEmitted && assistantText.includes('💭')) {
             const lineEnd = assistantText.indexOf('\n', assistantText.indexOf('💭'));
@@ -181,10 +193,19 @@ export async function streamTxnHistoryAguiRun(res, agentId, inputData, { signal 
             if (tc.function?.arguments) slot.args += tc.function.arguments;
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -204,13 +225,21 @@ export async function streamTxnHistoryAguiRun(res, agentId, inputData, { signal 
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
         if (!slot.id) continue;
         let args = {};
-        try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
+        try {
+          args = slot.args ? JSON.parse(slot.args) : {};
+        } catch {
+          args = {};
+        }
 
         if (slot.name === 'apply_date_filter') {
           write({
@@ -251,9 +280,16 @@ export async function streamTxnHistoryAguiRun(res, agentId, inputData, { signal 
     write({ type: 'RUN_FINISHED', thread_id: threadId, run_id: runId });
   } catch (err) {
     log.error({ err: err?.message || String(err) }, 'txn history agui stream error');
-    write({ type: 'RUN_ERROR', message: `${err?.name || 'Error'}: ${err?.message || String(err)}` });
+    write({
+      type: 'RUN_ERROR',
+      message: `${err?.name || 'Error'}: ${err?.message || String(err)}`,
+    });
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try { res.end(); } catch { /* noop */ }
+    try {
+      res.end();
+    } catch {
+      /* noop */
+    }
   }
 }

@@ -12,7 +12,14 @@ const NAV_ITEMS = [
 
 function ChevronDown() {
   return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+    >
       <path d="M6 9l6 6 6-6" strokeLinecap="round" />
     </svg>
   );
@@ -35,7 +42,11 @@ export default function DashboardHeader({ onCheckEligibility, onApplyLoan }) {
         className="mx-auto flex items-center justify-between gap-4 px-5 py-4 lg:px-8"
         style={{ maxWidth: DASHBOARD_MAX_W, fontFamily: FONTS.body }}
       >
-        <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="shrink-0">
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="shrink-0"
+        >
           <OptimoLogo className="!h-[56px] sm:!h-[64px]" />
         </button>
 
@@ -46,7 +57,9 @@ export default function DashboardHeader({ onCheckEligibility, onApplyLoan }) {
               type="button"
               className="flex items-center gap-1 text-[15px] font-medium transition hover:text-[#F15A29]"
               style={{ color: OPTIMO.navy }}
-              onClick={() => item.hasMenu && setOpenMenu(openMenu === item.label ? null : item.label)}
+              onClick={() =>
+                item.hasMenu && setOpenMenu(openMenu === item.label ? null : item.label)
+              }
             >
               {item.label}
               {item.hasMenu && <ChevronDown />}

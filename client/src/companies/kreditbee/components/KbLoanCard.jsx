@@ -2,7 +2,14 @@ import React from 'react';
 import { KB } from '../theme.js';
 
 function LoanIcon({ type }) {
-  const props = { width: 28, height: 28, viewBox: '0 0 24 24', fill: 'none', stroke: '#1A1A1A', strokeWidth: 1.6 };
+  const props = {
+    width: 28,
+    height: 28,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: '#1A1A1A',
+    strokeWidth: 1.6,
+  };
   switch (type) {
     case 'coin':
       return (
@@ -78,7 +85,10 @@ export default function KbLoanCard({ product, onAction }) {
     <div className="mx-4 mb-3 overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
       <div
         className="flex items-center justify-between px-4 py-2"
-        style={{ backgroundColor: product.accent, borderBottom: `1px solid ${product.accentBorder}` }}
+        style={{
+          backgroundColor: product.accent,
+          borderBottom: `1px solid ${product.accentBorder}`,
+        }}
       >
         <span className="text-[14px] font-bold text-kb-ink">{product.title}</span>
         <span className="flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-semibold text-kb-ink/70">
@@ -95,20 +105,18 @@ export default function KbLoanCard({ product, onAction }) {
           <LoanIcon type={product.icon} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`text-[13px] font-bold text-kb-ink ${product.id !== 'lap' ? 'uppercase tracking-wide' : ''}`}>
+          <p
+            className={`text-[13px] font-bold text-kb-ink ${product.id !== 'lap' ? 'uppercase tracking-wide' : ''}`}
+          >
             {product.amount}
           </p>
-          {product.tenure && (
-            <p className="mt-0.5 text-[12px] text-kb-muted">{product.tenure}</p>
-          )}
+          {product.tenure && <p className="mt-0.5 text-[12px] text-kb-muted">{product.tenure}</p>}
         </div>
         <button
           type="button"
           onClick={() => onAction(product.id)}
           className={`shrink-0 rounded-full px-5 py-2 text-[13px] font-bold press ${
-            isContinue
-              ? 'text-kb-ink shadow-sm'
-              : 'border-2 bg-white text-kb-ink'
+            isContinue ? 'text-kb-ink shadow-sm' : 'border-2 bg-white text-kb-ink'
           }`}
           style={
             isContinue

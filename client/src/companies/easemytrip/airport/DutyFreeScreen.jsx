@@ -3,7 +3,13 @@ import AirportShell, { DutyFreeBottomNav, PreOrderPill } from './AirportShell.js
 import { DUTY_FREE_CATEGORIES, getAirport } from './airportJourney.js';
 import { EMT } from '../theme.js';
 
-export default function DutyFreeScreen({ form, onChange, onBack, onOpenFragrances, onOpenCategory }) {
+export default function DutyFreeScreen({
+  form,
+  onChange,
+  onBack,
+  onOpenFragrances,
+  onOpenCategory,
+}) {
   const airport = getAirport(form.airport);
 
   return (
@@ -11,7 +17,14 @@ export default function DutyFreeScreen({ form, onChange, onBack, onOpenFragrance
       <div className="shrink-0 px-3 py-3 text-white" style={{ backgroundColor: '#1A8ADB' }}>
         <div className="flex items-center gap-2">
           <button type="button" onClick={onBack} className="press">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" />
             </svg>
           </button>
@@ -32,8 +45,19 @@ export default function DutyFreeScreen({ form, onChange, onBack, onOpenFragrance
         style={{ background: 'linear-gradient(180deg, #7EC8E3 0%, #B8E6F5 50%, #E8F4FC 100%)' }}
       >
         <div className="flex items-center justify-between">
-          <button type="button" onClick={onBack} className="press flex h-8 w-8 items-center justify-center rounded-full bg-white shadow">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="press flex h-8 w-8 items-center justify-center rounded-full bg-white shadow"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#333"
+              strokeWidth="2.5"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" />
             </svg>
           </button>
@@ -45,7 +69,10 @@ export default function DutyFreeScreen({ form, onChange, onBack, onOpenFragrance
           </div>
           <div className="flex items-center gap-2">
             <PreOrderPill />
-            <button type="button" className="press flex h-8 w-8 items-center justify-center rounded-full bg-black text-white">
+            <button
+              type="button"
+              className="press flex h-8 w-8 items-center justify-center rounded-full bg-black text-white"
+            >
               🛍️
             </button>
           </div>
@@ -77,7 +104,14 @@ export default function DutyFreeScreen({ form, onChange, onBack, onOpenFragrance
         </div>
 
         <div className="mt-3 flex items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-sm">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={EMT.muted} strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={EMT.muted}
+            strokeWidth="2"
+          >
             <circle cx="11" cy="11" r="7" />
             <path d="M20 20l-4-4" strokeLinecap="round" />
           </svg>
@@ -106,9 +140,7 @@ export default function DutyFreeScreen({ form, onChange, onBack, onOpenFragrance
               }}
               className="press relative flex flex-col items-center gap-1"
             >
-              {cat.locked && (
-                <span className="absolute -right-0.5 -top-0.5 text-[10px]">🔒</span>
-              )}
+              {cat.locked && <span className="absolute -right-0.5 -top-0.5 text-[10px]">🔒</span>}
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-50 text-xl">
                 {cat.emoji}
               </div>
@@ -126,7 +158,9 @@ export default function DutyFreeScreen({ form, onChange, onBack, onOpenFragrance
           <p className="text-[14px] font-bold leading-snug">
             Enjoy Additional <strong>Discounts</strong> on <strong>Duty Free Products</strong>
           </p>
-          <p className="mt-1 text-[10px] opacity-80">Exclusive on online pre-order products during the journey.</p>
+          <p className="mt-1 text-[10px] opacity-80">
+            Exclusive on online pre-order products during the journey.
+          </p>
           <p className="mt-2 text-[8px] opacity-60">*T&C Apply</p>
           <div className="mt-3 flex gap-2">
             <div className="h-16 w-12 rounded-lg bg-amber-900/50" />

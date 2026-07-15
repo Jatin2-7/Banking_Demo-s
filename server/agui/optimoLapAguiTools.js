@@ -1,7 +1,12 @@
 import { OPTIMO_LAP_FIELD_IDS } from './optimoLapAguiConfig.js';
 import { normalizeLapMoneyField } from './optimoMoneyParse.js';
 
-const MONEY_FIELDS = new Set(['loan_amount', 'property_value', 'business_revenue', 'business_profit']);
+const MONEY_FIELDS = new Set([
+  'loan_amount',
+  'property_value',
+  'business_revenue',
+  'business_profit',
+]);
 
 function validateField(fieldId, raw) {
   const value = raw == null ? '' : String(raw).trim();

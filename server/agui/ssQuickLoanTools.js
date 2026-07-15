@@ -166,7 +166,7 @@ export function ssQuickLoanOpenAiTools() {
       function: {
         name: 'request_field',
         description:
-          'Highlight a specific field on screen and bring it to the user\'s attention while you explain what to enter.',
+          "Highlight a specific field on screen and bring it to the user's attention while you explain what to enter.",
         parameters: {
           type: 'object',
           properties: {

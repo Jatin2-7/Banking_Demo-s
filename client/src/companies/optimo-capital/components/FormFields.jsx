@@ -13,7 +13,13 @@ function CheckIcon({ valid }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="10" fill={OPTIMO.success} />
-      <path d="M8 12l3 3 5-6" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M8 12l3 3 5-6"
+        stroke="white"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -51,7 +57,11 @@ export function MobileField({ value, onChange, onBlur }) {
       >
         <span
           className="flex items-center border-r px-4 text-[15px] font-medium"
-          style={{ borderColor: OPTIMO.borderLight, color: OPTIMO.navySoft, backgroundColor: '#FAFBFC' }}
+          style={{
+            borderColor: OPTIMO.borderLight,
+            color: OPTIMO.navySoft,
+            backgroundColor: '#FAFBFC',
+          }}
         >
           +91
         </span>

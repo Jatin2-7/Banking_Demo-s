@@ -9,7 +9,8 @@ export const optimoCapitalConfig = {
   standalone: true,
   voiceEnabled: true,
   status: 'active',
-  description: 'Optimo Capital — LAP dashboard, EMI calculator, and lead application with voice assistant.',
+  description:
+    'Optimo Capital — LAP dashboard, EMI calculator, and lead application with voice assistant.',
   theme: {
     primary: '#E85D3B',
     primaryDark: '#D84315',

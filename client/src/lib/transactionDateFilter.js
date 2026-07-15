@@ -27,7 +27,20 @@ const MONTHS = {
   december: 11,
 };
 
-const DISPLAY_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DISPLAY_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 const RANGE_SEP = '(?:to|until|till|through|upto|up to|-)';
 
@@ -121,7 +134,10 @@ function sanitizeFragment(fragment) {
     .replace(/[,.]/g, '')
     .replace(/\b(date|dates)\b/gi, ' ')
     .replace(/\s+/g, ' ')
-    .replace(/\b(please|thanks|thank you|transactions|transaction|history|statement|account|show|for|in|of|me|my)\b.*$/i, '')
+    .replace(
+      /\b(please|thanks|thank you|transactions|transaction|history|statement|account|show|for|in|of|me|my)\b.*$/i,
+      '',
+    )
     .trim();
 }
 
@@ -169,7 +185,9 @@ function parseDayMonthFragment(fragment, { defaultYear = 2026, defaultMonth = nu
     return Number.isNaN(d.getTime()) ? null : d;
   }
 
-  const withMonth = cleaned.match(/^(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+([a-z]+)(?:\s+(\d{4}))?$/i);
+  const withMonth = cleaned.match(
+    /^(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+([a-z]+)(?:\s+(\d{4}))?$/i,
+  );
   if (withMonth) {
     const month = MONTHS[withMonth[2].toLowerCase()];
     if (month == null) return null;

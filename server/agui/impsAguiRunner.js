@@ -54,7 +54,8 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
     res.write(
       sseEncode({
         type: 'RUN_ERROR',
-        message: 'LLM not configured. Add Azure OpenAI or OPENAI_API_KEY to server/.env and restart.',
+        message:
+          'LLM not configured. Add Azure OpenAI or OPENAI_API_KEY to server/.env and restart.',
       }),
     );
     res.end();
@@ -66,7 +67,9 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
 
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -80,7 +83,11 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
   };
 
   const onAbort = () => {
-    try { res.end(); } catch { /* noop */ }
+    try {
+      res.end();
+    } catch {
+      /* noop */
+    }
   };
   signal?.addEventListener('abort', onAbort);
 
@@ -95,8 +102,13 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
       else history.push(m);
     }
     const systemTail =
-      systemNotes.length > 0 ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
-    const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+      systemNotes.length > 0
+        ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+        : '';
+    const messages = [
+      { role: 'system', content: buildSystemPrompt(state) + systemTail },
+      ...history,
+    ];
     const tools = impsOpenAiTools();
 
     for (let step = 0; step < 14; step++) {
@@ -117,7 +129,12 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
 
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
 
         if (delta.tool_calls) {
@@ -130,10 +147,19 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
             if (tc.function?.arguments) slot.args += tc.function.arguments;
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -153,13 +179,21 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
         if (!slot.id) continue;
         let args = {};
-        try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
+        try {
+          args = slot.args ? JSON.parse(slot.args) : {};
+        } catch {
+          args = {};
+        }
 
         const exec = executeImpsTool(slot.name, args, state);
 
@@ -173,7 +207,11 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
           role: 'tool',
         });
 
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+        });
       }
 
       messages[0] = { role: 'system', content: buildSystemPrompt(state) };
@@ -193,6 +231,10 @@ export async function streamImpsAguiRun(res, agentId, inputData, { signal } = {}
     write({ type: 'RUN_ERROR', message: hint });
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try { res.end(); } catch { /* noop */ }
+    try {
+      res.end();
+    } catch {
+      /* noop */
+    }
   }
 }

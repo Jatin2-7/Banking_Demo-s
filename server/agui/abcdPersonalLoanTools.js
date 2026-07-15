@@ -1,8 +1,4 @@
-import {
-  ABCD_PL_FIELD_IDS,
-  ABCD_PL_GENDER,
-  ABCD_PL_EMPLOYMENT,
-} from './abcdPersonalLoanConfig.js';
+import { ABCD_PL_FIELD_IDS, ABCD_PL_GENDER, ABCD_PL_EMPLOYMENT } from './abcdPersonalLoanConfig.js';
 
 function validateField(fieldId, raw, _journeyStep = 'landing') {
   const value = raw == null ? '' : String(raw).trim();
@@ -39,7 +35,8 @@ function validateField(fieldId, raw, _journeyStep = 'landing') {
 
 function requiredForStep(step) {
   if (step === 'landing') return ['pan'];
-  if (step === 'basic') return ['pan', 'gender', 'dob', 'employment', 'monthlyIncome', 'pincode', 'email'];
+  if (step === 'basic')
+    return ['pan', 'gender', 'dob', 'employment', 'monthlyIncome', 'pincode', 'email'];
   return [];
 }
 
@@ -81,7 +78,10 @@ export function executeAbcdPersonalLoanTool(toolName, args, state) {
       };
     }
     case 'request_field':
-      return { result: { ok: true, action: 'highlight', field_id: args.field_id }, statePatches: [] };
+      return {
+        result: { ok: true, action: 'highlight', field_id: args.field_id },
+        statePatches: [],
+      };
     case 'validate_form':
       return { result: runValidateForm(state), statePatches: [] };
     case 'click_button': {

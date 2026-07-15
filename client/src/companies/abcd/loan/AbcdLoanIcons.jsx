@@ -30,7 +30,12 @@ export function IconNoPaperwork() {
         strokeWidth="1.2"
       />
       <path d="M20 6v6h6" stroke="#C2185B" strokeWidth="1.2" strokeLinejoin="round" />
-      <path d="M10 16h12M10 20h9M10 24h7" stroke="#E91E63" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M10 16h12M10 20h9M10 24h7"
+        stroke="#E91E63"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
       <ellipse cx="22" cy="10" rx="5" ry="3" fill="#F8BBD9" stroke="#C2185B" strokeWidth="0.8" />
     </svg>
   );
@@ -70,7 +75,16 @@ export function IconLoanAmount() {
 export function IconTenure() {
   return (
     <svg width="36" height="36" viewBox="0 0 40 40" fill="none" aria-hidden>
-      <rect x="8" y="10" width="24" height="22" rx="3" fill="#E3F2FD" stroke="#1565C0" strokeWidth="1.2" />
+      <rect
+        x="8"
+        y="10"
+        width="24"
+        height="22"
+        rx="3"
+        fill="#E3F2FD"
+        stroke="#1565C0"
+        strokeWidth="1.2"
+      />
       <path d="M8 16h24" stroke="#1565C0" strokeWidth="1.2" />
       <rect x="12" y="6" width="4" height="6" rx="1" fill="#1565C0" />
       <rect x="24" y="6" width="4" height="6" rx="1" fill="#1565C0" />
@@ -94,8 +108,22 @@ export function IconRateTag() {
 export function IconProcessingFee() {
   return (
     <svg width="36" height="36" viewBox="0 0 40 40" fill="none" aria-hidden>
-      <rect x="10" y="8" width="20" height="26" rx="2" fill="#ECEFF1" stroke="#546E7A" strokeWidth="1.2" />
-      <path d="M14 16h12M14 21h12M14 26h8" stroke="#78909C" strokeWidth="1.5" strokeLinecap="round" />
+      <rect
+        x="10"
+        y="8"
+        width="20"
+        height="26"
+        rx="2"
+        fill="#ECEFF1"
+        stroke="#546E7A"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M14 16h12M14 21h12M14 26h8"
+        stroke="#78909C"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
       <circle cx="28" cy="28" r="6" fill="#FFD54F" stroke="#F9A825" strokeWidth="0.8" />
     </svg>
   );

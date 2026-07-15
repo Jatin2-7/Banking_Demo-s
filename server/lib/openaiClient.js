@@ -7,9 +7,9 @@ let _client = null;
 
 export function isAzureOpenAI() {
   return Boolean(
-    process.env.AZURE_OPENAI_API_KEY?.trim()
-    && process.env.AZURE_OPENAI_ENDPOINT?.trim()
-    && process.env.AZURE_OPENAI_DEPLOYMENT?.trim(),
+    process.env.AZURE_OPENAI_API_KEY?.trim() &&
+    process.env.AZURE_OPENAI_ENDPOINT?.trim() &&
+    process.env.AZURE_OPENAI_DEPLOYMENT?.trim(),
   );
 }
 

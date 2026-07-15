@@ -8,7 +8,8 @@ function HeroBanner({ query, onChange, onSearch }) {
     <div
       className="relative px-4 pb-16 pt-6"
       style={{
-        background: 'linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.5) 100%), linear-gradient(135deg, #4A6FA5 0%, #2C5282 50%, #1A365D 100%)',
+        background:
+          'linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.5) 100%), linear-gradient(135deg, #4A6FA5 0%, #2C5282 50%, #1A365D 100%)',
         minHeight: '14rem',
       }}
     >
@@ -23,7 +24,14 @@ function HeroBanner({ query, onChange, onSearch }) {
       <div className="absolute -bottom-5 left-4 right-4">
         <div className="flex items-center overflow-hidden rounded-full bg-white shadow-md">
           <div className="flex flex-1 items-center gap-2 px-4 py-3">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={EMT.muted} strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={EMT.muted}
+              strokeWidth="2"
+            >
               <circle cx="11" cy="11" r="7" />
               <path d="M20 20l-4-4" strokeLinecap="round" />
             </svg>
@@ -73,7 +81,9 @@ function DestinationCard({ dest, onSelect }) {
 export default function VisaHomeScreen({ form, onChange, onBack, onSelectDestination, onSearch }) {
   const handleSearch = () => {
     const q = (form.searchQuery || '').toLowerCase();
-    const match = DESTINATIONS.find((d) => q.includes(d.name.toLowerCase()) || d.name.toLowerCase().includes(q));
+    const match = DESTINATIONS.find(
+      (d) => q.includes(d.name.toLowerCase()) || d.name.toLowerCase().includes(q),
+    );
     if (match) onSelectDestination(match.id);
     else if (q) onSelectDestination('singapore');
     else onSearch?.();

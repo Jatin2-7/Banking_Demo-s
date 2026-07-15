@@ -8,9 +8,18 @@ import {
 } from '../loan/incredJourney.js';
 
 const WORD_TO_DIGIT = {
-  zero: '0', oh: '0', o: '0',
-  one: '1', two: '2', three: '3', four: '4', five: '5',
-  six: '6', seven: '7', eight: '8', nine: '9',
+  zero: '0',
+  oh: '0',
+  o: '0',
+  one: '1',
+  two: '2',
+  three: '3',
+  four: '4',
+  five: '5',
+  six: '6',
+  seven: '7',
+  eight: '8',
+  nine: '9',
 };
 
 function norm(text) {
@@ -44,7 +53,9 @@ export function parseSpokenPan(text) {
   const direct = raw.toUpperCase().match(/\b[A-Z]{5}\d{4}[A-Z]\b/);
   if (direct) return direct[0];
 
-  const compact = wordsToDigits(raw).replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  const compact = wordsToDigits(raw)
+    .replace(/[^A-Z0-9]/gi, '')
+    .toUpperCase();
   const m = compact.match(/[A-Z]{5}\d{4}[A-Z]/);
   if (m) return m[0];
 
@@ -71,7 +82,9 @@ function formatInr(n) {
 function parseIndianAmount(text) {
   const n = norm(text);
 
-  let m = n.match(/(\d+(?:\.\d+)?)\s*(?:lakh|lac|lacs)\s+(\d+(?:\.\d+)?)\s*(?:thousand|thousands|k|hazaar|hazar)/);
+  let m = n.match(
+    /(\d+(?:\.\d+)?)\s*(?:lakh|lac|lacs)\s+(\d+(?:\.\d+)?)\s*(?:thousand|thousands|k|hazaar|hazar)/,
+  );
   if (m) return Math.round(parseFloat(m[1]) * 100000 + parseFloat(m[2]) * 1000);
 
   m = n.match(/(\d+(?:\.\d+)?)\s*(?:crore|cr)\s+(\d+(?:\.\d+)?)\s*(?:lakh|lac|lacs)/);
@@ -98,15 +111,17 @@ function isYearlyIncomePhrase(text) {
   const n = norm(text);
   return (
     /year|yearly|annual|annum|per annum|per year|saal|salana|\bctc\b/.test(n) ||
-    (/earn|karta|kart|karti|salary|package/i.test(n) && /year|yearly|saal|annual|lakh|crore/i.test(n))
+    (/earn|karta|kart|karti|salary|package/i.test(n) &&
+      /year|yearly|saal|annual|lakh|crore/i.test(n))
   );
 }
 
 function disclaimsMonthlyIncome(text) {
   const n = norm(text);
   return (
-    /(?:yaad nahi|don't remember|do not remember|not sure|don't know|dont know|pata nahi)/.test(n) &&
-    /month|monthly|mahine|mahina/.test(n)
+    /(?:yaad nahi|don't remember|do not remember|not sure|don't know|dont know|pata nahi)/.test(
+      n,
+    ) && /month|monthly|mahine|mahina/.test(n)
   );
 }
 
@@ -169,10 +184,30 @@ function isValidDobParts(day, month, year) {
 }
 
 const MONTH_MAP = {
-  jan: '01', january: '01', feb: '02', february: '02', mar: '03', march: '03',
-  apr: '04', april: '04', may: '05', jun: '06', june: '06', jul: '07', july: '07',
-  aug: '08', august: '08', sep: '09', sept: '09', september: '09', oct: '10', october: '10',
-  nov: '11', november: '11', dec: '12', december: '12',
+  jan: '01',
+  january: '01',
+  feb: '02',
+  february: '02',
+  mar: '03',
+  march: '03',
+  apr: '04',
+  april: '04',
+  may: '05',
+  jun: '06',
+  june: '06',
+  jul: '07',
+  july: '07',
+  aug: '08',
+  august: '08',
+  sep: '09',
+  sept: '09',
+  september: '09',
+  oct: '10',
+  october: '10',
+  nov: '11',
+  november: '11',
+  dec: '12',
+  december: '12',
 };
 
 function expandYear(y) {
@@ -261,7 +296,11 @@ function parseName(text) {
     const m = raw.match(p);
     if (m?.[1] && !looksLikePan(m[1])) return m[1].trim().replace(/\s+/g, ' ');
   }
-  if (/^[A-Za-z][A-Za-z\s.'-]{2,50}$/.test(raw) && raw.split(/\s+/).length >= 2 && !looksLikePan(raw)) {
+  if (
+    /^[A-Za-z][A-Za-z\s.'-]{2,50}$/.test(raw) &&
+    raw.split(/\s+/).length >= 2 &&
+    !looksLikePan(raw)
+  ) {
     return raw.replace(/\s+/g, ' ');
   }
   return null;
@@ -329,7 +368,20 @@ function replyForField(field, value, form, phase) {
       const m = form.dobMonth || '';
       const y = form.dobYear || '';
       if (d && m && y) {
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const months = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
         const mi = parseInt(m, 10) - 1;
         const label = months[mi] ? `${parseInt(d, 10)} ${months[mi]} ${y}` : `${d}/${m}/${y}`;
         return `Got it — ${label}. What is your gender?`;
@@ -403,7 +455,10 @@ function parseForField(field, text, form) {
       return patch;
     }
     case 'companyName': {
-      const company = matchOption(text, COMPANY_OPTIONS.map((c) => ({ id: c, label: c })));
+      const company = matchOption(
+        text,
+        COMPANY_OPTIONS.map((c) => ({ id: c, label: c })),
+      );
       return company ? { companyName: company } : null;
     }
     case 'maritalStatus': {
@@ -450,7 +505,8 @@ export function parseIncredVoiceInput(phase, text, form = {}) {
     return {
       handled: true,
       patch: {},
-      reply: 'Sorry, I didn\'t catch your date of birth clearly. Could you say it again, for example 27 March 2007?',
+      reply:
+        "Sorry, I didn't catch your date of birth clearly. Could you say it again, for example 27 March 2007?",
     };
   }
 
@@ -472,7 +528,9 @@ export function parseIncredVoiceInput(phase, text, form = {}) {
     cleanPatch.residenceType ||
     cleanPatch.purpose ||
     cleanPatch.employmentType ||
-    (cleanPatch.dobDay ? `${cleanPatch.dobDay}/${cleanPatch.dobMonth}/${cleanPatch.dobYear}` : null);
+    (cleanPatch.dobDay
+      ? `${cleanPatch.dobDay}/${cleanPatch.dobMonth}/${cleanPatch.dobYear}`
+      : null);
 
   return {
     handled: true,

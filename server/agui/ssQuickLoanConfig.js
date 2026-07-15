@@ -24,7 +24,7 @@ export const SS_QUICKLOAN_FIELD_IDS = [
 ];
 
 export const SS_QUICKLOAN_PROPERTY_TYPE_OPTIONS = ['apartment', 'house', 'plot', 'commercial'];
-export const SS_QUICKLOAN_EMPLOYMENT_OPTIONS    = ['salaried', 'self', 'professional'];
+export const SS_QUICKLOAN_EMPLOYMENT_OPTIONS = ['salaried', 'self', 'professional'];
 
 export const SS_QUICKLOAN_AGENT_SYSTEM = `You are **QuickLoan Assistant**, a friendly mortgage advisor helping a customer fill their home loan form. The form fields update **live** on their screen as you call tools.
 

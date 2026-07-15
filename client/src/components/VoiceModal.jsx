@@ -51,7 +51,14 @@ function TransferIcon({ size = 20 }) {
       style={{ width: size, height: size }}
       aria-hidden
     >
-      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+      <svg
+        width={size * 0.55}
+        height={size * 0.55}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+      >
         <path d="M7 7h11M7 7l3-3M7 7l3 3" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M17 17H6M17 17l-3 3M17 17l-3-3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -115,7 +122,9 @@ function AaravAvatar({ size = 32, pulse = false }) {
       className={`rounded-full bg-gradient-to-br from-bank-gold to-amber-500 flex items-center justify-center font-bold shrink-0 shadow-md select-none ${pulse ? 'ring-4 ring-bank-gold/40 animate-pulse' : 'ring-2 ring-bank-gold/50'}`}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }}
     >
-      <span className="text-bank-purpleDeep" style={{ fontSize: Math.round(size * 0.38) }}>A</span>
+      <span className="text-bank-purpleDeep" style={{ fontSize: Math.round(size * 0.38) }}>
+        A
+      </span>
     </div>
   );
 }
@@ -173,7 +182,16 @@ function OptionCard({ option, kind, onPick }) {
           <div className="text-[11px] text-white/60 truncate">{option.sublabel}</div>
         )}
       </div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.5">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.5"
+      >
         <path d="M9 18l6-6-6-6" />
       </svg>
     </button>
@@ -209,7 +227,9 @@ function PaymentSummaryCard({ session }) {
         className="mx-4 my-3 rounded-2xl bg-white overflow-hidden shadow-lg"
       >
         <div className="bg-gradient-to-r from-[#3D2666]/10 to-[#5B3D8A]/10 px-4 py-2">
-          <p className="text-[10px] uppercase tracking-widest font-bold text-[#3D2666]">{meta.confirmLabel}</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-[#3D2666]">
+            {meta.confirmLabel}
+          </p>
         </div>
         {amount && (
           <div className="text-center py-3">
@@ -302,7 +322,15 @@ function ProcessingBubble({ session }) {
       <AaravAvatar size={28} />
       <div className="bg-white rounded-2xl rounded-bl-sm px-3.5 py-2 flex items-center gap-2 shadow-sm">
         <svg className="w-4 h-4 animate-spin text-[#3D2666]" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="42" strokeLinecap="round" />
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeDasharray="42"
+            strokeLinecap="round"
+          />
         </svg>
         <span className="text-[12px] text-slate-600">{processing}</span>
       </div>
@@ -378,11 +406,20 @@ export default function VoiceModal({
     if (!open) return;
     const r = requestAnimationFrame(scrollToBottom);
     const t = setTimeout(scrollToBottom, 220);
-    return () => { cancelAnimationFrame(r); clearTimeout(t); };
+    return () => {
+      cancelAnimationFrame(r);
+      clearTimeout(t);
+    };
   }, [
-    scrollToBottom, open, isListening,
-    session?.history?.length, session?.pending,
-    session?.thinking, session?.executing, session?.state, liveTranscript,
+    scrollToBottom,
+    open,
+    isListening,
+    session?.history?.length,
+    session?.pending,
+    session?.thinking,
+    session?.executing,
+    session?.state,
+    liveTranscript,
   ]);
 
   if (!open || !session) return null;
@@ -429,7 +466,11 @@ export default function VoiceModal({
                 <span className="text-sm font-bold text-white">AI Assistant</span>
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    isListening ? 'bg-bank-gold animate-pulse' : session?.thinking ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
+                    isListening
+                      ? 'bg-bank-gold animate-pulse'
+                      : session?.thinking
+                        ? 'bg-amber-400 animate-pulse'
+                        : 'bg-emerald-400'
                   }`}
                 />
               </div>
@@ -512,7 +553,11 @@ export default function VoiceModal({
                 ))}
               </div>
               <div className="max-w-[78%] text-[13px] text-white/90 italic px-3.5 py-2.5 rounded-2xl rounded-br-sm bg-white/10 ring-1 ring-white/20 leading-snug">
-                {liveTranscript ? `"${liveTranscript}"` : <span className="text-white/40">Speak now…</span>}
+                {liveTranscript ? (
+                  `"${liveTranscript}"`
+                ) : (
+                  <span className="text-white/40">Speak now…</span>
+                )}
               </div>
             </motion.div>
           )}
@@ -597,8 +642,10 @@ export default function VoiceModal({
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
-                placeholder={isListening ? 'Or type your answer…' : (L.typeHere || 'Type or speak…')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') submit();
+                }}
+                placeholder={isListening ? 'Or type your answer…' : L.typeHere || 'Type or speak…'}
                 className="flex-1 text-[13px] bg-transparent outline-none text-white placeholder:text-white/40 px-1"
               />
 

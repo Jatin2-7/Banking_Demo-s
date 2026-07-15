@@ -141,7 +141,7 @@ export function parseStepInput(stepId, text, form = {}) {
       const emailMatch = raw.match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
       const email = emailMatch ? emailMatch[0] : raw.replace(/\s/g, '');
       if (isValidEmail(email)) return { ok: true, value: email, display: email };
-      return { ok: false, error: 'What is your email address? I\'ll send an OTP to verify it.' };
+      return { ok: false, error: "What is your email address? I'll send an OTP to verify it." };
     }
 
     case 'marital_status':
@@ -162,7 +162,8 @@ export function parseStepInput(stepId, text, form = {}) {
       if (/10th|tenth/.test(n)) return { ok: true, value: '10th pass', display: '10th Pass' };
       if (/12th|twelfth/.test(n)) return { ok: true, value: '12th pass', display: '12th Pass' };
       if (/diploma/.test(n)) return { ok: true, value: 'diploma', display: 'Diploma' };
-      if (/phd|doctorate/.test(n)) return { ok: true, value: 'doctorate / phd', display: 'Doctorate / PhD' };
+      if (/phd|doctorate/.test(n))
+        return { ok: true, value: 'doctorate / phd', display: 'Doctorate / PhD' };
       break;
     }
 
@@ -176,8 +177,10 @@ export function parseStepInput(stepId, text, form = {}) {
     }
 
     case 'income_verify':
-      if (/verify|yes|proceed|now/.test(n)) return { ok: true, value: 'verify', display: 'Verify Now' };
-      if (/skip|later|no|not now/.test(n)) return { ok: true, value: 'skip', display: 'Skip for Now' };
+      if (/verify|yes|proceed|now/.test(n))
+        return { ok: true, value: 'verify', display: 'Verify Now' };
+      if (/skip|later|no|not now/.test(n))
+        return { ok: true, value: 'skip', display: 'Skip for Now' };
       break;
 
     case 'family_reference':
@@ -197,7 +200,10 @@ export function parseStepInput(stepId, text, form = {}) {
       const phone = phoneMatch?.[1] || null;
       const namePart =
         parseFriendNameFromSpeech(raw) ||
-        raw.replace(/\d{5,}/g, '').replace(/mobile|number|phone/gi, '').trim();
+        raw
+          .replace(/\d{5,}/g, '')
+          .replace(/mobile|number|phone/gi, '')
+          .trim();
 
       if (namePart && phone && isValidPhone(phone)) {
         return {
@@ -218,9 +224,10 @@ export function parseStepInput(stepId, text, form = {}) {
         return {
           ok: false,
           partial: { friendName: namePart },
-          error: form.friendMobile && isValidPhone(form.friendMobile)
-            ? 'Name saved. Say their mobile number or enter it below.'
-            : 'Got the name. What is their 10-digit mobile number?',
+          error:
+            form.friendMobile && isValidPhone(form.friendMobile)
+              ? 'Name saved. Say their mobile number or enter it below.'
+              : 'Got the name. What is their 10-digit mobile number?',
         };
       }
       if (phone && isValidPhone(phone)) {
@@ -235,7 +242,7 @@ export function parseStepInput(stepId, text, form = {}) {
         return {
           ok: false,
           partial: { friendMobile: phone },
-          error: 'Please tell me your friend\'s full name first.',
+          error: "Please tell me your friend's full name first.",
         };
       }
       break;
@@ -245,7 +252,7 @@ export function parseStepInput(stepId, text, form = {}) {
       break;
   }
 
-  return { ok: false, error: 'I didn\'t catch that. Please try again or pick an option above.' };
+  return { ok: false, error: "I didn't catch that. Please try again or pick an option above." };
 }
 
 /** Map quick-option value to display label */

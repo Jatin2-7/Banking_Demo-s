@@ -11,7 +11,7 @@
 
 import { useCallback, useRef } from 'react';
 
-const RAGE_TAP_COUNT = 5;   // taps needed to trigger
+const RAGE_TAP_COUNT = 5; // taps needed to trigger
 const RAGE_TAP_WINDOW = 900; // ms window
 const INVALID_FIELD_THRESHOLD = 2; // times same field invalid before trigger
 
@@ -25,7 +25,9 @@ export function useRageDetect({ onFrustrated } = {}) {
     firedRef.current = true;
     onFrustrated?.();
     // auto-reset after 8s so it can trigger again if needed
-    setTimeout(() => { firedRef.current = false; }, 8000);
+    setTimeout(() => {
+      firedRef.current = false;
+    }, 8000);
   }, [onFrustrated]);
 
   const handleTap = useCallback(() => {
@@ -40,15 +42,18 @@ export function useRageDetect({ onFrustrated } = {}) {
   }, [fire]);
 
   /** Call this whenever a field value is rejected as invalid. */
-  const markInvalidField = useCallback((fieldId) => {
-    if (!fieldId) return;
-    const count = (invalidFieldCounts.current[fieldId] || 0) + 1;
-    invalidFieldCounts.current[fieldId] = count;
-    if (count >= INVALID_FIELD_THRESHOLD) {
-      invalidFieldCounts.current[fieldId] = 0;
-      fire();
-    }
-  }, [fire]);
+  const markInvalidField = useCallback(
+    (fieldId) => {
+      if (!fieldId) return;
+      const count = (invalidFieldCounts.current[fieldId] || 0) + 1;
+      invalidFieldCounts.current[fieldId] = count;
+      if (count >= INVALID_FIELD_THRESHOLD) {
+        invalidFieldCounts.current[fieldId] = 0;
+        fire();
+      }
+    },
+    [fire],
+  );
 
   /** Reset after the help prompt is handled. */
   const dismiss = useCallback(() => {

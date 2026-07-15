@@ -1,7 +1,13 @@
 import React from 'react';
 import { ArmHelpBox } from './ArmChatHeader.jsx';
 
-export default function ArmQuickOptions({ title = 'QUICK OPTIONS', options, onSelect, helpText, embedded = false }) {
+export default function ArmQuickOptions({
+  title = 'QUICK OPTIONS',
+  options,
+  onSelect,
+  helpText,
+  embedded = false,
+}) {
   if (!options?.length) return null;
 
   return (
@@ -20,7 +26,14 @@ export default function ArmQuickOptions({ title = 'QUICK OPTIONS', options, onSe
             className="flex w-full items-center justify-between rounded-xl border border-kb-border bg-white px-4 py-3.5 text-left text-[14px] font-semibold text-kb-ink press transition hover:bg-gray-50"
           >
             <span>{opt.label}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#9CA3AF"
+              strokeWidth="2"
+            >
               <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -46,7 +59,14 @@ export function ArmListOptions({ options, onSelect, helpText, embedded = false }
           className="flex w-full items-center justify-between rounded-xl border border-kb-border bg-white px-4 py-3.5 text-left text-[14px] font-semibold text-kb-ink press shadow-sm"
         >
           <span>{opt.label}</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9CA3AF"
+            strokeWidth="2"
+          >
             <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>

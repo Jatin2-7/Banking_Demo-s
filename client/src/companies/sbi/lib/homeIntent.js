@@ -16,10 +16,15 @@ export function matchesApplyHomeLoanIntent(t, raw = '') {
   if (matchesPinChangeIntent(t)) return false;
   if (/^(apply|loan|home\s*loan)$/i.test(trimmed)) return true;
   if (/\b(apply\s+(for\s+(a\s+)?)?home\s+loan|home\s+loan\s+application)\b/.test(t)) return true;
-  if (/\b(apply\s+(for\s+)?(a\s+)?loan|i\s+want\s+to\s+apply|start\s+(a\s+)?loan)\b/.test(t)) return true;
-  if (/\b(ghar\s*ka\s*loan|home\s*loan\s*chahiye|loan\s*apply|loan\s*lena|loan\s*chahiye)\b/.test(t)) return true;
+  if (/\b(apply\s+(for\s+)?(a\s+)?loan|i\s+want\s+to\s+apply|start\s+(a\s+)?loan)\b/.test(t))
+    return true;
+  if (
+    /\b(ghar\s*ka\s*loan|home\s*loan\s*chahiye|loan\s*apply|loan\s*lena|loan\s*chahiye)\b/.test(t)
+  )
+    return true;
   if (/\bmortgage\b/.test(t)) return true;
-  if (/\bhome\s+loan\b/.test(t) && /\b(apply|start|open|chahiye|lena|karna|form)\b/.test(t)) return true;
+  if (/\bhome\s+loan\b/.test(t) && /\b(apply|start|open|chahiye|lena|karna|form)\b/.test(t))
+    return true;
   if (/\bhome\s+loan\b/.test(t)) return true;
   return false;
 }
@@ -83,7 +88,8 @@ export function handleSbiHomeUserMessage(text) {
         context: text,
         routingStatus: 'Opening your SBI YONO home loan application.',
       },
-      reply: 'Opening your home loan application — main aapka form step by step bharne mein madad karunga.',
+      reply:
+        'Opening your home loan application — main aapka form step by step bharne mein madad karunga.',
     };
   }
 

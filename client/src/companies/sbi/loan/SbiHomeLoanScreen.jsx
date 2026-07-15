@@ -37,7 +37,7 @@ const CONSENT_PARAS = [
   'I/we understand that the Bank will use the information furnished by me/us in accordance with the applicable laws of India and any other foreign laws to which I/we/the Bank may be subject to.',
   'I/we agree and undertake to provide any further information that Bank may require. I/we agree and understand that Bank reserve the right to retain the application form, and the documents provided therewith and will not return the same to me/us.',
   'I/we further agree that any facility that may be provided to me/us shall be governed by the rules of the Bank that may be in force from time to time.',
-  'I/we undertake and declare that I/we will comply with the Foreign Exchange Management Act, 1999 (\'FEMA\') and the applicable rules, regulations, notifications, directions or orders made there under.',
+  "I/we undertake and declare that I/we will comply with the Foreign Exchange Management Act, 1999 ('FEMA') and the applicable rules, regulations, notifications, directions or orders made there under.",
   'I/we acknowledge that the Bank remains entitled to assign any activities to any third-party agency at its sole discretion.',
   'I/we hereby agree and give consent for the disclosure or obtention by the Bank of all or any such information and data relating to me/us to Credit Information Companies.',
   'I/we agree to receive SMS alerts/Phone calls related to my/our application status and account activity.',
@@ -50,12 +50,20 @@ function SbiLoanHeader({ title, onBack, showBackBtn }) {
     <header className="flex items-center gap-2 bg-white px-3 py-3 shadow-sm">
       {onBack && (
         <button type="button" onClick={onBack} className="press" aria-label="Back">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke={SBI.purple} strokeWidth="2">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke={SBI.purple}
+            strokeWidth="2"
+          >
             <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       )}
-      <h1 className="flex-1 text-[15px] font-bold" style={{ color: SBI.ink }}>{title}</h1>
+      <h1 className="flex-1 text-[15px] font-bold" style={{ color: SBI.ink }}>
+        {title}
+      </h1>
       {showBackBtn && (
         <button
           type="button"
@@ -68,7 +76,13 @@ function SbiLoanHeader({ title, onBack, showBackBtn }) {
       )}
       {!showBackBtn && (
         <button type="button" className="press" style={{ color: SBI.purple }} aria-label="Support">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
             <path d="M3 11a9 9 0 1018 0" />
             <path d="M12 16v2" strokeLinecap="round" />
           </svg>
@@ -115,7 +129,9 @@ function SelectField({ value, onChange, options, placeholder = 'Select' }) {
     >
       <option value="">{placeholder}</option>
       {options.map((o) => (
-        <option key={o} value={o}>{o}</option>
+        <option key={o} value={o}>
+          {o}
+        </option>
       ))}
     </select>
   );
@@ -128,20 +144,43 @@ function EmiCalc({ onContinue }) {
 
   const emi = Math.round(
     (amount * (rate / 1200) * Math.pow(1 + rate / 1200, tenure)) /
-    (Math.pow(1 + rate / 1200, tenure) - 1),
+      (Math.pow(1 + rate / 1200, tenure) - 1),
   );
 
   return (
     <>
       <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 pt-2">
         {[
-          { label: 'Select loan amount', val: amount, min: 100000, max: 5000000, fmt: (v) => `₹ ${v.toLocaleString('en-IN')}`, set: setAmount },
-          { label: 'Select loan tenure', val: tenure, min: 6, max: 84, fmt: (v) => `${v} months`, set: setTenure },
-          { label: 'Select rate of interest', val: rate, min: 8, max: 17, fmt: (v) => `${v.toFixed(1)} %`, set: setRate },
+          {
+            label: 'Select loan amount',
+            val: amount,
+            min: 100000,
+            max: 5000000,
+            fmt: (v) => `₹ ${v.toLocaleString('en-IN')}`,
+            set: setAmount,
+          },
+          {
+            label: 'Select loan tenure',
+            val: tenure,
+            min: 6,
+            max: 84,
+            fmt: (v) => `${v} months`,
+            set: setTenure,
+          },
+          {
+            label: 'Select rate of interest',
+            val: rate,
+            min: 8,
+            max: 17,
+            fmt: (v) => `${v.toFixed(1)} %`,
+            set: setRate,
+          },
         ].map((s) => (
           <div key={s.label} className="mb-4 rounded-xl bg-slate-100 px-4 py-4">
             <p className="text-[12px] font-semibold text-slate-700">{s.label}</p>
-            <p className="mt-1 text-[18px] font-bold" style={{ color: SBI.purple }}>{s.fmt(s.val)}</p>
+            <p className="mt-1 text-[18px] font-bold" style={{ color: SBI.purple }}>
+              {s.fmt(s.val)}
+            </p>
             <input
               type="range"
               min={s.min}
@@ -152,7 +191,11 @@ function EmiCalc({ onContinue }) {
             />
             <div className="mt-1 flex justify-between text-[9px] text-slate-500">
               <span>{s.min >= 100000 ? `₹ ${s.min}` : s.min}</span>
-              <span>{s.max >= 100000 ? `₹ ${s.max.toLocaleString('en-IN')}` : `${String(s.max).padStart(2, '0')} months`}</span>
+              <span>
+                {s.max >= 100000
+                  ? `₹ ${s.max.toLocaleString('en-IN')}`
+                  : `${String(s.max).padStart(2, '0')} months`}
+              </span>
             </div>
           </div>
         ))}
@@ -244,12 +287,15 @@ export default function SbiHomeLoanScreen({
   }, [onClose]);
 
   const { containerProps: rageProps, dismiss: dismissRage } = useRageDetect({
-    onFrustrated: () => { if (!aiOpen) setRmPromptOpen(true); },
+    onFrustrated: () => {
+      if (!aiOpen) setRmPromptOpen(true);
+    },
   });
 
   const validateLoanDetails = useCallback(() => {
     const e = {};
-    if (!form.loanPurposeCategory) e.loanPurposeCategory = 'Loan Purpose Category is a required field';
+    if (!form.loanPurposeCategory)
+      e.loanPurposeCategory = 'Loan Purpose Category is a required field';
     if (!form.purposeOfLoan) e.purposeOfLoan = 'Purpose of Loan is a required field';
     if (!form.propertyType) e.propertyType = 'Property Type is a required field';
     if (!form.propertyStatus) e.propertyStatus = 'Property Status is a required field';
@@ -276,7 +322,9 @@ export default function SbiHomeLoanScreen({
         if (field) {
           set(field, value);
           setAiOpen(true);
-          setPhase((p) => (p === 'intro' || p === 'consent' || p === 'steps' || p === 'emi' ? 'loan-details' : p));
+          setPhase((p) =>
+            p === 'intro' || p === 'consent' || p === 'steps' || p === 'emi' ? 'loan-details' : p,
+          );
         }
       } else if (toolName === 'save_and_next') {
         if (phase === 'loan-details' && !validateLoanDetails()) return;
@@ -287,7 +335,16 @@ export default function SbiHomeLoanScreen({
   );
 
   const handleBack = useCallback(() => {
-    const order = ['intro', 'consent', 'emi', 'steps', 'loan-details', 'personal', 'residence', 'employment'];
+    const order = [
+      'intro',
+      'consent',
+      'emi',
+      'steps',
+      'loan-details',
+      'personal',
+      'residence',
+      'employment',
+    ];
     const idx = order.indexOf(phase);
     if (idx <= 0) onClose?.();
     else setPhase(order[idx - 1]);
@@ -304,7 +361,9 @@ export default function SbiHomeLoanScreen({
               <div className="absolute -right-4 -top-2 text-3xl">🏠</div>
             </div>
           </div>
-          <h2 className="text-[14px] font-bold" style={{ color: SBI.purple }}>Features</h2>
+          <h2 className="text-[14px] font-bold" style={{ color: SBI.purple }}>
+            Features
+          </h2>
           {[
             { icon: '📄', text: 'Minimal Documentation' },
             { icon: '🏷️', text: 'Low Processing Fees' },
@@ -332,10 +391,19 @@ export default function SbiHomeLoanScreen({
             Start New Application →
           </button>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <button type="button" className="press rounded-lg border bg-white py-3 text-[10px] font-semibold" style={{ borderColor: SBI.border, color: SBI.purple }}>
+            <button
+              type="button"
+              className="press rounded-lg border bg-white py-3 text-[10px] font-semibold"
+              style={{ borderColor: SBI.border, color: SBI.purple }}
+            >
               ❓ Know more
             </button>
-            <button type="button" onClick={() => setPhase('emi')} className="press rounded-lg border bg-white py-3 text-[10px] font-semibold" style={{ borderColor: SBI.border, color: SBI.purple }}>
+            <button
+              type="button"
+              onClick={() => setPhase('emi')}
+              className="press rounded-lg border bg-white py-3 text-[10px] font-semibold"
+              style={{ borderColor: SBI.border, color: SBI.purple }}
+            >
               ₹ Calculator
             </button>
           </div>
@@ -348,17 +416,27 @@ export default function SbiHomeLoanScreen({
     return (
       <div className="absolute inset-0 z-40 flex flex-col overflow-hidden bg-white">
         <div className="flex items-center justify-between px-3 py-2">
-          <button type="button" className="rounded border px-2 py-1 text-[10px] font-semibold" style={{ borderColor: SBI.border }}>
+          <button
+            type="button"
+            className="rounded border px-2 py-1 text-[10px] font-semibold"
+            style={{ borderColor: SBI.border }}
+          >
             ENG ▾
           </button>
-          <button type="button" onClick={onClose} className="press text-slate-500">✕</button>
+          <button type="button" onClick={onClose} className="press text-slate-500">
+            ✕
+          </button>
         </div>
         <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-3">
-          <h2 className="text-[16px] font-bold" style={{ color: SBI.purple }}>Consent-cum-Declaration</h2>
+          <h2 className="text-[16px] font-bold" style={{ color: SBI.purple }}>
+            Consent-cum-Declaration
+          </h2>
           <p className="text-[11px] text-slate-500">(For all applicants)</p>
           <div className="mt-4 space-y-4 text-[11px] leading-relaxed text-slate-700">
             {CONSENT_PARAS.map((p, i) => (
-              <p key={i}><span className="font-semibold">{i + 1}.</span> {p}</p>
+              <p key={i}>
+                <span className="font-semibold">{i + 1}.</span> {p}
+              </p>
             ))}
           </div>
         </div>
@@ -396,10 +474,17 @@ export default function SbiHomeLoanScreen({
     return (
       <div className="absolute inset-0 z-40 flex flex-col overflow-hidden bg-white">
         <div className="shrink-0 px-3 py-2">
-          <button type="button" onClick={handleBack} className="text-[11px] font-semibold" style={{ color: SBI.purple }}>
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-[11px] font-semibold"
+            style={{ color: SBI.purple }}
+          >
             ‹ Go Back
           </button>
-          <h1 className="text-[18px] font-bold" style={{ color: SBI.ink }}>EMI Calculator</h1>
+          <h1 className="text-[18px] font-bold" style={{ color: SBI.ink }}>
+            EMI Calculator
+          </h1>
         </div>
         <EmiCalc onContinue={() => setPhase('steps')} />
       </div>
@@ -408,10 +493,21 @@ export default function SbiHomeLoanScreen({
 
   if (phase === 'steps') {
     const steps = [
-      { title: 'Loan application', desc: 'Generate instant in-principle approval.', active: true, status: 'Application In-Progress' },
-      { title: 'Branch verification', desc: 'Application and documents will be verified by the bank.' },
+      {
+        title: 'Loan application',
+        desc: 'Generate instant in-principle approval.',
+        active: true,
+        status: 'Application In-Progress',
+      },
+      {
+        title: 'Branch verification',
+        desc: 'Application and documents will be verified by the bank.',
+      },
       { title: 'Sanction generation', desc: 'Sanction generated by branch post verification.' },
-      { title: 'Document execution', desc: 'Complete your digital document execution to initiate disbursement.' },
+      {
+        title: 'Document execution',
+        desc: 'Complete your digital document execution to initiate disbursement.',
+      },
       { title: 'Disbursement', desc: 'Disbursement to Builder/ Seller / Applicant.' },
     ];
     return (
@@ -428,14 +524,24 @@ export default function SbiHomeLoanScreen({
                 <div className="flex flex-col items-center">
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] ${s.active ? 'text-white' : 'border border-dashed text-slate-400'}`}
-                    style={{ backgroundColor: s.active ? SBI.purple : 'transparent', borderColor: SBI.purple }}
+                    style={{
+                      backgroundColor: s.active ? SBI.purple : 'transparent',
+                      borderColor: SBI.purple,
+                    }}
                   >
                     {s.active ? '₹' : '○'}
                   </div>
-                  {i < steps.length - 1 && <div className="w-px flex-1 bg-slate-200" style={{ minHeight: 40 }} />}
+                  {i < steps.length - 1 && (
+                    <div className="w-px flex-1 bg-slate-200" style={{ minHeight: 40 }} />
+                  )}
                 </div>
                 <div className="pb-5">
-                  <p className="text-[12px] font-bold" style={{ color: s.active ? SBI.purple : SBI.muted }}>{s.title}</p>
+                  <p
+                    className="text-[12px] font-bold"
+                    style={{ color: s.active ? SBI.purple : SBI.muted }}
+                  >
+                    {s.title}
+                  </p>
                   <p className="text-[10px] text-slate-500">{s.desc}</p>
                   {s.status && (
                     <span className="mt-1 inline-block rounded bg-orange-100 px-2 py-0.5 text-[9px] font-semibold text-orange-700">
@@ -470,45 +576,102 @@ export default function SbiHomeLoanScreen({
           <SbiLoanHeader title="Home Loan" onBack={handleBack} showBackBtn />
           <ProgressBar step={stepMap[phase]} />
           {showSuccess && (
-            <div className="mx-3 mb-2 flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: SBI.successBg }}>
-              <span className="text-[11px] font-semibold" style={{ color: SBI.success }}>✓ Success! Personal Details Saved Successfully!</span>
-              <button type="button" onClick={() => setShowSuccess(false)} className="text-slate-400">✕</button>
+            <div
+              className="mx-3 mb-2 flex items-center justify-between rounded-lg px-3 py-2"
+              style={{ backgroundColor: SBI.successBg }}
+            >
+              <span className="text-[11px] font-semibold" style={{ color: SBI.success }}>
+                ✓ Success! Personal Details Saved Successfully!
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowSuccess(false)}
+                className="text-slate-400"
+              >
+                ✕
+              </button>
             </div>
           )}
         </div>
-        <div className={`no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 ${aiOpen ? 'pb-4' : 'pb-3'}`}>
+        <div
+          className={`no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 ${aiOpen ? 'pb-4' : 'pb-3'}`}
+        >
           {phase === 'loan-details' && (
             <>
-              <h2 className="py-2 text-[15px] font-bold" style={{ color: SBI.ink }}>Loan Details</h2>
+              <h2 className="py-2 text-[15px] font-bold" style={{ color: SBI.ink }}>
+                Loan Details
+              </h2>
               <FormField label="Loan Purpose Category" required error={errors.loanPurposeCategory}>
-                <SelectField value={form.loanPurposeCategory} onChange={(v) => set('loanPurposeCategory', v)} options={LOAN_PURPOSE_CATEGORIES} />
+                <SelectField
+                  value={form.loanPurposeCategory}
+                  onChange={(v) => set('loanPurposeCategory', v)}
+                  options={LOAN_PURPOSE_CATEGORIES}
+                />
               </FormField>
               <FormField label="Purpose of Loan" required error={errors.purposeOfLoan}>
-                <SelectField value={form.purposeOfLoan} onChange={(v) => set('purposeOfLoan', v)} options={PURPOSE_OPTIONS} />
+                <SelectField
+                  value={form.purposeOfLoan}
+                  onChange={(v) => set('purposeOfLoan', v)}
+                  options={PURPOSE_OPTIONS}
+                />
               </FormField>
               <FormField label="Estimated Property Value (in INR)" required>
-                <input type="text" value={form.propertyValue} onChange={(e) => set('propertyValue', e.target.value)} className="w-full bg-transparent text-[13px] outline-none" placeholder="" />
+                <input
+                  type="text"
+                  value={form.propertyValue}
+                  onChange={(e) => set('propertyValue', e.target.value)}
+                  className="w-full bg-transparent text-[13px] outline-none"
+                  placeholder=""
+                />
               </FormField>
               <FormField label="Requested Loan Amount (in INR)" required>
-                <input type="text" value={form.loanAmount} onChange={(e) => set('loanAmount', e.target.value)} className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="text"
+                  value={form.loanAmount}
+                  onChange={(e) => set('loanAmount', e.target.value)}
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
-              <label className="flex items-center gap-2 py-2 text-[11px]" style={{ color: SBI.purple }}>
-                <input type="checkbox" className="accent-purple-700" /> RERA No./Project Name Available
+              <label
+                className="flex items-center gap-2 py-2 text-[11px]"
+                style={{ color: SBI.purple }}
+              >
+                <input type="checkbox" className="accent-purple-700" /> RERA No./Project Name
+                Available
               </label>
               <FormField label="Property Type" required error={errors.propertyType}>
-                <SelectField value={form.propertyType} onChange={(v) => set('propertyType', v)} options={PROPERTY_TYPES} />
+                <SelectField
+                  value={form.propertyType}
+                  onChange={(v) => set('propertyType', v)}
+                  options={PROPERTY_TYPES}
+                />
               </FormField>
               <FormField label="Property Status" required error={errors.propertyStatus}>
-                <SelectField value={form.propertyStatus} onChange={(v) => set('propertyStatus', v)} options={PROPERTY_STATUS} />
+                <SelectField
+                  value={form.propertyStatus}
+                  onChange={(v) => set('propertyStatus', v)}
+                  options={PROPERTY_STATUS}
+                />
               </FormField>
               <FormField label="Repayment Mode" required error={errors.repaymentMode}>
-                <SelectField value={form.repaymentMode} onChange={(v) => set('repaymentMode', v)} options={REPAYMENT_MODES} />
+                <SelectField
+                  value={form.repaymentMode}
+                  onChange={(v) => set('repaymentMode', v)}
+                  options={REPAYMENT_MODES}
+                />
               </FormField>
-              <p className="py-2 text-[12px] font-semibold text-slate-700">Interest to be Capitalised during Moratorium*</p>
+              <p className="py-2 text-[12px] font-semibold text-slate-700">
+                Interest to be Capitalised during Moratorium*
+              </p>
               <div className="flex gap-6 pb-4">
                 {['Yes', 'No'].map((o) => (
                   <label key={o} className="flex items-center gap-2 text-[12px]">
-                    <input type="radio" checked={form.capitaliseInterest === o} onChange={() => set('capitaliseInterest', o)} className="accent-purple-700" />
+                    <input
+                      type="radio"
+                      checked={form.capitaliseInterest === o}
+                      onChange={() => set('capitaliseInterest', o)}
+                      className="accent-purple-700"
+                    />
                     {o}
                   </label>
                 ))}
@@ -517,35 +680,69 @@ export default function SbiHomeLoanScreen({
           )}
           {phase === 'personal' && (
             <>
-              <h2 className="py-2 text-[15px] font-bold" style={{ color: SBI.ink }}>Personal Details</h2>
+              <h2 className="py-2 text-[15px] font-bold" style={{ color: SBI.ink }}>
+                Personal Details
+              </h2>
               <FormField label="E-mail ID" required>
-                <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => set('email', e.target.value)}
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
               <FormField label="Gender" required>
-                <SelectField value={form.gender} onChange={(v) => set('gender', v)} options={['Male', 'Female', 'Other']} />
+                <SelectField
+                  value={form.gender}
+                  onChange={(v) => set('gender', v)}
+                  options={['Male', 'Female', 'Other']}
+                />
               </FormField>
               <FormField label="PAN / Other Identification Proof" required>
                 <SelectField value="PAN" onChange={() => {}} options={['PAN']} />
               </FormField>
               <FormField label="Identification Number" required>
-                <input type="text" value={form.pan} onChange={(e) => set('pan', e.target.value)} className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="text"
+                  value={form.pan}
+                  onChange={(e) => set('pan', e.target.value)}
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
               <FormField label="Marital Status" required>
-                <SelectField value={form.maritalStatus} onChange={(v) => set('maritalStatus', v)} options={['Single', 'Married']} />
+                <SelectField
+                  value={form.maritalStatus}
+                  onChange={(v) => set('maritalStatus', v)}
+                  options={['Single', 'Married']}
+                />
               </FormField>
             </>
           )}
           {phase === 'residence' && (
             <>
-              <h2 className="py-2 text-[15px] font-bold" style={{ color: SBI.ink }}>Residence Details</h2>
+              <h2 className="py-2 text-[15px] font-bold" style={{ color: SBI.ink }}>
+                Residence Details
+              </h2>
               <FormField label="Pincode" required>
-                <input type="text" defaultValue="313001" className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="text"
+                  defaultValue="313001"
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
               <FormField label="Address Line 1" required>
-                <input type="text" defaultValue="S/O Lokpal Singh Bhatnagar, 55,gogawat" className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="text"
+                  defaultValue="S/O Lokpal Singh Bhatnagar, 55,gogawat"
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
               <FormField label="Address Line 2" required>
-                <input type="text" defaultValue="adi, chandpole gait, inside chandpole" className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="text"
+                  defaultValue="adi, chandpole gait, inside chandpole"
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
               <FormField label="State" required>
                 <SelectField value="RAJASTHAN" onChange={() => {}} options={['RAJASTHAN']} />
@@ -558,22 +755,47 @@ export default function SbiHomeLoanScreen({
           {phase === 'employment' && (
             <>
               <FormField label="Employment Type" required>
-                <SelectField value={form.employmentType} onChange={(v) => set('employmentType', v)} options={['Salaried', 'Self Employed', 'Others']} />
+                <SelectField
+                  value={form.employmentType}
+                  onChange={(v) => set('employmentType', v)}
+                  options={['Salaried', 'Self Employed', 'Others']}
+                />
               </FormField>
               <FormField label="Employer Name" required>
-                <input type="text" value={form.employerName} onChange={(e) => set('employerName', e.target.value)} className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="text"
+                  value={form.employerName}
+                  onChange={(e) => set('employerName', e.target.value)}
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
               <FormField label="Gross Monthly Income (In INR)" required>
-                <input type="text" value={form.grossIncome} onChange={(e) => set('grossIncome', e.target.value)} className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="text"
+                  value={form.grossIncome}
+                  onChange={(e) => set('grossIncome', e.target.value)}
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
               <FormField label="Net Monthly Income (In INR)" required>
-                <input type="text" value={form.netIncome} onChange={(e) => set('netIncome', e.target.value)} className="w-full bg-transparent text-[13px] outline-none" />
+                <input
+                  type="text"
+                  value={form.netIncome}
+                  onChange={(e) => set('netIncome', e.target.value)}
+                  className="w-full bg-transparent text-[13px] outline-none"
+                />
               </FormField>
               <p className="py-2 text-[12px] font-medium text-slate-600">I have an existing EMI*</p>
               <div className="flex gap-6 pb-4">
                 {['Yes', 'No'].map((o) => (
                   <label key={o} className="flex items-center gap-2 text-[12px]">
-                    <input type="radio" name="emi" defaultChecked={o === 'No'} className="accent-purple-700" /> {o}
+                    <input
+                      type="radio"
+                      name="emi"
+                      defaultChecked={o === 'No'}
+                      className="accent-purple-700"
+                    />{' '}
+                    {o}
                   </label>
                 ))}
               </div>
@@ -582,14 +804,24 @@ export default function SbiHomeLoanScreen({
         </div>
         <div className="shrink-0 border-t bg-white px-4 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-between">
-            <button type="button" onClick={handleBack} className="press flex items-center gap-1 text-[12px] font-semibold" style={{ color: SBI.purple }}>
+            <button
+              type="button"
+              onClick={handleBack}
+              className="press flex items-center gap-1 text-[12px] font-semibold"
+              style={{ color: SBI.purple }}
+            >
               ← Previous
             </button>
             <button
               type="button"
               onClick={() => {
                 if (phase === 'loan-details' && !validateLoanDetails()) return;
-                const next = { 'loan-details': 'personal', personal: 'residence', residence: 'employment', employment: null };
+                const next = {
+                  'loan-details': 'personal',
+                  personal: 'residence',
+                  residence: 'employment',
+                  employment: null,
+                };
                 if (phase === 'personal') setShowSuccess(true);
                 if (next[phase]) setPhase(next[phase]);
                 else onClose?.();
@@ -614,7 +846,11 @@ export default function SbiHomeLoanScreen({
           voiceAssist={voiceAssist}
           greeting={`Namaste! I'm your SBI home loan assistant. ${getSbiHomeLoanGreetingHint(form)}`}
           assistTitle={voiceAssist ? 'SBI Home Loan · Voice' : 'SBI Home Loan Assistant'}
-          assistHint={voiceAssist ? 'Hands-free — speak after I finish.' : 'Say values like "flat", "50 lakh loan" — I fill the form instantly.'}
+          assistHint={
+            voiceAssist
+              ? 'Hands-free — speak after I finish.'
+              : 'Say values like "flat", "50 lakh loan" — I fill the form instantly.'
+          }
           lang={lang}
           dockClassName="bottom-[4.5rem]"
         />
@@ -631,8 +867,15 @@ export default function SbiHomeLoanScreen({
         )}
         <RMHelpPrompt
           open={rmPromptOpen}
-          onHelp={() => { setRmPromptOpen(false); dismissRage(); setAiOpen(true); }}
-          onDismiss={() => { setRmPromptOpen(false); dismissRage(); }}
+          onHelp={() => {
+            setRmPromptOpen(false);
+            dismissRage();
+            setAiOpen(true);
+          }}
+          onDismiss={() => {
+            setRmPromptOpen(false);
+            dismissRage();
+          }}
         />
       </div>
     );

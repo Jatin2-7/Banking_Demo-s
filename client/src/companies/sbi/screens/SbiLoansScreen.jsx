@@ -18,7 +18,13 @@ export default function SbiLoansScreen({ onBack, onSelectLoan }) {
       <header className="flex items-center gap-2 bg-white px-3 py-3 shadow-sm">
         {onBack && (
           <button type="button" onClick={onBack} className="press" aria-label="Back">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke={SBI.purple} strokeWidth="2">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke={SBI.purple}
+              strokeWidth="2"
+            >
               <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -27,7 +33,13 @@ export default function SbiLoansScreen({ onBack, onSelectLoan }) {
           Loans
         </h1>
         <button type="button" className="press" aria-label="Support" style={{ color: SBI.purple }}>
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
             <path d="M3 11a9 9 0 1018 0" />
             <path d="M12 16v2M9 20h6" strokeLinecap="round" />
           </svg>

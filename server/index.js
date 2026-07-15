@@ -44,8 +44,8 @@ app.get('/api/health', (_req, res) => {
       provider: 'cartesia',
       model: process.env.CARTESIA_MODEL || 'sonic-3',
       hasKey: Boolean(
-        process.env.CARTESIA_API_KEY?.trim()
-        && process.env.CARTESIA_API_KEY !== 'your_cartesia_api_key_here',
+        process.env.CARTESIA_API_KEY?.trim() &&
+        process.env.CARTESIA_API_KEY !== 'your_cartesia_api_key_here',
       ),
     },
     actions: registry.list().map((m) => m.action),
@@ -143,7 +143,13 @@ app.post(
 
       const text = String(data?.text || '').trim();
       log.info(
-        { ms, model: STT_MODEL, lang: data?.language_code || langPrimary || null, bytes: req.body.length, chars: text.length },
+        {
+          ms,
+          model: STT_MODEL,
+          lang: data?.language_code || langPrimary || null,
+          bytes: req.body.length,
+          chars: text.length,
+        },
         'stt ok',
       );
       res.json({
@@ -183,7 +189,7 @@ function cleanForTts(text) {
     .replace(/\p{Extended_Pictographic}/gu, '')
     .replace(/[✦•·★☆©®™°🙏]/gu, '')
     .replace(/[*_`#~|]/g, '')
-    .replace(/[—–]/g, ',')                       // em/en dash → pause
+    .replace(/[—–]/g, ',') // em/en dash → pause
     .replace(/[!？！]/g, '.')
     .replace(/[?]/g, '')
     .replace(/:{1,}/g, ',')
@@ -196,7 +202,9 @@ function cleanForTts(text) {
 app.post('/api/tts', express.json({ limit: '32kb' }), async (req, res) => {
   const cartesiaKey = process.env.CARTESIA_API_KEY?.trim();
   if (!cartesiaKey || cartesiaKey === 'your_cartesia_api_key_here') {
-    return res.status(503).json({ error: 'cartesia_not_configured', hint: 'Set CARTESIA_API_KEY in .env' });
+    return res
+      .status(503)
+      .json({ error: 'cartesia_not_configured', hint: 'Set CARTESIA_API_KEY in .env' });
   }
 
   const raw = String(req.body?.text || '').trim();
@@ -237,11 +245,16 @@ app.post('/api/tts', express.json({ limit: '32kb' }), async (req, res) => {
     if (!cRes.ok) {
       const detail = await cRes.text().catch(() => '');
       log.error({ status: cRes.status, detail: detail.slice(0, 300) }, 'cartesia tts failed');
-      return res.status(502).json({ error: 'tts_failed', status: cRes.status, detail: detail.slice(0, 300) });
+      return res
+        .status(502)
+        .json({ error: 'tts_failed', status: cRes.status, detail: detail.slice(0, 300) });
     }
 
     const buf = await cRes.arrayBuffer();
-    log.info({ ms: Date.now() - t0, lang, model: modelId, chars: text.length, bytes: buf.byteLength }, 'tts ok');
+    log.info(
+      { ms: Date.now() - t0, lang, model: modelId, chars: text.length, bytes: buf.byteLength },
+      'tts ok',
+    );
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-store');
     res.send(Buffer.from(buf));

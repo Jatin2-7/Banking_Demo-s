@@ -12,7 +12,14 @@ const TABS = [
 function TabIcon({ type, active }) {
   const color = active ? KB.yellow : '#9CA3AF';
   const stroke = active ? KB.yellowDark : '#9CA3AF';
-  const props = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke, strokeWidth: 1.8 };
+  const props = {
+    width: 22,
+    height: 22,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke,
+    strokeWidth: 1.8,
+  };
 
   switch (type) {
     case 'home':

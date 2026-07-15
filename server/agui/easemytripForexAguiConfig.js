@@ -2,7 +2,16 @@
 
 export const EASEMYTRIP_FOREX_AGENT_ID = 'easemytrip_forex_assistant';
 
-export const FOREX_CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad', 'Pune', 'Ahmedabad'];
+export const FOREX_CITIES = [
+  'Mumbai',
+  'Delhi',
+  'Bangalore',
+  'Chennai',
+  'Kolkata',
+  'Hyderabad',
+  'Pune',
+  'Ahmedabad',
+];
 export const FOREX_CURRENCIES = ['USD', 'EUR', 'GBP', 'AED', 'SGD'];
 export const FOREX_TABS = ['forex_card', 'currency', 'send_money'];
 export const FOREX_TX_TYPES = ['buy', 'sell'];

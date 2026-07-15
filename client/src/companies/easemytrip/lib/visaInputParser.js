@@ -22,15 +22,18 @@ export function parseVisaVoiceInput(phase, text, form) {
       handled: true,
       action: 'search_destination',
       patch: { destination: country, searchQuery: country, phase: 'destination' },
-      reply: appendNext(
-        `Opening ${countryLabel(country)} visa.`,
-        { ...form, destination: country, phase: 'destination' },
-      ),
+      reply: appendNext(`Opening ${countryLabel(country)} visa.`, {
+        ...form,
+        destination: country,
+        phase: 'destination',
+      }),
     };
   }
 
   if (
-    /\bvisa\b|apply\s*for\s*visa|visa\s*application|open\s*visa|want\s*(a\s*)?visa|need\s*(a\s*)?visa/.test(t)
+    /\bvisa\b|apply\s*for\s*visa|visa\s*application|open\s*visa|want\s*(a\s*)?visa|need\s*(a\s*)?visa/.test(
+      t,
+    )
   ) {
     if (!form.destination) {
       if (effectivePhase === 'home' && !form.destination) {
@@ -51,7 +54,11 @@ export function parseVisaVoiceInput(phase, text, form) {
         handled: true,
         patch: { destination: dest.id, searchQuery: dest.name, phase: 'destination' },
         action: 'search_destination',
-        reply: appendNext(`Opening ${dest.name} visa.`, { ...form, destination: dest.id, phase: 'destination' }),
+        reply: appendNext(`Opening ${dest.name} visa.`, {
+          ...form,
+          destination: dest.id,
+          phase: 'destination',
+        }),
       };
     }
   }
@@ -72,7 +79,12 @@ export function parseVisaVoiceInput(phase, text, form) {
         handled: true,
         patch: { departureDate: String(day) },
         action: 'proceed_date',
-        reply: appendNext(`Date set to ${day} July.`, { ...form, departureDate: String(day), phase: 'wizard', currentStep: 'upload_picture' }),
+        reply: appendNext(`Date set to ${day} July.`, {
+          ...form,
+          departureDate: String(day),
+          phase: 'wizard',
+          currentStep: 'upload_picture',
+        }),
       };
     }
     if (form.phase === 'wizard') {
@@ -81,7 +93,11 @@ export function parseVisaVoiceInput(phase, text, form) {
           handled: true,
           patch: { photoUploaded: true },
           action: 'next_step',
-          reply: appendNext('Photo uploaded.', { ...form, photoUploaded: true, currentStep: 'scan_passport' }),
+          reply: appendNext('Photo uploaded.', {
+            ...form,
+            photoUploaded: true,
+            currentStep: 'scan_passport',
+          }),
         };
       }
       if (form.currentStep === 'scan_passport' && !form.passportScanned) {
@@ -89,19 +105,38 @@ export function parseVisaVoiceInput(phase, text, form) {
           handled: true,
           patch: { passportScanned: true },
           action: 'next_step',
-          reply: appendNext('Passport scanned.', { ...form, passportScanned: true, currentStep: 'traveller_details' }),
+          reply: appendNext('Passport scanned.', {
+            ...form,
+            passportScanned: true,
+            currentStep: 'traveller_details',
+          }),
         };
       }
       if (form.currentStep === 'upload_picture' && form.photoUploaded) {
-        return { handled: true, action: 'next_step', reply: appendNext('Moving to passport scan.', { ...form, currentStep: 'scan_passport' }) };
+        return {
+          handled: true,
+          action: 'next_step',
+          reply: appendNext('Moving to passport scan.', { ...form, currentStep: 'scan_passport' }),
+        };
       }
       if (form.currentStep === 'scan_passport' && form.passportScanned) {
-        return { handled: true, action: 'next_step', reply: appendNext('Moving to traveller details.', { ...form, currentStep: 'traveller_details' }) };
+        return {
+          handled: true,
+          action: 'next_step',
+          reply: appendNext('Moving to traveller details.', {
+            ...form,
+            currentStep: 'traveller_details',
+          }),
+        };
       }
       return { handled: true, action: 'next_step', reply: 'Continuing.' };
     }
     if (form.phase === 'destination') {
-      return { handled: true, action: 'start_application', reply: appendNext('Opening date selection.', { ...form, showDateModal: true }) };
+      return {
+        handled: true,
+        action: 'start_application',
+        reply: appendNext('Opening date selection.', { ...form, showDateModal: true }),
+      };
     }
   }
 
@@ -112,7 +147,12 @@ export function parseVisaVoiceInput(phase, text, form) {
       handled: true,
       patch: { departureDate: String(day) },
       action: 'proceed_date',
-      reply: appendNext(`Date set to ${day} July 2026.`, { ...form, departureDate: String(day), phase: 'wizard', currentStep: 'upload_picture' }),
+      reply: appendNext(`Date set to ${day} July 2026.`, {
+        ...form,
+        departureDate: String(day),
+        phase: 'wizard',
+        currentStep: 'upload_picture',
+      }),
     };
   }
 
@@ -123,7 +163,10 @@ export function parseVisaVoiceInput(phase, text, form) {
       handled: true,
       patch: { photoUploaded: true },
       action,
-      reply: appendNext('Photo uploaded.', { ...merged, currentStep: action ? 'scan_passport' : form.currentStep }),
+      reply: appendNext('Photo uploaded.', {
+        ...merged,
+        currentStep: action ? 'scan_passport' : form.currentStep,
+      }),
     };
   }
 
@@ -134,16 +177,27 @@ export function parseVisaVoiceInput(phase, text, form) {
       handled: true,
       patch: { passportScanned: true },
       action,
-      reply: appendNext('Passport scanned.', { ...merged, currentStep: action ? 'traveller_details' : form.currentStep }),
+      reply: appendNext('Passport scanned.', {
+        ...merged,
+        currentStep: action ? 'traveller_details' : form.currentStep,
+      }),
     };
   }
 
   if (/submit|confirm|finish|complete/.test(t)) {
-    return { handled: true, action: 'submit_application', reply: 'Submitting your visa application.' };
+    return {
+      handled: true,
+      action: 'submit_application',
+      reply: 'Submitting your visa application.',
+    };
   }
 
   if (/tourist|business|transit/.test(t)) {
-    const type = t.includes('business') ? 'Business' : t.includes('transit') ? 'Transit' : 'Tourist';
+    const type = t.includes('business')
+      ? 'Business'
+      : t.includes('transit')
+        ? 'Transit'
+        : 'Tourist';
     return { handled: true, patch: { visaType: type }, reply: `Visa type set to ${type}.` };
   }
 
@@ -191,7 +245,10 @@ export function parseVisaVoiceInput(phase, text, form) {
     return {
       handled: true,
       patch: { travellerPassport: passportMatch[1].toUpperCase() },
-      reply: appendNext('Passport number updated.', { ...form, travellerPassport: passportMatch[1].toUpperCase() }),
+      reply: appendNext('Passport number updated.', {
+        ...form,
+        travellerPassport: passportMatch[1].toUpperCase(),
+      }),
     };
   }
 

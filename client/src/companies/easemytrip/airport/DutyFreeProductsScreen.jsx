@@ -21,7 +21,14 @@ export default function DutyFreeProductsScreen({ form, onChange, onBack, onAddTo
       <header className="shrink-0 text-white" style={{ backgroundColor: '#1A8ADB' }}>
         <div className="flex items-center gap-2 px-3 py-3">
           <button type="button" onClick={onBack} className="press">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" />
             </svg>
           </button>
@@ -31,20 +38,43 @@ export default function DutyFreeProductsScreen({ form, onChange, onBack, onAddTo
 
       <div className="shrink-0 border-b border-emt-borderLight bg-white px-3 py-2">
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onBack} className="press flex h-8 w-8 items-center justify-center rounded-full border border-emt-border">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="press flex h-8 w-8 items-center justify-center rounded-full border border-emt-border"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#333"
+              strokeWidth="2.5"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" />
             </svg>
           </button>
-          <button type="button" className="flex items-center gap-1 text-[13px] font-semibold text-emt-ink press">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-[13px] font-semibold text-emt-ink press"
+          >
             Fragrances
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M6 9l6 6 6-6" strokeLinecap="round" />
             </svg>
           </button>
           <div className="ml-auto flex items-center gap-2">
             <PreOrderPill />
-            <button type="button" className="press text-emt-muted">🔍</button>
+            <button type="button" className="press text-emt-muted">
+              🔍
+            </button>
             <button type="button" className="press relative">
               🛍️
               {form.cartCount > 0 && (
@@ -60,7 +90,8 @@ export default function DutyFreeProductsScreen({ form, onChange, onBack, onAddTo
           className="mt-2 w-full rounded-lg px-3 py-2 text-left text-[11px] font-medium press"
           style={{ backgroundColor: '#E8F3FF', color: EMT.brandBlue }}
         >
-          {airport.name} - Terminal {airport.terminal}, {form.collectionType === 'arrival' ? 'Arrival' : 'Departure'} ▾
+          {airport.name} - Terminal {airport.terminal},{' '}
+          {form.collectionType === 'arrival' ? 'Arrival' : 'Departure'} ▾
         </button>
       </div>
 
@@ -94,7 +125,8 @@ export default function DutyFreeProductsScreen({ form, onChange, onBack, onAddTo
             type="button"
             className="shrink-0 rounded-full border border-emt-border px-3 py-1 text-[10px] font-medium text-emt-ink press"
           >
-            {f}{f === 'Sort' ? ' ▾' : ''}
+            {f}
+            {f === 'Sort' ? ' ▾' : ''}
           </button>
         ))}
       </div>
@@ -132,7 +164,10 @@ export default function DutyFreeProductsScreen({ form, onChange, onBack, onAddTo
               <div className="mt-2 flex gap-2 overflow-x-auto">
                 {FRAGRANCE_PRODUCTS.slice(0, 3).map((p) => (
                   <div key={p.id} className="shrink-0 rounded-lg bg-white p-2 shadow-sm">
-                    <div className="h-16 w-10 rounded" style={{ backgroundColor: `${p.color}40` }} />
+                    <div
+                      className="h-16 w-10 rounded"
+                      style={{ backgroundColor: `${p.color}40` }}
+                    />
                     <p className="mt-1 max-w-[5rem] truncate text-[8px] font-medium">{p.brand}</p>
                   </div>
                 ))}

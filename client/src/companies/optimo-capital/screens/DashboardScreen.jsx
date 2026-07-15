@@ -29,10 +29,16 @@ export default function DashboardScreen({
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: OPTIMO.bg, fontFamily: FONTS.body }}>
-      <DashboardHeader onCheckEligibility={onCheckEligibility || scrollToEmi} onApplyLoan={() => onNavigateLap('lap')} />
+      <DashboardHeader
+        onCheckEligibility={onCheckEligibility || scrollToEmi}
+        onApplyLoan={() => onNavigateLap('lap')}
+      />
       <FloatingSideTabs />
 
-      <main className="mx-auto space-y-12 px-5 py-8 lg:space-y-14 lg:px-8 lg:py-10" style={{ maxWidth: DASHBOARD_MAX_W }}>
+      <main
+        className="mx-auto space-y-12 px-5 py-8 lg:space-y-14 lg:px-8 lg:py-10"
+        style={{ maxWidth: DASHBOARD_MAX_W }}
+      >
         <DashboardHero onApplyLoan={() => onNavigateLap('lap')} />
         <StatsBanner />
         <ProductCards onApply={(product) => onNavigateLap(product)} />

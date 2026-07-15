@@ -121,7 +121,11 @@ export default function AbcdHomeTab({
       <h2 className="mb-2 text-[15px] font-bold text-[#1A1A1A]">Recommended For You</h2>
       <div className="h-16 rounded-2xl bg-[#FAFAFA]" aria-hidden />
 
-      <button type="button" onClick={() => onGoTab?.('myTrack')} className="mt-4 w-full text-left press">
+      <button
+        type="button"
+        onClick={() => onGoTab?.('myTrack')}
+        className="mt-4 w-full text-left press"
+      >
         <h2 className="text-[15px] font-bold text-[#1A1A1A]">My Track</h2>
       </button>
     </div>

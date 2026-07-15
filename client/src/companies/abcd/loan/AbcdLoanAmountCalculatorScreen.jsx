@@ -1,9 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import AbcdLoanSlider from './AbcdLoanSlider.jsx';
-import {
-  calcPrincipalFromEmi,
-  formatInrFull,
-} from './loanCalc.js';
+import { calcPrincipalFromEmi, formatInrFull } from './loanCalc.js';
 
 const TENURE_MARKS = [
   { value: 12, label: '12mos' },
@@ -35,23 +32,36 @@ export default function AbcdLoanAmountCalculatorScreen({ onBack }) {
   const [rate] = useState(18);
   const [showResult, setShowResult] = useState(false);
 
-  const loanAmount = useMemo(
-    () => calcPrincipalFromEmi(emi, rate, tenure),
-    [emi, rate, tenure],
-  );
+  const loanAmount = useMemo(() => calcPrincipalFromEmi(emi, rate, tenure), [emi, rate, tenure]);
 
   return (
     <div className="flex h-full flex-col bg-white">
       <header className="flex shrink-0 items-center gap-2 border-b border-[#EEEEEE] px-3 py-2.5">
-        <button type="button" onClick={onBack} className="flex h-9 w-9 items-center justify-center press" aria-label="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2.2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex h-9 w-9 items-center justify-center press"
+          aria-label="Back"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#1A1A1A"
+            strokeWidth="2.2"
+          >
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
         <h1 className="min-w-0 flex-1 text-center text-[14px] font-bold leading-tight text-[#1A1A1A]">
           Personal loan amount calculator
         </h1>
-        <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C41E24] text-[13px] font-bold text-white press" aria-label="Help">
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C41E24] text-[13px] font-bold text-white press"
+          aria-label="Help"
+        >
           ?
         </button>
       </header>
@@ -76,8 +86,17 @@ export default function AbcdLoanAmountCalculatorScreen({ onBack }) {
             <span>Tenure</span>
             <span>in months</span>
           </div>
-          <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">{tenure}</div>
-          <AbcdLoanSlider min={12} max={60} step={12} value={tenure} onChange={setTenure} marks={TENURE_MARKS} />
+          <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">
+            {tenure}
+          </div>
+          <AbcdLoanSlider
+            min={12}
+            max={60}
+            step={12}
+            value={tenure}
+            onChange={setTenure}
+            marks={TENURE_MARKS}
+          />
         </div>
 
         <div className="mb-4">
@@ -85,12 +104,21 @@ export default function AbcdLoanAmountCalculatorScreen({ onBack }) {
           <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">
             {formatInrFull(emi)}
           </div>
-          <AbcdLoanSlider min={1000} max={25000} step={1000} value={emi} onChange={setEmi} marks={EMI_MARKS} />
+          <AbcdLoanSlider
+            min={1000}
+            max={25000}
+            step={1000}
+            value={emi}
+            onChange={setEmi}
+            marks={EMI_MARKS}
+          />
         </div>
 
         <div className="mb-2">
           <p className="mb-1 text-[11px] text-[#9CA3AF]">Rate of Interest</p>
-          <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">{rate}%</div>
+          <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">
+            {rate}%
+          </div>
         </div>
       </div>
 
@@ -104,8 +132,8 @@ export default function AbcdLoanAmountCalculatorScreen({ onBack }) {
         </button>
         <p className="mt-3 text-center text-[9px] leading-snug text-[#9CA3AF]">
           Disclaimer : The aforementioned values, calculations and results are for illustrative and
-          informational purposes only, and may vary basis various parameters laid down by Aditya Birla
-          Capital Limited.
+          informational purposes only, and may vary basis various parameters laid down by Aditya
+          Birla Capital Limited.
         </p>
       </div>
     </div>

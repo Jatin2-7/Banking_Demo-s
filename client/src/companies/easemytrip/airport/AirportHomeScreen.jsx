@@ -7,7 +7,10 @@ function ServiceCard({ icon, title, description, onBook }) {
     <div className="overflow-hidden rounded-2xl border border-emt-border bg-white shadow-sm">
       <div
         className="flex h-20 items-center px-4"
-        style={{ background: 'repeating-linear-gradient(45deg, #f9f9f9 0, #f9f9f9 2px, #fff 2px, #fff 8px)' }}
+        style={{
+          background:
+            'repeating-linear-gradient(45deg, #f9f9f9 0, #f9f9f9 2px, #fff 2px, #fff 8px)',
+        }}
       >
         <span className="text-4xl">{icon}</span>
       </div>
@@ -33,7 +36,8 @@ export default function AirportHomeScreen({ onBack, onDutyFree, onMeetGreet }) {
       <div
         className="relative px-4 py-10 text-center text-white"
         style={{
-          background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%), linear-gradient(135deg, #1a2a3a 0%, #2d4a6a 100%)',
+          background:
+            'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%), linear-gradient(135deg, #1a2a3a 0%, #2d4a6a 100%)',
           minHeight: '12rem',
         }}
       >
@@ -46,7 +50,8 @@ export default function AirportHomeScreen({ onBack, onDutyFree, onMeetGreet }) {
       <div
         className="px-4 py-6"
         style={{
-          background: 'repeating-linear-gradient(45deg, #fafafa 0, #fafafa 2px, #fff 2px, #fff 10px)',
+          background:
+            'repeating-linear-gradient(45deg, #fafafa 0, #fafafa 2px, #fff 2px, #fff 10px)',
         }}
       >
         <div className="space-y-4">

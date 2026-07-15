@@ -8,11 +8,7 @@ import { AbcdHomeHeader } from './AbcdHeader.jsx';
 import AbcdBottomNav from './AbcdBottomNav.jsx';
 import AbcdHomeTab from './AbcdHomeTab.jsx';
 import AbcdMyTrackTab from './AbcdMyTrackTab.jsx';
-import {
-  AbcdInsureTab,
-  AbcdInvestTab,
-  AbcdLoansTab,
-} from './AbcdLoansInsureInvest.jsx';
+import { AbcdInsureTab, AbcdInvestTab, AbcdLoansTab } from './AbcdLoansInsureInvest.jsx';
 import { ABCD } from './theme.js';
 
 function formatInr(n) {

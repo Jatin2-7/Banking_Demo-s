@@ -19,7 +19,10 @@ export default function StatsBanner() {
             <p style={{ fontSize: 36, fontWeight: 700, color: OPTIMO.orange, lineHeight: 1.1 }}>
               {s.value}
               {s.label && (
-                <span style={{ fontSize: 22, fontWeight: 600, color: OPTIMO.navy }}> {s.label}</span>
+                <span style={{ fontSize: 22, fontWeight: 600, color: OPTIMO.navy }}>
+                  {' '}
+                  {s.label}
+                </span>
               )}
             </p>
             <p className="mt-1.5" style={{ fontSize: 14, fontWeight: 500, color: OPTIMO.navySoft }}>

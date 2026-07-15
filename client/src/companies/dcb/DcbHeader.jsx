@@ -25,7 +25,14 @@ export function DcbAppHeader({
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full press ${fg}`}
             aria-label="Back"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -44,13 +51,30 @@ export function DcbAppHeader({
         </div>
 
         <div className={`flex shrink-0 items-center gap-0.5 ${fg}`}>
-          <button type="button" onClick={onHome} className="flex h-9 w-9 items-center justify-center rounded-full press" aria-label="Home">
+          <button
+            type="button"
+            onClick={onHome}
+            className="flex h-9 w-9 items-center justify-center rounded-full press"
+            aria-label="Home"
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
             </svg>
           </button>
-          <button type="button" onClick={onLogout} className="flex h-9 w-9 items-center justify-center rounded-full press" aria-label="Logout">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex h-9 w-9 items-center justify-center rounded-full press"
+            aria-label="Logout"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 2v10M8.5 5.5a7 7 0 107 0" strokeLinecap="round" />
             </svg>
           </button>
@@ -75,7 +99,14 @@ export function DcbHomeHeader({ onMenu, onSearch, onLogout }) {
           style={{ color: DCB.navy }}
           aria-label="Menu"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+          >
             <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
           </svg>
         </button>
@@ -90,14 +121,38 @@ export function DcbHomeHeader({ onMenu, onSearch, onLogout }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5" style={{ color: DCB.navy }}>
-          <button type="button" onClick={onSearch} className="flex h-9 w-9 items-center justify-center press" aria-label="Search">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button
+            type="button"
+            onClick={onSearch}
+            className="flex h-9 w-9 items-center justify-center press"
+            aria-label="Search"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="10" cy="10" r="6" />
               <path d="M15 15l5 5" strokeLinecap="round" />
             </svg>
           </button>
-          <button type="button" onClick={onLogout} className="flex h-9 w-9 items-center justify-center press" aria-label="Logout">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex h-9 w-9 items-center justify-center press"
+            aria-label="Logout"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 2v10M8.5 5.5a7 7 0 107 0" strokeLinecap="round" />
             </svg>
           </button>

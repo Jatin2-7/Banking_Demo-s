@@ -23,8 +23,24 @@ export const INCRED_GENDER_OPTIONS = ['female', 'male', 'others'];
 export const INCRED_EMPLOYMENT_OPTIONS = ['salaried', 'business'];
 export const INCRED_MARITAL_OPTIONS = ['single', 'married', 'divorced'];
 export const INCRED_RESIDENCE_OPTIONS = ['owned', 'rented', 'pg', 'parental'];
-export const INCRED_PURPOSE_OPTIONS = ['personal', 'medical', 'education', 'travel', 'wedding', 'debt'];
-export const INCRED_COMPANY_OPTIONS = ['SilverSuits', 'TCS', 'Infosys', 'Wipro', 'HDFC Bank', 'ICICI Bank', 'Reliance Industries', 'Other'];
+export const INCRED_PURPOSE_OPTIONS = [
+  'personal',
+  'medical',
+  'education',
+  'travel',
+  'wedding',
+  'debt',
+];
+export const INCRED_COMPANY_OPTIONS = [
+  'SilverSuits',
+  'TCS',
+  'Infosys',
+  'Wipro',
+  'HDFC Bank',
+  'ICICI Bank',
+  'Reliance Industries',
+  'Other',
+];
 
 export const INCRED_PERSONAL_LOAN_AGENT_SYSTEM = `You are a professional **InCred Finance** relationship manager helping a customer complete their **Personal Loan** application on the mobile app.
 

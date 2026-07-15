@@ -37,9 +37,10 @@ function buildRoutingStatus(destination, context, assistantText) {
   if (reason?.[1]) return reason[1].trim();
   const map = {
     loan_application: 'Opening your SBI YONO home loan application.',
-    credit_card: context === 'change_pin'
-      ? 'Opening SBI credit card PIN change.'
-      : 'Opening credit card services.',
+    credit_card:
+      context === 'change_pin'
+        ? 'Opening SBI credit card PIN change.'
+        : 'Opening credit card services.',
     loans: 'Opening SBI loans.',
     home: 'Returning to YONO home.',
   };
@@ -59,9 +60,11 @@ function inferDestination(userText = '', assistantText = '') {
     return { destination: 'credit_card', context: 'change_pin' };
   }
   if (
-    /\b(home\s*loan|apply.{0,30}loan|loan\s*application|mortgage|ghar.{0,12}loan|loan\s*chahiye|fill.{0,30}loan|loan\s*form)\b/.test(t) ||
+    /\b(home\s*loan|apply.{0,30}loan|loan\s*application|mortgage|ghar.{0,12}loan|loan\s*chahiye|fill.{0,30}loan|loan\s*form)\b/.test(
+      t,
+    ) ||
     /^apply$/i.test(userText.trim()) ||
-    /\bnext\s+screen\b/.test(assistantText.toLowerCase()) && /\b(apply|loan)\b/.test(t)
+    (/\bnext\s+screen\b/.test(assistantText.toLowerCase()) && /\b(apply|loan)\b/.test(t))
   ) {
     return { destination: 'loan_application', context: userText || 'Customer wants SBI home loan' };
   }
@@ -79,7 +82,12 @@ function emitNavigateFallback(write, messageId, args) {
     delta: [{ op: 'replace', path: '/navigate_to', value: payload }],
   });
   const fakeId = `fallback_${Date.now()}`;
-  write({ type: 'TOOL_CALL_START', tool_call_id: fakeId, tool_call_name: 'navigate_to', parent_message_id: messageId });
+  write({
+    type: 'TOOL_CALL_START',
+    tool_call_id: fakeId,
+    tool_call_name: 'navigate_to',
+    parent_message_id: messageId,
+  });
   write({ type: 'TOOL_CALL_ARGS', tool_call_id: fakeId, delta: JSON.stringify(payload) });
   write({ type: 'TOOL_CALL_END', tool_call_id: fakeId });
   write({
@@ -106,7 +114,8 @@ const HOME_TOOLS = [
           },
           context: {
             type: 'string',
-            description: 'For credit card PIN change use exactly "change_pin". Optional note for loan_application.',
+            description:
+              'For credit card PIN change use exactly "change_pin". Optional note for loan_application.',
           },
         },
         required: ['destination'],
@@ -132,7 +141,9 @@ export async function streamSbiHomeAguiRun(res, agentId, inputData, { signal } =
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -164,7 +175,9 @@ export async function streamSbiHomeAguiRun(res, agentId, inputData, { signal } =
       if (m.role === 'system') systemNotes.push(m.content);
       else history.push(m);
     }
-    const systemTail = systemNotes.length ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
+    const systemTail = systemNotes.length
+      ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+      : '';
     const messages = [
       {
         role: 'system',
@@ -176,7 +189,12 @@ export async function streamSbiHomeAguiRun(res, agentId, inputData, { signal } =
     for (let step = 0; step < 10; step++) {
       if (signal?.aborted) break;
 
-      const stream = await client.chat.completions.create({ model, messages, tools: HOME_TOOLS, stream: true });
+      const stream = await client.chat.completions.create({
+        model,
+        messages,
+        tools: HOME_TOOLS,
+        stream: true,
+      });
       const messageId = randomUUID();
       let assistantText = '';
       const toolCallBuf = new Map();
@@ -188,7 +206,12 @@ export async function streamSbiHomeAguiRun(res, agentId, inputData, { signal } =
         if (!delta) continue;
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
         if (delta.tool_calls) {
           for (const tc of delta.tool_calls) {
@@ -208,7 +231,11 @@ export async function streamSbiHomeAguiRun(res, agentId, inputData, { signal } =
               });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -246,7 +273,11 @@ export async function streamSbiHomeAguiRun(res, agentId, inputData, { signal } =
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
@@ -264,15 +295,21 @@ export async function streamSbiHomeAguiRun(res, agentId, inputData, { signal } =
             const inferred = inferDestination(lastUser, assistantText);
             if (inferred) args = { ...inferred, ...args };
           }
-          const routingStatus = buildRoutingStatus(args.destination, args.context || '', assistantText);
+          const routingStatus = buildRoutingStatus(
+            args.destination,
+            args.context || '',
+            assistantText,
+          );
           const payload = { ...args, routingStatus };
           write({
             type: 'STATE_DELTA',
-            delta: [{
-              op: 'replace',
-              path: '/navigate_to',
-              value: payload,
-            }],
+            delta: [
+              {
+                op: 'replace',
+                path: '/navigate_to',
+                value: payload,
+              },
+            ],
           });
         }
 
@@ -283,7 +320,11 @@ export async function streamSbiHomeAguiRun(res, agentId, inputData, { signal } =
           content: JSON.stringify({ ok: true, destination: args.destination }),
           role: 'tool',
         });
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify({ ok: true }) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify({ ok: true }),
+        });
       }
     }
 

@@ -10,7 +10,9 @@ export default function VisaDateModal({ selectedDay, onSelect, onClose, onProcee
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
-        <h2 className="mb-4 text-center text-[16px] font-bold text-emt-ink">Select Your Departure Date</h2>
+        <h2 className="mb-4 text-center text-[16px] font-bold text-emt-ink">
+          Select Your Departure Date
+        </h2>
 
         <div className="mb-4 flex items-center justify-between">
           <span
@@ -19,7 +21,11 @@ export default function VisaDateModal({ selectedDay, onSelect, onClose, onProcee
           >
             July 2026
           </span>
-          <button type="button" className="text-[12px] font-semibold press" style={{ color: EMT.brandBlue }}>
+          <button
+            type="button"
+            className="text-[12px] font-semibold press"
+            style={{ color: EMT.brandBlue }}
+          >
             Next
           </button>
         </div>
@@ -57,7 +63,11 @@ export default function VisaDateModal({ selectedDay, onSelect, onClose, onProcee
         </div>
 
         <OrangeButton onClick={onProceed}>Proceed To Application</OrangeButton>
-        <button type="button" onClick={onClose} className="mt-2 w-full text-center text-[12px] text-emt-muted press">
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-2 w-full text-center text-[12px] text-emt-muted press"
+        >
           Cancel
         </button>
       </div>

@@ -5,15 +5,8 @@ import { EMT } from '../theme.js';
 function EmtPlaneIcon({ size = 26 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
-      <path
-        d="M3.5 16.2L28.5 5.5L17.8 27.2L13.8 16.8L3.5 16.2Z"
-        fill={EMT.brandBlue}
-      />
-      <path
-        d="M13.8 16.8L17.8 27.2L15.2 19.8L13.8 16.8Z"
-        fill={EMT.brandBlueDark}
-        opacity="0.55"
-      />
+      <path d="M3.5 16.2L28.5 5.5L17.8 27.2L13.8 16.8L3.5 16.2Z" fill={EMT.brandBlue} />
+      <path d="M13.8 16.8L17.8 27.2L15.2 19.8L13.8 16.8Z" fill={EMT.brandBlueDark} opacity="0.55" />
     </svg>
   );
 }
@@ -79,7 +72,14 @@ export function EmtHomeHeader({ onMenu }) {
           className="press w-8 justify-self-start p-0.5"
           aria-label="Menu"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.2">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#000"
+            strokeWidth="2.2"
+          >
             <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
           </svg>
         </button>
@@ -101,7 +101,14 @@ export function EmtForexHeader({ title = 'Forex Cash & Cards', onBack }) {
     <header className="shrink-0 px-3 py-3 text-white" style={{ backgroundColor: EMT.blueHeader }}>
       <div className="flex items-center gap-2">
         <button type="button" onClick={onBack} className="press p-1" aria-label="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2.5"
+          >
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>

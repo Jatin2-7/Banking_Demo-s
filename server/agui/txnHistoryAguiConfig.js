@@ -16,7 +16,7 @@ function buildTransactionLines() {
 }
 
 function hasLargeCredit() {
-  return TRANSACTIONS.some(t => t.type === 'CR' && t.amount >= 500000);
+  return TRANSACTIONS.some((t) => t.type === 'CR' && t.amount >= 500000);
 }
 
 export function buildTxnHistorySystemPrompt() {
@@ -32,9 +32,11 @@ ${buildTransactionLines()}
 ## Key facts derived from the statement
 - Regular salary credit of ${inr(125000)} on 1st of each month from TECHINFRA SOLUTIONS PVT LTD.
 - Regular EMI of ${inr(45000)} (HDFC Car Loan) debited monthly.
-${hasLargeCredit()
+${
+  hasLargeCredit()
     ? '- There IS a large unexplained credit — investigate carefully.'
-    : '- There are NO transactions of ₹7,00,000 or ₹7,000 or any unexplained large credit in this statement.'}
+    : '- There are NO transactions of ₹7,00,000 or ₹7,000 or any unexplained large credit in this statement.'
+}
 - If customer says they received a call or SMS claiming a large amount was credited that is NOT shown here — that is almost certainly a FRAUD / SCAM attempt.
 
 ## Fraud advisory

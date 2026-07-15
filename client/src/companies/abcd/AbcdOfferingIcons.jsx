@@ -14,7 +14,10 @@ export function IconDigitalGold() {
 export function IconMutualFunds() {
   return (
     <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden>
-      <path d="M24 8c-6 0-10 4-10 8 0 3 2 5 5 6l-1 14h12l-1-14c3-1 5-3 5-6 0-4-4-8-10-8z" fill="#8D6E63" />
+      <path
+        d="M24 8c-6 0-10 4-10 8 0 3 2 5 5 6l-1 14h12l-1-14c3-1 5-3 5-6 0-4-4-8-10-8z"
+        fill="#8D6E63"
+      />
       <ellipse cx="24" cy="36" rx="10" ry="3" fill="#A1887F" />
       <path d="M24 14v8M20 18h8" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" />
       <circle cx="24" cy="12" r="4" fill="#66BB6A" />

@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { OPTIMO_LAP_AGENT_ID, OPTIMO_LAP_AGENT_SYSTEM } from './optimoLapAguiConfig.js';
-import { executeOptimoLapTool, optimoLapOpenAiTools, runValidateForm } from './optimoLapAguiTools.js';
+import {
+  executeOptimoLapTool,
+  optimoLapOpenAiTools,
+  runValidateForm,
+} from './optimoLapAguiTools.js';
 import { module_ } from '../lib/log.js';
 import { getOpenAIClient, getChatModel, hasLlmConfigured } from '../lib/openaiClient.js';
 
@@ -56,7 +60,9 @@ export async function streamOptimoLapAguiRun(res, agentId, inputData, { signal }
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -65,8 +71,16 @@ export async function streamOptimoLapAguiRun(res, agentId, inputData, { signal }
   res.setHeader('X-Accel-Buffering', 'no');
   if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
-  const write = (obj) => { if (!res.writableEnded) res.write(sseEncode(obj)); };
-  const onAbort = () => { try { res.end(); } catch { /* ignore */ } };
+  const write = (obj) => {
+    if (!res.writableEnded) res.write(sseEncode(obj));
+  };
+  const onAbort = () => {
+    try {
+      res.end();
+    } catch {
+      /* ignore */
+    }
+  };
   signal?.addEventListener('abort', onAbort);
 
   write({ type: 'RUN_STARTED', thread_id: threadId, run_id: runId });
@@ -80,7 +94,10 @@ export async function streamOptimoLapAguiRun(res, agentId, inputData, { signal }
       else history.push(m);
     }
     const systemTail = systemNotes.length ? `\n\n## Context\n${systemNotes.join('\n')}` : '';
-    const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+    const messages = [
+      { role: 'system', content: buildSystemPrompt(state) + systemTail },
+      ...history,
+    ];
     const tools = optimoLapOpenAiTools();
 
     for (let step = 0; step < 14; step++) {
@@ -98,7 +115,12 @@ export async function streamOptimoLapAguiRun(res, agentId, inputData, { signal }
         if (!delta) continue;
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
         if (delta.tool_calls) {
           for (const tc of delta.tool_calls) {
@@ -110,10 +132,19 @@ export async function streamOptimoLapAguiRun(res, agentId, inputData, { signal }
             if (tc.function?.arguments) slot.args += tc.function.arguments;
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -133,18 +164,36 @@ export async function streamOptimoLapAguiRun(res, agentId, inputData, { signal }
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
         if (!slot.id) continue;
         let args = {};
-        try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
+        try {
+          args = slot.args ? JSON.parse(slot.args) : {};
+        } catch {
+          args = {};
+        }
         const lastUser = [...history].reverse().find((m) => m.role === 'user')?.content || '';
         const exec = executeOptimoLapTool(slot.name, args, state, { lastUserMessage: lastUser });
         if (exec.statePatches?.length) write({ type: 'STATE_DELTA', delta: exec.statePatches });
-        write({ type: 'TOOL_CALL_RESULT', message_id: randomUUID(), tool_call_id: slot.id, content: JSON.stringify(exec.result), role: 'tool' });
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+        write({
+          type: 'TOOL_CALL_RESULT',
+          message_id: randomUUID(),
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+          role: 'tool',
+        });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+        });
       }
 
       messages[0] = { role: 'system', content: buildSystemPrompt(state) + systemTail };
@@ -153,9 +202,16 @@ export async function streamOptimoLapAguiRun(res, agentId, inputData, { signal }
     write({ type: 'RUN_FINISHED', thread_id: threadId, run_id: runId });
   } catch (err) {
     log.error({ err: err?.message || String(err) }, 'optimo lap agui error');
-    write({ type: 'RUN_ERROR', message: `${err?.name || 'Error'}: ${err?.message || String(err)}` });
+    write({
+      type: 'RUN_ERROR',
+      message: `${err?.name || 'Error'}: ${err?.message || String(err)}`,
+    });
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try { res.end(); } catch { /* ignore */ }
+    try {
+      res.end();
+    } catch {
+      /* ignore */
+    }
   }
 }

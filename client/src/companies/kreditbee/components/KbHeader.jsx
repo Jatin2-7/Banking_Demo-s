@@ -29,7 +29,14 @@ export default function KbHeader() {
       </div>
       <div className="flex items-center gap-2">
         <IconButton label="Scan QR">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#1A1A1A"
+            strokeWidth="2"
+          >
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -37,13 +44,27 @@ export default function KbHeader() {
           </svg>
         </IconButton>
         <IconButton label="Profile">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#1A1A1A"
+            strokeWidth="2"
+          >
             <circle cx="12" cy="8" r="4" />
             <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeLinecap="round" />
           </svg>
         </IconButton>
         <IconButton label="Help">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#1A1A1A"
+            strokeWidth="2"
+          >
             <circle cx="12" cy="12" r="9" />
             <path d="M9.5 9a2.5 2.5 0 015 0c0 2-2.5 1.5-2.5 4" strokeLinecap="round" />
             <circle cx="12" cy="17" r="0.5" fill="#1A1A1A" />

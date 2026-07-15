@@ -30,10 +30,7 @@ export default function AbcdLoanSlider({ min, max, step, value, onChange, marks 
       {marks.length > 0 && (
         <div className="mt-2 flex justify-between text-[9px] text-[#9CA3AF]">
           {marks.map((m) => (
-            <span
-              key={m.value}
-              className={value === m.value ? 'font-bold text-[#1A1A1A]' : ''}
-            >
+            <span key={m.value} className={value === m.value ? 'font-bold text-[#1A1A1A]' : ''}>
               {m.label}
             </span>
           ))}

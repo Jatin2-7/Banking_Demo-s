@@ -1,13 +1,17 @@
 import { KB_ARM_FIELD_IDS } from './kreditbeeArmConfig.js';
 
 function resolveNextJourneyStep(currentStep, value) {
-  const v = String(value || '').trim().toLowerCase();
+  const v = String(value || '')
+    .trim()
+    .toLowerCase();
   switch (currentStep) {
     case 'terms':
-      if (v === 'no') return { step: 'terms', error: 'You need to agree to continue with your application.' };
+      if (v === 'no')
+        return { step: 'terms', error: 'You need to agree to continue with your application.' };
       return { step: 'aadhaar_consent' };
     case 'aadhaar_consent':
-      if (v === 'no') return { step: 'aadhaar_consent', error: 'Aadhaar KYC is required to proceed.' };
+      if (v === 'no')
+        return { step: 'aadhaar_consent', error: 'Aadhaar KYC is required to proceed.' };
       return { step: 'aadhaar_mobile_link' };
     case 'aadhaar_mobile_link':
       return { step: 'aadhaar_number' };
@@ -82,7 +86,11 @@ export function executeKreditbeeArmTool(toolName, args, state) {
         return { result: { ok: false, error: `Unknown field_id: ${field_id}` }, statePatches: [] };
       }
       let normalized = String(value).trim();
-      if (['aadhaarNumber', 'aadhaarOtp', 'emailOtp', 'familyMobile', 'friendMobile'].includes(field_id)) {
+      if (
+        ['aadhaarNumber', 'aadhaarOtp', 'emailOtp', 'familyMobile', 'friendMobile'].includes(
+          field_id,
+        )
+      ) {
         normalized = normalized.replace(/\D/g, '');
       }
       const err = validateField(field_id, normalized);

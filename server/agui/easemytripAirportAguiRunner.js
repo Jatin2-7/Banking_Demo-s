@@ -27,7 +27,10 @@ function agUiMessagesToOpenAI(messages) {
         entry.tool_calls = m.tool_calls.map((tc) => ({
           id: tc.id,
           type: 'function',
-          function: { name: tc.function?.name || tc.name, arguments: tc.function?.arguments || tc.arguments || '{}' },
+          function: {
+            name: tc.function?.name || tc.name,
+            arguments: tc.function?.arguments || tc.arguments || '{}',
+          },
         }));
       }
       out.push(entry);
@@ -162,7 +165,9 @@ function executeAirportTool(name, args, state) {
     state.navigate_to = { destination: args.destination };
     return {
       result: { ok: true, destination: args.destination },
-      statePatches: [{ op: 'replace', path: '/navigate_to', value: { destination: args.destination } }],
+      statePatches: [
+        { op: 'replace', path: '/navigate_to', value: { destination: args.destination } },
+      ],
     };
   }
   return { result: { ok: false, error: `Unknown tool: ${name}` }, statePatches: [] };
@@ -185,7 +190,9 @@ export async function streamEasemytripAirportAguiRun(res, agentId, inputData, { 
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -199,7 +206,11 @@ export async function streamEasemytripAirportAguiRun(res, agentId, inputData, { 
   };
 
   const onAbort = () => {
-    try { res.end(); } catch { /* noop */ }
+    try {
+      res.end();
+    } catch {
+      /* noop */
+    }
   };
   signal?.addEventListener('abort', onAbort);
 
@@ -216,13 +227,20 @@ export async function streamEasemytripAirportAguiRun(res, agentId, inputData, { 
       if (m.role === 'system') systemNotes.push(m.content);
       else history.push(m);
     }
-    const systemTail = systemNotes.length ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
+    const systemTail = systemNotes.length
+      ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+      : '';
     const messages = [{ role: 'system', content: buildSystem() + systemTail }, ...history];
 
     for (let step = 0; step < 14; step++) {
       if (signal?.aborted) break;
 
-      const stream = await client.chat.completions.create({ model, messages, tools: AIRPORT_TOOLS, stream: true });
+      const stream = await client.chat.completions.create({
+        model,
+        messages,
+        tools: AIRPORT_TOOLS,
+        stream: true,
+      });
       const messageId = randomUUID();
       let assistantText = '';
       const toolCallBuf = new Map();
@@ -234,7 +252,12 @@ export async function streamEasemytripAirportAguiRun(res, agentId, inputData, { 
         if (!delta) continue;
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
         if (delta.tool_calls) {
           for (const tc of delta.tool_calls) {
@@ -246,10 +269,19 @@ export async function streamEasemytripAirportAguiRun(res, agentId, inputData, { 
             if (tc.function?.arguments) slot.args += tc.function.arguments;
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -269,13 +301,21 @@ export async function streamEasemytripAirportAguiRun(res, agentId, inputData, { 
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
         if (!slot.id) continue;
         let args = {};
-        try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
+        try {
+          args = slot.args ? JSON.parse(slot.args) : {};
+        } catch {
+          args = {};
+        }
 
         const exec = executeAirportTool(slot.name, args, state);
         if (exec.statePatches?.length) write({ type: 'STATE_DELTA', delta: exec.statePatches });
@@ -287,7 +327,11 @@ export async function streamEasemytripAirportAguiRun(res, agentId, inputData, { 
           content: JSON.stringify(exec.result),
           role: 'tool',
         });
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+        });
       }
 
       messages[0] = { role: 'system', content: buildSystem() + systemTail };
@@ -299,6 +343,10 @@ export async function streamEasemytripAirportAguiRun(res, agentId, inputData, { 
     write({ type: 'RUN_ERROR', message: err?.message || String(err) });
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try { res.end(); } catch { /* noop */ }
+    try {
+      res.end();
+    } catch {
+      /* noop */
+    }
   }
 }

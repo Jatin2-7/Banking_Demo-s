@@ -78,7 +78,10 @@ function detectCurrency(text) {
     if (t.includes(phrase)) return code;
   }
   for (const [country, code] of COUNTRY_CURRENCY) {
-    if (new RegExp(`\\b${country}\\b`).test(t) && /forex|currency|cash|dollar|money|chahiye/.test(t)) {
+    if (
+      new RegExp(`\\b${country}\\b`).test(t) &&
+      /forex|currency|cash|dollar|money|chahiye/.test(t)
+    ) {
       return code;
     }
   }
@@ -127,7 +130,9 @@ function currencyReply(code) {
 export function parseForexIntent(text) {
   const t = String(text).toLowerCase().trim();
   const isForex =
-    /forex|foreign\s*currency|currency\s*exchange|forex\s*cash|global\s*pay|money\s*transfer/.test(t) ||
+    /forex|foreign\s*currency|currency\s*exchange|forex\s*cash|global\s*pay|money\s*transfer/.test(
+      t,
+    ) ||
     /\b(?:lakh|lac|lacs|lakhs|लाख|लाक|crore|करोड़|करोड)\b/.test(t) ||
     (/\b(inr|rupees?|rs|₹|chahiye|mujhe)\b/.test(t) && /\d/.test(t)) ||
     /singapore\s*dollar|us\s*dollar|british\s*pound|uae\s*dirham/.test(t);
@@ -173,8 +178,10 @@ export function parseForexIntent(text) {
 export function parseForexVoiceInput(phase, text, form) {
   const t = String(text).toLowerCase().trim();
 
-  if (/^(order\s*now|place\s*order|book\s*order|confirm|submit|complete)$/.test(t) ||
-      /\b(order\s*now|place\s*(my\s*)?order|complete\s*order)\b/.test(t)) {
+  if (
+    /^(order\s*now|place\s*order|book\s*order|confirm|submit|complete)$/.test(t) ||
+    /\b(order\s*now|place\s*(my\s*)?order|complete\s*order)\b/.test(t)
+  ) {
     return {
       handled: true,
       action: 'complete_order',
@@ -228,7 +235,10 @@ export function parseForexVoiceInput(phase, text, form) {
     return {
       handled: true,
       patch: { foreignAmount: amt, inrAmount: calcInrAmount(amt, cur, false) },
-      reply: appendNextPrompt(`Amount set to ${amt} ${currencyReply(cur)}.`, { ...form, foreignAmount: amt }),
+      reply: appendNextPrompt(`Amount set to ${amt} ${currencyReply(cur)}.`, {
+        ...form,
+        foreignAmount: amt,
+      }),
     };
   }
 
@@ -246,7 +256,11 @@ export function parseForexVoiceInput(phase, text, form) {
     return { handled: true, patch: { activeTab: 'forex_card' }, reply: 'Switched to Forex Card.' };
   }
   if (/\bcurrency\s*(notes?|tab)?\b/.test(t)) {
-    return { handled: true, patch: { activeTab: 'currency' }, reply: 'Switched to Currency notes.' };
+    return {
+      handled: true,
+      patch: { activeTab: 'currency' },
+      reply: 'Switched to Currency notes.',
+    };
   }
 
   if (/^(fill|demo|sample)/.test(t)) {

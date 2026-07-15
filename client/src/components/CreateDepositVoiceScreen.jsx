@@ -49,7 +49,9 @@ function AaravAvatar({ size = 32 }) {
       className="flex shrink-0 select-none items-center justify-center rounded-full bg-gradient-to-br from-bank-gold to-amber-500 font-bold shadow-md ring-2 ring-bank-gold/50"
       style={{ width: size, height: size }}
     >
-      <span className="text-bank-purpleDeep" style={{ fontSize: Math.round(size * 0.38) }}>A</span>
+      <span className="text-bank-purpleDeep" style={{ fontSize: Math.round(size * 0.38) }}>
+        A
+      </span>
     </div>
   );
 }
@@ -78,7 +80,9 @@ function DepositSummaryCard({ fv, phase, rate, maturity }) {
         className="mx-4 my-2 overflow-hidden rounded-2xl bg-white shadow-lg"
       >
         <div className="bg-gradient-to-r from-emerald-600/10 to-[#003D7C]/10 px-4 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-800">Confirm deposit</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-800">
+            Confirm deposit
+          </p>
         </div>
         <div className="py-3 text-center">
           <p className="text-3xl font-black tracking-tight text-slate-800">
@@ -123,7 +127,16 @@ function ReviewCard({ fv, rate, maturity, onConfirm, onEdit }) {
     ['Tenure', formatTenure(fv.years, fv.months, fv.days)],
     ['Interest rate', `${rate.toFixed(2)}% p.a.`],
     ['Maturity amount', maturity.amount > 0 ? formatInr(maturity.amount) : '—'],
-    ['Maturity date', maturity.date ? maturity.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'],
+    [
+      'Maturity date',
+      maturity.date
+        ? maturity.date.toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          })
+        : '—',
+    ],
   ];
 
   return (
@@ -134,9 +147,14 @@ function ReviewCard({ fv, rate, maturity, onConfirm, onEdit }) {
     >
       <div className="space-y-0 px-4 py-2">
         {rows.map(([k, v]) => (
-          <div key={k} className="flex items-center justify-between border-b border-slate-100 py-2.5 text-xs last:border-0">
+          <div
+            key={k}
+            className="flex items-center justify-between border-b border-slate-100 py-2.5 text-xs last:border-0"
+          >
             <span className="text-slate-500">{k}</span>
-            <span className="max-w-[58%] truncate text-right font-semibold text-slate-800">{v}</span>
+            <span className="max-w-[58%] truncate text-right font-semibold text-slate-800">
+              {v}
+            </span>
           </div>
         ))}
       </div>
@@ -230,14 +248,17 @@ export default function CreateDepositVoiceScreen({ onClose, lang, aiPrimer, voic
     if (next.days !== undefined) setDays(Math.min(30, Math.max(0, Number(next.days) || 0)));
   }, []);
 
-  const handleAgentToolCall = useCallback((name, args) => {
-    if (name === 'set_field' && args.field) {
-      applyField(args.field, args.value);
-    }
-    if (name === 'submit_deposit' && (args.ok || args.submitted)) {
-      setPhase('review');
-    }
-  }, [applyField]);
+  const handleAgentToolCall = useCallback(
+    (name, args) => {
+      if (name === 'set_field' && args.field) {
+        applyField(args.field, args.value);
+      }
+      if (name === 'submit_deposit' && (args.ok || args.submitted)) {
+        setPhase('review');
+      }
+    },
+    [applyField],
+  );
 
   const greeting =
     depositType === 'mmd'
@@ -246,7 +267,7 @@ export default function CreateDepositVoiceScreen({ onClose, lang, aiPrimer, voic
         ? 'Fixed Deposit — how much would you like to deposit? (Minimum ₹1,000)'
         : depositType === 'rd'
           ? 'Recurring Deposit — how much would you like to save each month? (Minimum ₹100)'
-          : "Let me help you open a deposit. Would you like a Fixed Deposit (FD), Money Multiplier Deposit (MMD), or Recurring Deposit (RD)?";
+          : 'Let me help you open a deposit. Would you like a Fixed Deposit (FD), Money Multiplier Deposit (MMD), or Recurring Deposit (RD)?';
 
   return (
     <motion.div
@@ -319,9 +340,7 @@ export default function CreateDepositVoiceScreen({ onClose, lang, aiPrimer, voic
       />
 
       <AnimatePresence>
-        {showSuccess && (
-          <SuccessOverlay fv={fv} maturity={maturity} onDone={onClose} />
-        )}
+        {showSuccess && <SuccessOverlay fv={fv} maturity={maturity} onDone={onClose} />}
       </AnimatePresence>
     </motion.div>
   );

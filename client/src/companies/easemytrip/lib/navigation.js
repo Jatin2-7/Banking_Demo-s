@@ -1,7 +1,9 @@
 /** EaseMyTrip navigation — speech + agent destination → UI view. */
 
 export function resolveEmtNavigation(destination, _context = '') {
-  const d = String(destination || '').toLowerCase().replace(/-/g, '_');
+  const d = String(destination || '')
+    .toLowerCase()
+    .replace(/-/g, '_');
   if (d === 'forex_cash' || d === 'forex' || d === 'forex_cash_cards' || d === 'forex_cards') {
     return { view: 'forex_form' };
   }
@@ -26,11 +28,18 @@ export function resolveEmtNavigation(destination, _context = '') {
   if (d === 'airport_duty_free' || d === 'duty_free') {
     return { view: 'duty_free' };
   }
-  if (d === 'airport_products' || d === 'airport_perfumes' || d === 'fragrances' || d === 'perfumes') {
+  if (
+    d === 'airport_products' ||
+    d === 'airport_perfumes' ||
+    d === 'fragrances' ||
+    d === 'perfumes'
+  ) {
     return { view: 'duty_free_products', category: 'fragrances' };
   }
-  if (d === 'flights' || d === 'flight_booking') return { view: 'dashboard', tab: 'home', highlight: 'flights' };
-  if (d === 'hotels' || d === 'hotel_booking') return { view: 'dashboard', tab: 'home', highlight: 'hotels' };
+  if (d === 'flights' || d === 'flight_booking')
+    return { view: 'dashboard', tab: 'home', highlight: 'flights' };
+  if (d === 'hotels' || d === 'hotel_booking')
+    return { view: 'dashboard', tab: 'home', highlight: 'hotels' };
   if (d === 'bookings' || d === 'my_bookings') return { view: 'dashboard', tab: 'bookings' };
   if (d === 'wallet') return { view: 'dashboard', tab: 'wallet' };
   if (d === 'profile') return { view: 'dashboard', tab: 'profile' };
@@ -40,11 +49,20 @@ export function resolveEmtNavigation(destination, _context = '') {
 
 export function inferEmtDestination(text = '') {
   const t = String(text).toLowerCase();
-  if (/forex|currency\s*exchange|foreign\s*exchange|global\s*pay|money\s*transfer|forex\s*cash/.test(t)) return 'forex_form';
-  if (/\bvisa\b|visa\s*application|apply\s*for\s*visa|singapore\s*visa|dubai\s*visa/.test(t)) return 'visa';
-  if (/purchase|buy|shop|want|need|looking/.test(t) && /perfume|fragrance|cologne|scent/.test(t)) return 'airport_perfumes';
-  if (/perfume|fragrance|cologne|scent|duty\s*free|duty-free|airport\s*service/.test(t)) return 'airport_perfumes';
-  if (/airport\s*service|duty\s*free|duty-free|airport\s*shopping/.test(t)) return 'airport_services';
+  if (
+    /forex|currency\s*exchange|foreign\s*exchange|global\s*pay|money\s*transfer|forex\s*cash/.test(
+      t,
+    )
+  )
+    return 'forex_form';
+  if (/\bvisa\b|visa\s*application|apply\s*for\s*visa|singapore\s*visa|dubai\s*visa/.test(t))
+    return 'visa';
+  if (/purchase|buy|shop|want|need|looking/.test(t) && /perfume|fragrance|cologne|scent/.test(t))
+    return 'airport_perfumes';
+  if (/perfume|fragrance|cologne|scent|duty\s*free|duty-free|airport\s*service/.test(t))
+    return 'airport_perfumes';
+  if (/airport\s*service|duty\s*free|duty-free|airport\s*shopping/.test(t))
+    return 'airport_services';
   if (/\bflights?\b|book\s*a?\s*flight|air\s*ticket/.test(t)) return 'flights';
   if (/\bhotels?\b|book\s*a?\s*hotel|hotel\s*room/.test(t)) return 'hotels';
   if (/\bbookings?\b|my\s*trips|my\s*bookings/.test(t)) return 'bookings';

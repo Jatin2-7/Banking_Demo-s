@@ -57,14 +57,19 @@ export function SbiPaymentTabs({ active = 'upi', onChange }) {
             style={{ backgroundColor: SBI.alert }}
           >
             <div className="flex min-w-0 items-center gap-2">
-              <span className="shrink-0 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold" style={{ color: '#5C2D91' }}>
+              <span
+                className="shrink-0 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold"
+                style={{ color: '#5C2D91' }}
+              >
                 UPI
               </span>
               <span className="truncate text-[11px] font-semibold" style={{ color: SBI.alertText }}>
                 Re-verification required
               </span>
             </div>
-            <span className="shrink-0 text-lg leading-none" style={{ color: SBI.purple }}>&#8250;</span>
+            <span className="shrink-0 text-lg leading-none" style={{ color: SBI.purple }}>
+              &#8250;
+            </span>
           </button>
         </div>
       )}

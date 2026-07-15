@@ -207,7 +207,11 @@ export async function streamKreditbeeHomeAguiRun(res, agentId, inputData, { sign
               });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -220,8 +224,7 @@ export async function streamKreditbeeHomeAguiRun(res, agentId, inputData, { sign
       if (toolCallBuf.size === 0) {
         messages.push({ role: 'assistant', content: assistantText || '' });
 
-        const lastUser =
-          [...messages].reverse().find((m) => m.role === 'user')?.content || '';
+        const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
         const inferred = inferDestination(lastUser, assistantText);
         if (inferred) {
           const args = { destination: inferred, context: '' };

@@ -17,11 +17,21 @@ function NavIcon({ type, active }) {
         className="flex h-[3.25rem] w-[3.25rem] -mt-5 items-center justify-center rounded-2xl shadow-lg"
         style={{ backgroundColor: SBI.purple }}
       >
-        <svg viewBox="0 0 24 24" className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-6 w-6 text-white"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
           <rect x="3" y="3" width="7" height="7" rx="1" />
           <rect x="14" y="3" width="7" height="7" rx="1" />
           <rect x="3" y="14" width="7" height="7" rx="1" />
-          <path d="M14 14h2v2h-2zM18 14h3v3h-3zM14 18h2v3h-2zM18 21h3v-3h-3z" fill="currentColor" stroke="none" />
+          <path
+            d="M14 14h2v2h-2zM18 14h3v3h-3zM14 18h2v3h-2zM18 21h3v-3h-3z"
+            fill="currentColor"
+            stroke="none"
+          />
         </svg>
       </div>
     );
@@ -44,7 +54,13 @@ function NavIcon({ type, active }) {
     ),
   };
   return (
-    <svg viewBox="0 0 24 24" className="h-[1.35rem] w-[1.35rem]" fill="none" stroke={color} strokeWidth="1.8">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-[1.35rem] w-[1.35rem]"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.8"
+    >
       {paths[type]}
     </svg>
   );

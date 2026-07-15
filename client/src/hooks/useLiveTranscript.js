@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const SR =
   typeof window !== 'undefined'
-    ? (window.SpeechRecognition || window.webkitSpeechRecognition || null)
+    ? window.SpeechRecognition || window.webkitSpeechRecognition || null
     : null;
 
 /**
@@ -33,7 +33,11 @@ export function useLiveTranscript({ enabled = false, lang = 'en-IN' } = {}) {
     if (!SR || !enabled) {
       // Tear down any live recogniser
       if (recRef.current) {
-        try { recRef.current.abort(); } catch { /* ignore */ }
+        try {
+          recRef.current.abort();
+        } catch {
+          /* ignore */
+        }
         recRef.current = null;
       }
       if (restartRef.current) {
@@ -72,7 +76,11 @@ export function useLiveTranscript({ enabled = false, lang = 'en-IN' } = {}) {
         // Auto-restart after a brief pause so the display stays live.
         restartRef.current = setTimeout(() => {
           if (destroyed) return;
-          try { createRec(); } catch { /* ignore */ }
+          try {
+            createRec();
+          } catch {
+            /* ignore */
+          }
         }, 200);
       };
 
@@ -84,7 +92,11 @@ export function useLiveTranscript({ enabled = false, lang = 'en-IN' } = {}) {
         // back off and retry shortly.
         restartRef.current = setTimeout(() => {
           if (destroyed) return;
-          try { createRec(); } catch { /* ignore */ }
+          try {
+            createRec();
+          } catch {
+            /* ignore */
+          }
         }, 500);
       }
     }
@@ -98,7 +110,11 @@ export function useLiveTranscript({ enabled = false, lang = 'en-IN' } = {}) {
         restartRef.current = null;
       }
       if (recRef.current) {
-        try { recRef.current.abort(); } catch { /* ignore */ }
+        try {
+          recRef.current.abort();
+        } catch {
+          /* ignore */
+        }
         recRef.current = null;
       }
       setText('');

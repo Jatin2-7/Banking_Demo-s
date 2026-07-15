@@ -20,7 +20,14 @@ import {
   getNextStep,
   getStepConfig,
 } from './armJourney.js';
-import { isValidEmail, isValidPhone, parseStepInput, quickOptionDisplay, cleanSpeechText, parseFriendNameFromSpeech } from './armInputParser.js';
+import {
+  isValidEmail,
+  isValidPhone,
+  parseStepInput,
+  quickOptionDisplay,
+  cleanSpeechText,
+  parseFriendNameFromSpeech,
+} from './armInputParser.js';
 import { useElevenSpeech } from '../../../hooks/useElevenSpeech.js';
 import { useSpeech } from '../../../hooks/useSpeech.js';
 import { ELEVENLABS_STT_ENABLED } from '../../../config/voiceBackend.js';
@@ -137,10 +144,13 @@ export default function ArmJourneyScreen({
     setMessages((prev) => [...prev, { id: msgId(), role, content }]);
   }, []);
 
-  const speakAi = useCallback((text) => {
-    if (!text || !voiceAssist) return;
-    speakViaCartesia(text, { lang }).catch(() => {});
-  }, [voiceAssist, lang]);
+  const speakAi = useCallback(
+    (text) => {
+      if (!text || !voiceAssist) return;
+      speakViaCartesia(text, { lang }).catch(() => {});
+    },
+    [voiceAssist, lang],
+  );
 
   const advanceToStep = useCallback(
     (nextStep, userDisplay) => {
@@ -190,7 +200,7 @@ export default function ArmJourneyScreen({
         const name = formRef.current.friendName?.trim();
         const mobile = formRef.current.friendMobile;
         if (!name) {
-          setFieldError('Please enter friend\'s full name.');
+          setFieldError("Please enter friend's full name.");
           return;
         }
         if (!isValidPhone(mobile)) {
@@ -441,7 +451,9 @@ export default function ArmJourneyScreen({
       setDraftAadhaar(form.aadhaarNumber);
     }
     if (step === 'aadhaar_otp' && form.aadhaarOtp?.length === 6) {
-      const aadhaarPrefix = String(form.aadhaarNumber || '').replace(/\D/g, '').slice(0, 6);
+      const aadhaarPrefix = String(form.aadhaarNumber || '')
+        .replace(/\D/g, '')
+        .slice(0, 6);
       if (form.aadhaarOtp !== aadhaarPrefix) {
         setDraftOtp(form.aadhaarOtp);
       }
@@ -491,7 +503,7 @@ export default function ArmJourneyScreen({
   const handleEmailSubmit = () => {
     const email = draftEmail.trim();
     if (!isValidEmail(email)) {
-      setFieldError('What is your email address? I\'ll send an OTP to verify it.');
+      setFieldError("What is your email address? I'll send an OTP to verify it.");
       return;
     }
     patchForm({ email });
@@ -533,7 +545,9 @@ export default function ArmJourneyScreen({
           }, val);
           setIsLiveFilling(false);
         } else {
-          patchForm({ [fid]: fid === 'friendName' ? String(args.value).trim() : val || args.value });
+          patchForm({
+            [fid]: fid === 'friendName' ? String(args.value).trim() : val || args.value,
+          });
           if (fid === 'aadhaarNumber') setDraftAadhaar(val || args.value);
           if (fid === 'aadhaarOtp' || fid === 'emailOtp') setDraftOtp(val || args.value);
           if (fid === 'familyMobile') setDraftPhone(val || args.value);
@@ -541,7 +555,11 @@ export default function ArmJourneyScreen({
         }
       }
       if (name === 'select_option' && args?.value) {
-        const label = quickOptionDisplay(stepRef.current, args.value, getStepConfig(stepRef.current));
+        const label = quickOptionDisplay(
+          stepRef.current,
+          args.value,
+          getStepConfig(stepRef.current),
+        );
         submitAnswer(args.value, label);
       }
       if (name === 'submit_step') {
@@ -560,7 +578,17 @@ export default function ArmJourneyScreen({
         }
       }
     },
-    [patchForm, submitAnswer, draftAadhaar, draftOtp, draftPhone, draftEmail, handleEmailSubmit, handleFriendSubmit, setDraftForStep],
+    [
+      patchForm,
+      submitAnswer,
+      draftAadhaar,
+      draftOtp,
+      draftPhone,
+      draftEmail,
+      handleEmailSubmit,
+      handleFriendSubmit,
+      setDraftForStep,
+    ],
   );
 
   useEffect(() => {
@@ -657,7 +685,10 @@ export default function ArmJourneyScreen({
       {stepConfig?.inputType === 'email' && (
         <ArmEmailInput
           value={draftEmail}
-          onChange={(v) => { setDraftEmail(v); setFieldError(''); }}
+          onChange={(v) => {
+            setDraftEmail(v);
+            setFieldError('');
+          }}
           onSubmit={handleEmailSubmit}
           error={fieldError}
           label={stepConfig.inputLabel}
@@ -708,7 +739,9 @@ export default function ArmJourneyScreen({
           onMicTap={handleMicTap}
           listening={listening}
           voiceHint={stepConfig?.voiceHint}
-          showTextInput={!['aadhaar', 'otp6', 'phone10', 'email', 'friend_form'].includes(stepConfig?.inputType)}
+          showTextInput={
+            !['aadhaar', 'otp6', 'phone10', 'email', 'friend_form'].includes(stepConfig?.inputType)
+          }
           disabled={isSuccess}
         />
       )}

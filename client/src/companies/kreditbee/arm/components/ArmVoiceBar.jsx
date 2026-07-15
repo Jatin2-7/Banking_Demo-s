@@ -35,7 +35,11 @@ export default function ArmVoiceBar({
           className={`relative flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full press transition disabled:opacity-50 ${
             listening ? 'bg-red-500 ring-4 ring-red-200' : ''
           }`}
-          style={listening ? undefined : { backgroundColor: KB.yellow, boxShadow: `0 0 0 4px ${KB.yellowRing}` }}
+          style={
+            listening
+              ? undefined
+              : { backgroundColor: KB.yellow, boxShadow: `0 0 0 4px ${KB.yellowRing}` }
+          }
           aria-label={listening ? 'Stop listening' : 'Start voice input'}
         >
           {listening ? (
@@ -54,7 +58,14 @@ export default function ArmVoiceBar({
           style={{ backgroundColor: KB.yellowPale }}
           aria-label="Send message"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9CA3AF"
+            strokeWidth="2"
+          >
             <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>

@@ -45,7 +45,9 @@ function VoiceCommandBar({ listening, liveTranscript, lastTranscript, onSend }) 
         style={{
           background: 'linear-gradient(135deg, rgba(0,30,70,0.97) 0%, rgba(10,10,46,0.97) 100%)',
           ringColor: listening ? 'rgba(245,197,24,0.4)' : 'rgba(255,255,255,0.12)',
-          border: listening ? '1px solid rgba(245,197,24,0.35)' : '1px solid rgba(255,255,255,0.12)',
+          border: listening
+            ? '1px solid rgba(245,197,24,0.35)'
+            : '1px solid rgba(255,255,255,0.12)',
         }}
       >
         {/* status bar */}
@@ -66,11 +68,7 @@ function VoiceCommandBar({ listening, liveTranscript, lastTranscript, onSend }) 
           {listening && (
             <div className="flex shrink-0 items-end gap-[2px]" aria-hidden>
               {[0, 1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="wave-bar"
-                  style={{ animationDelay: `${i * 0.12}s` }}
-                />
+                <div key={i} className="wave-bar" style={{ animationDelay: `${i * 0.12}s` }} />
               ))}
             </div>
           )}
@@ -79,9 +77,7 @@ function VoiceCommandBar({ listening, liveTranscript, lastTranscript, onSend }) 
         {/* live transcript area */}
         <div className="min-h-[36px] px-3 py-1">
           {displayText ? (
-            <p className="text-sm font-medium leading-snug text-white">
-              {displayText}
-            </p>
+            <p className="text-sm font-medium leading-snug text-white">{displayText}</p>
           ) : listening ? (
             <p className="text-[12px] italic text-white/35">Say something…</p>
           ) : (
@@ -92,7 +88,9 @@ function VoiceCommandBar({ listening, liveTranscript, lastTranscript, onSend }) 
         {/* action row */}
         <div className="flex items-center gap-2 px-3 pb-3 pt-1">
           <p className="flex-1 text-[10px] text-white/40">
-            {listening ? 'AI will auto-send after silence · or tap Send' : 'Speak anytime to issue a command'}
+            {listening
+              ? 'AI will auto-send after silence · or tap Send'
+              : 'Speak anytime to issue a command'}
           </p>
           {listening && (
             <button
@@ -142,10 +140,7 @@ import {
 import { LANGUAGES, DEFAULT_LANG } from '../../i18n/strings.js';
 import { getAccounts, resetServerState } from '../../services/engineClient.js';
 import { routeVoiceCommand } from '../../lib/voiceCommandRouter.js';
-import {
-  formatPeriodLabel,
-  parseDateRangeFromUtterance,
-} from '../../lib/transactionDateFilter.js';
+import { formatPeriodLabel, parseDateRangeFromUtterance } from '../../lib/transactionDateFilter.js';
 
 // Per-language "cancel/no" matcher — only these explicit negations bypass MPIN
 // during CONFIRM.  Everything else (ambiguous, affirmative, or unrecognised)
@@ -232,7 +227,7 @@ export default function CompanyDemoApp() {
   });
   const cmdLiveTranscript = ELEVENLABS_STT_ENABLED
     ? cmdLiveTranscriptEleven
-    : (cmdSpeech.transcript || '');
+    : cmdSpeech.transcript || '';
   // Same for the UPI saga speech so VoiceModal can show interim text.
   const sagaLiveTranscriptEleven = useLiveTranscript({
     enabled: ELEVENLABS_STT_ENABLED && Boolean(speech.listening),
@@ -240,7 +235,7 @@ export default function CompanyDemoApp() {
   });
   const sagaLiveTranscript = ELEVENLABS_STT_ENABLED
     ? sagaLiveTranscriptEleven
-    : (speech.transcript || '');
+    : speech.transcript || '';
 
   // Rage detection for UPI voice flow — fires only when the voice modal is already open
   // (HomeScreen has its own rage detection for the home AI assistant)
@@ -598,7 +593,12 @@ export default function CompanyDemoApp() {
   // Called by HomeScreen's AI assistant when navigate_to tool fires.
   // Pass { silent: true } when called from voice-to-command mode so TTS is skipped.
   const handleNavigate = useCallback(
-    async (destination, context, routingStatus, { silent = false, dateFrom = null, dateTo = null } = {}) => {
+    async (
+      destination,
+      context,
+      routingStatus,
+      { silent = false, dateFrom = null, dateTo = null } = {},
+    ) => {
       stopGlobalCartesiaTts();
 
       // Intercept over-limit UPI amounts BEFORE speaking anything — context
@@ -658,7 +658,8 @@ export default function CompanyDemoApp() {
         let depositPrimerText =
           'Customer opened the DCB Term Deposit menu via Voice Assist. There are two products on screen: DCB Fixed Deposit and DCB Pragati Recurring Deposit. You MUST ask which one they want before calling set_field(depositType). Do not assume Fixed Deposit even if they said "fixed deposit" earlier — wait for their choice from the on-screen menu. After they choose, help fill the deposit form step by step.';
         if (amountHint || tenureHint) {
-          depositPrimerText += ' After product selection, reuse any amount/tenure already mentioned instead of re-asking.';
+          depositPrimerText +=
+            ' After product selection, reuse any amount/tenure already mentioned instead of re-asking.';
           if (amountHint) depositPrimerText += ` Amount mentioned: ₹${amountHint}.`;
           if (tenureHint) depositPrimerText += ` Tenure mentioned: ${tenureHint[0]}.`;
         }
@@ -667,9 +668,7 @@ export default function CompanyDemoApp() {
       } else if (destination === 'transaction_history') {
         if (company?.homeVariant === 'sbi') return;
         const range =
-          dateFrom && dateTo
-            ? { dateFrom, dateTo }
-            : parseDateRangeFromUtterance(context || '');
+          dateFrom && dateTo ? { dateFrom, dateTo } : parseDateRangeFromUtterance(context || '');
         openTxnHistory({
           primer: context || '',
           dateFrom: range?.dateFrom || null,
@@ -688,7 +687,11 @@ export default function CompanyDemoApp() {
         }
         const ctx = String(context || '').toLowerCase();
         let subFlow = null;
-        if (ctx.includes('change_pin') || /\b(change|reset|update)\b.*\bpin\b/.test(ctx) || /\bpin\b.*\b(change|reset|update)\b/.test(ctx)) {
+        if (
+          ctx.includes('change_pin') ||
+          /\b(change|reset|update)\b.*\bpin\b/.test(ctx) ||
+          /\bpin\b.*\b(change|reset|update)\b/.test(ctx)
+        ) {
           subFlow = 'change_pin';
         } else if (ctx.includes('card_statement') || ctx.includes('statement')) {
           subFlow = 'card_statement';
@@ -705,15 +708,43 @@ export default function CompanyDemoApp() {
   // Word-number vocabulary — STT engines sometimes transcribe spoken numbers
   // as words ("two lakh") rather than digits ("2 lakh"), so we need both.
   const _NUM_WORDS = {
-    zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
-    ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
-    sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
-    twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+    zero: 0,
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+    eleven: 11,
+    twelve: 12,
+    thirteen: 13,
+    fourteen: 14,
+    fifteen: 15,
+    sixteen: 16,
+    seventeen: 17,
+    eighteen: 18,
+    nineteen: 19,
+    twenty: 20,
+    thirty: 30,
+    forty: 40,
+    fifty: 50,
+    sixty: 60,
+    seventy: 70,
+    eighty: 80,
+    ninety: 90,
   };
   const _NUM_WORD_PATTERN = Object.keys(_NUM_WORDS).concat('hundred').join('|');
 
   function wordsToNumber(str) {
-    const words = str.trim().toLowerCase().split(/[\s-]+/).filter(Boolean);
+    const words = str
+      .trim()
+      .toLowerCase()
+      .split(/[\s-]+/)
+      .filter(Boolean);
     if (!words.length) return null;
     let total = 0;
     let current = 0;
@@ -874,7 +905,14 @@ export default function CompanyDemoApp() {
             );
             setFundTransferVoiceOpen(true);
           }, 3000);
-          return { text, match: { ...match, destination: 'fund_transfer', label: 'Fund Transfer (UPI limit exceeded)' } };
+          return {
+            text,
+            match: {
+              ...match,
+              destination: 'fund_transfer',
+              label: 'Fund Transfer (UPI limit exceeded)',
+            },
+          };
         }
 
         stopHandsFreeForSoloVoiceScreen();
@@ -908,7 +946,9 @@ export default function CompanyDemoApp() {
       // debit/credit card) opens its own screen — hand off the mic to it (if
       // it has one) and stop the hands-free navigation loop.
       stopHandsFreeForSoloVoiceScreen();
-      await handleNavigate(match.destination, match.subFlow || '', match.routingStatus, { silent: true });
+      await handleNavigate(match.destination, match.subFlow || '', match.routingStatus, {
+        silent: true,
+      });
       return { text, match };
     },
     [
@@ -989,16 +1029,30 @@ export default function CompanyDemoApp() {
           <>
             {/* VoiceCommandBar only on non-home screens — the home screen's
                 LoanAguiPanel handles voice feedback when the user is there. */}
-            {voiceCommandMode && continuousVoice.active &&
-              (open || impsOpen || loanLosOpen || depositOpen || txnHistOpen ||
-               hotelBookingOpen || flightBookingOpen || debitCardOpen || creditCardOpen) && (
-              <VoiceCommandBar
-                listening={continuousVoice.listening}
-                liveTranscript={cmdLiveTranscript}
-                lastTranscript={continuousVoice.transcript}
-                onSend={() => { try { cmdSpeech.stop(); } catch { /* ignore */ } }}
-              />
-            )}
+            {voiceCommandMode &&
+              continuousVoice.active &&
+              (open ||
+                impsOpen ||
+                loanLosOpen ||
+                depositOpen ||
+                txnHistOpen ||
+                hotelBookingOpen ||
+                flightBookingOpen ||
+                debitCardOpen ||
+                creditCardOpen) && (
+                <VoiceCommandBar
+                  listening={continuousVoice.listening}
+                  liveTranscript={cmdLiveTranscript}
+                  lastTranscript={continuousVoice.transcript}
+                  onSend={() => {
+                    try {
+                      cmdSpeech.stop();
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                />
+              )}
             <RMHelpPrompt
               open={rmUpiPromptOpen}
               onHelp={() => {
@@ -1042,7 +1096,10 @@ export default function CompanyDemoApp() {
               {impsOpen && (
                 <ImpsFundTransferScreen
                   key="imps-fund"
-                  onClose={() => { setImpsOpen(false); setImpsPrimer(''); }}
+                  onClose={() => {
+                    setImpsOpen(false);
+                    setImpsPrimer('');
+                  }}
                   lang={lang}
                   accounts={accounts}
                   aiPrimer={impsPrimer}
@@ -1053,7 +1110,10 @@ export default function CompanyDemoApp() {
               {loanLosOpen && (
                 <LoanScreen
                   key="loan-los"
-                  onClose={() => { setLoanLosOpen(false); setLoanPrimer(''); }}
+                  onClose={() => {
+                    setLoanLosOpen(false);
+                    setLoanPrimer('');
+                  }}
                   lang={lang}
                   aiPrimer={loanPrimer}
                   voiceAssist={voiceAssistMode}
@@ -1093,7 +1153,10 @@ export default function CompanyDemoApp() {
               {depositOpen && (
                 <CreateDepositScreen
                   key="create-deposit"
-                  onClose={() => { setDepositOpen(false); setDepositPrimer(''); }}
+                  onClose={() => {
+                    setDepositOpen(false);
+                    setDepositPrimer('');
+                  }}
                   onNavigate={async (dest, ctx, routingStatus) => {
                     setDepositOpen(false);
                     await handleNavigate(dest, ctx, routingStatus);
@@ -1149,7 +1212,13 @@ export default function CompanyDemoApp() {
               session={session}
               isListening={speech.listening}
               liveTranscript={sagaLiveTranscript || speech.transcript}
-              onSendVoice={() => { try { speech.stop(); } catch { /* ignore */ } }}
+              onSendVoice={() => {
+                try {
+                  speech.stop();
+                } catch {
+                  /* ignore */
+                }
+              }}
               speechSupported={speech.supported}
               onClose={handleClose}
               onSubmitText={handleSubmitText}
@@ -1228,16 +1297,20 @@ export default function CompanyDemoApp() {
                   UPI limit is ₹1,00,000
                 </p>
                 <p className="text-[11px] text-amber-100 mt-0.5 leading-snug">
-                  ₹{upiLimitBanner.amount.toLocaleString('en-IN')} exceeds the UPI per-transaction limit.
+                  ₹{upiLimitBanner.amount.toLocaleString('en-IN')} exceeds the UPI per-transaction
+                  limit.
                 </p>
               </div>
             </div>
             {upiLimitBanner.redirecting && (
               <div className="bg-white px-4 py-2.5 flex items-center gap-2">
                 <span className="flex gap-[3px]">
-                  {[0,1,2].map(i => (
-                    <span key={i} className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500"
-                      style={{ animationDelay: `${i * 0.15}s` }} />
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500"
+                      style={{ animationDelay: `${i * 0.15}s` }}
+                    />
                   ))}
                 </span>
                 <p className="text-[12px] font-semibold text-ink">

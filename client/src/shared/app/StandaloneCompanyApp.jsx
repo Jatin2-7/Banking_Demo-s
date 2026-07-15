@@ -8,7 +8,8 @@ import OptimoHomeScreen from '../../companies/optimo-capital/HomeScreen.jsx';
 /** Lightweight app shell for standalone company demos (web full-viewport or mobile phone frame). */
 export default function StandaloneCompanyApp() {
   const company = useCompany();
-  const HomeScreen = company.slug === 'optimo-capital' ? OptimoHomeScreen : resolveHomeScreen(company);
+  const HomeScreen =
+    company.slug === 'optimo-capital' ? OptimoHomeScreen : resolveHomeScreen(company);
 
   if (company.platform === 'mobile') {
     return (

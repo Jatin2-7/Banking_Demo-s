@@ -88,7 +88,9 @@ export function stopGlobalCartesiaTts() {
     try {
       globalAudio.pause();
       globalAudio.src = '';
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     globalAudio = null;
   }
   if (globalUrl) {
@@ -105,11 +107,39 @@ export function stopGlobalCartesiaTts() {
 // ── Indian number-to-words ────────────────────────────────────────────────────
 
 const _ONES = [
-  '', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
-  'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen',
-  'sixteen', 'seventeen', 'eighteen', 'nineteen',
+  '',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+  'eleven',
+  'twelve',
+  'thirteen',
+  'fourteen',
+  'fifteen',
+  'sixteen',
+  'seventeen',
+  'eighteen',
+  'nineteen',
 ];
-const _TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+const _TENS = [
+  '',
+  '',
+  'twenty',
+  'thirty',
+  'forty',
+  'fifty',
+  'sixty',
+  'seventy',
+  'eighty',
+  'ninety',
+];
 
 function _b100(n) {
   if (n < 20) return _ONES[n];
@@ -131,23 +161,50 @@ function toIndianWords(n) {
   n = Math.round(Math.abs(n));
   if (n === 0) return 'zero';
   const parts = [];
-  const crore = Math.floor(n / 10000000); n %= 10000000;
-  const lakh  = Math.floor(n / 100000);   n %= 100000;
-  const thou  = Math.floor(n / 1000);     n %= 1000;
+  const crore = Math.floor(n / 10000000);
+  n %= 10000000;
+  const lakh = Math.floor(n / 100000);
+  n %= 100000;
+  const thou = Math.floor(n / 1000);
+  n %= 1000;
   if (crore) parts.push(`${_b100(crore)} crore`);
-  if (lakh)  parts.push(`${_b100(lakh)} lakh`);
-  if (thou)  parts.push(`${_b100(thou)} thousand`);
-  if (n)     parts.push(_b1000(n));
+  if (lakh) parts.push(`${_b100(lakh)} lakh`);
+  if (thou) parts.push(`${_b100(thou)} thousand`);
+  if (n) parts.push(_b1000(n));
   return parts.join(' ');
 }
 
 const MONEY_CONTEXT_TERMS = [
-  '₹', 'rs', 'rupee', 'amount', 'income', 'salary', 'emi', 'loan', 'deposit',
-  'balance', 'payment', 'transfer', 'रुपये', 'रुपए', 'राशि', 'आय', 'वेतन', 'किस्त',
+  '₹',
+  'rs',
+  'rupee',
+  'amount',
+  'income',
+  'salary',
+  'emi',
+  'loan',
+  'deposit',
+  'balance',
+  'payment',
+  'transfer',
+  'रुपये',
+  'रुपए',
+  'राशि',
+  'आय',
+  'वेतन',
+  'किस्त',
 ];
 const IDENTIFIER_CONTEXT_TERMS = [
-  'pan', 'pincode', 'pin code', 'mpin', 'otp', 'account number', 'account no',
-  'phone', 'mobile', 'ifsc',
+  'pan',
+  'pincode',
+  'pin code',
+  'mpin',
+  'otp',
+  'account number',
+  'account no',
+  'phone',
+  'mobile',
+  'ifsc',
 ];
 
 function includesAnyTerm(value, terms) {
@@ -193,7 +250,10 @@ function formatNumbersForTts(text) {
     })
     // ── Percentage with decimal: 6.2% ───────────────────────────────────────
     .replace(/\b(\d{1,3})\.(\d{1,2})\s*%/g, (_, int, dec) => {
-      const decWords = dec.split('').map((d) => _ONES[parseInt(d, 10)] || d).join(' ');
+      const decWords = dec
+        .split('')
+        .map((d) => _ONES[parseInt(d, 10)] || d)
+        .join(' ');
       return `${toIndianWords(parseInt(int, 10))} point ${decWords} percent`;
     })
     // ── Percentage without decimal: 6% ──────────────────────────────────────
@@ -271,9 +331,10 @@ function waitForCurrentTtsEnd() {
  */
 export async function speakViaCartesia(text, { onBeforePlay } = {}) {
   if (!ttsEnabled) return false;
-  const clean = typeof text === 'string' && text.includes('\n')
-    ? textForTtsDisplay(text)
-    : cleanTextForTts(text);
+  const clean =
+    typeof text === 'string' && text.includes('\n')
+      ? textForTtsDisplay(text)
+      : cleanTextForTts(text);
   if (!clean) return false;
 
   stopGlobalCartesiaTts();

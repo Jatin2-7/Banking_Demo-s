@@ -26,9 +26,7 @@ function CompanyCard({ company }) {
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-white group-hover:text-white">
-              {company.name}
-            </h2>
+            <h2 className="text-lg font-bold text-white group-hover:text-white">{company.name}</h2>
             <p className="mt-0.5 text-sm text-white/50">{company.shortName}</p>
           </div>
           <span
@@ -42,9 +40,7 @@ function CompanyCard({ company }) {
           <span className="text-xs font-medium text-white/40">
             {PLATFORM_LABELS[company.platform] ?? company.platform} demo
           </span>
-          <span className="text-sm font-semibold text-white/70 group-hover:text-white">
-            Open →
-          </span>
+          <span className="text-sm font-semibold text-white/70 group-hover:text-white">Open →</span>
         </div>
       </div>
     </Link>
@@ -80,9 +76,9 @@ export default function DemoHub() {
         <footer className="mt-12 rounded-xl bg-white/5 px-5 py-4 text-sm text-white/45 ring-1 ring-white/10">
           <p>
             <strong className="text-white/70">Adding a new company:</strong> create{' '}
-            <code className="text-white/60">client/src/companies/{'{slug}'}/config.js</code>, register
-            it in <code className="text-white/60">companies/registry.js</code>, then build UI from
-            screenshots in that folder.
+            <code className="text-white/60">client/src/companies/{'{slug}'}/config.js</code>,
+            register it in <code className="text-white/60">companies/registry.js</code>, then build
+            UI from screenshots in that folder.
           </p>
         </footer>
       </div>

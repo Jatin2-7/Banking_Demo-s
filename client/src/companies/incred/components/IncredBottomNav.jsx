@@ -12,7 +12,14 @@ function TabIcon({ type, active }) {
   const color = active ? INCRED.orange : INCRED.muted;
   if (type === 'home') {
     return (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? INCRED.orange : 'none'} stroke={color} strokeWidth="1.8">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill={active ? INCRED.orange : 'none'}
+        stroke={color}
+        strokeWidth="1.8"
+      >
         <path d="M3 11l9-7 9 7v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9z" />
       </svg>
     );
@@ -21,7 +28,15 @@ function TabIcon({ type, active }) {
     return (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8">
         <circle cx="12" cy="12" r="9" />
-        <text x="12" y="16" textAnchor="middle" fill={color} fontSize="10" fontWeight="bold" stroke="none">
+        <text
+          x="12"
+          y="16"
+          textAnchor="middle"
+          fill={color}
+          fontSize="10"
+          fontWeight="bold"
+          stroke="none"
+        >
           ₹
         </text>
       </svg>
@@ -71,7 +86,10 @@ export default function IncredBottomNav({ activeTab, onTabChange, onMicTap }) {
               className="flex min-w-[3.5rem] flex-col items-center gap-0.5 py-1 press"
             >
               <TabIcon type={tab.icon} active={active} />
-              <span className="text-[11px] font-medium" style={{ color: active ? INCRED.orange : INCRED.muted }}>
+              <span
+                className="text-[11px] font-medium"
+                style={{ color: active ? INCRED.orange : INCRED.muted }}
+              >
                 {tab.label}
               </span>
             </button>

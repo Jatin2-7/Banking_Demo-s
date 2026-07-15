@@ -5,7 +5,9 @@ const CRORE = 10_000_000;
 
 export function isYearlyPeriod(text) {
   const s = String(text || '').toLowerCase();
-  return /yearly|annual|per\s*year|each\s*year|\/\s*year|saal|saalana|varsh|वार्षिक|सालाना|साल\s*का|वर्ष/.test(s);
+  return /yearly|annual|per\s*year|each\s*year|\/\s*year|saal|saalana|varsh|वार्षिक|सालाना|साल\s*का|वर्ष/.test(
+    s,
+  );
 }
 
 export function isMonthlyPeriod(text) {
@@ -14,7 +16,9 @@ export function isMonthlyPeriod(text) {
 }
 
 export function parseIndianMoneyAmount(text) {
-  const s = String(text || '').trim().toLowerCase();
+  const s = String(text || '')
+    .trim()
+    .toLowerCase();
   if (!s) return null;
 
   const crore = s.match(/(\d+(?:\.\d+)?)\s*(?:crore|cr|करोड़|करोड)/);
@@ -49,7 +53,10 @@ export function parseLapFromUserSpeech(text, form = {}) {
   if (amount != null) {
     if (/\b(profit|munafa|लाभ|मुनाफा)\b/i.test(t) && !form.businessProfit) {
       patch.businessProfit = String(toMonthly(amount, t));
-    } else if (/\b(revenue|turnover|sales|income|आय|बिक्री|रेवेन्यू)\b/i.test(t) && !form.businessRevenue) {
+    } else if (
+      /\b(revenue|turnover|sales|income|आय|बिक्री|रेवेन्यू)\b/i.test(t) &&
+      !form.businessRevenue
+    ) {
       patch.businessRevenue = String(toMonthly(amount, t));
     } else if (/\b(loan|borrow|ऋण)\b/i.test(t) && !form.loanAmount) {
       patch.loanAmount = String(amount);
@@ -92,9 +99,7 @@ export function correctLakhMultiplierError(amount, userContext, { yearly = false
 
   for (const wrong of wrongTargets) {
     if (Math.abs(agent - wrong) <= Math.max(5000, wrong * 0.02)) {
-      const best = targets.reduce((a, b) =>
-        Math.abs(agent - a) <= Math.abs(agent - b) ? a : b,
-      );
+      const best = targets.reduce((a, b) => (Math.abs(agent - a) <= Math.abs(agent - b) ? a : b));
       return String(best);
     }
   }

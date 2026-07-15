@@ -25,22 +25,33 @@ export default function AbcdCalculatorPickerSheet({ open, onClose, onPickEmi, on
             <p className="mt-1 text-center text-[12px] text-[#6B7280]">
               Select a calculator you would like to proceed with
             </p>
-            <div className="mt-5 grid grid-cols-2 gap-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div
+              className="mt-5 grid grid-cols-2 gap-3"
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}
+            >
               <button
                 type="button"
                 onClick={onPickEmi}
                 className="rounded-2xl bg-[#F5F5F5] px-3 py-4 press"
               >
-                <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center text-[36px]">📅</div>
-                <p className="text-center text-[12px] font-semibold text-[#374151]">EMI calculator</p>
+                <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center text-[36px]">
+                  📅
+                </div>
+                <p className="text-center text-[12px] font-semibold text-[#374151]">
+                  EMI calculator
+                </p>
               </button>
               <button
                 type="button"
                 onClick={onPickAmount}
                 className="rounded-2xl bg-[#F5F5F5] px-3 py-4 press"
               >
-                <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center text-[36px]">🪙</div>
-                <p className="text-center text-[12px] font-semibold text-[#374151]">Loan amount calculator</p>
+                <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center text-[36px]">
+                  🪙
+                </div>
+                <p className="text-center text-[12px] font-semibold text-[#374151]">
+                  Loan amount calculator
+                </p>
               </button>
             </div>
           </motion.div>

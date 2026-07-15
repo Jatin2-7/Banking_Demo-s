@@ -93,9 +93,24 @@ function executeGoldLoanTool(name, args, state) {
     if (field === 'loanAmount' || field === 'tenureMonths' || field === 'goldWeightGrams') {
       coerced = parseFloat(String(value).replace(/[^0-9.]/g, '')) || 0;
     } else if (field === 'purpose' && !DCB_GOLD_LOAN_PURPOSE_OPTIONS.includes(String(value))) {
-      return { result: { ok: false, error: `purpose must be one of: ${DCB_GOLD_LOAN_PURPOSE_OPTIONS.join(', ')}` }, statePatches: [] };
-    } else if (field === 'employment' && !DCB_GOLD_LOAN_EMPLOYMENT_OPTIONS.includes(String(value))) {
-      return { result: { ok: false, error: `employment must be one of: ${DCB_GOLD_LOAN_EMPLOYMENT_OPTIONS.join(', ')}` }, statePatches: [] };
+      return {
+        result: {
+          ok: false,
+          error: `purpose must be one of: ${DCB_GOLD_LOAN_PURPOSE_OPTIONS.join(', ')}`,
+        },
+        statePatches: [],
+      };
+    } else if (
+      field === 'employment' &&
+      !DCB_GOLD_LOAN_EMPLOYMENT_OPTIONS.includes(String(value))
+    ) {
+      return {
+        result: {
+          ok: false,
+          error: `employment must be one of: ${DCB_GOLD_LOAN_EMPLOYMENT_OPTIONS.join(', ')}`,
+        },
+        statePatches: [],
+      };
     }
     state[field] = coerced;
     return {
@@ -140,7 +155,9 @@ export async function streamDcbGoldLoanRun(res, agentId, inputData, { signal } =
 
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -173,8 +190,13 @@ export async function streamDcbGoldLoanRun(res, agentId, inputData, { signal } =
       else history.push(m);
     }
     const systemTail =
-      systemNotes.length > 0 ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
-    const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+      systemNotes.length > 0
+        ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+        : '';
+    const messages = [
+      { role: 'system', content: buildSystemPrompt(state) + systemTail },
+      ...history,
+    ];
 
     for (let step = 0; step < 14; step++) {
       if (signal?.aborted) break;
@@ -199,7 +221,12 @@ export async function streamDcbGoldLoanRun(res, agentId, inputData, { signal } =
 
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
 
         if (delta.tool_calls) {
@@ -220,7 +247,11 @@ export async function streamDcbGoldLoanRun(res, agentId, inputData, { signal } =
               });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -240,7 +271,11 @@ export async function streamDcbGoldLoanRun(res, agentId, inputData, { signal } =
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
@@ -264,7 +299,11 @@ export async function streamDcbGoldLoanRun(res, agentId, inputData, { signal } =
           role: 'tool',
         });
 
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+        });
       }
 
       messages[0] = { role: 'system', content: buildSystemPrompt(state) + systemTail };

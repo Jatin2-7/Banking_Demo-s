@@ -81,7 +81,7 @@ export function getStepConfig(stepId, form = {}) {
       ],
       inputType: 'quick',
       helpText:
-        'Having trouble with KYC? Type or say what went wrong and we\'ll help you through it.',
+        "Having trouble with KYC? Type or say what went wrong and we'll help you through it.",
       voiceHint: 'Tap mic to speak naturally',
     },
     aadhaar_mobile_link: {
@@ -93,7 +93,7 @@ export function getStepConfig(stepId, form = {}) {
       ],
       inputType: 'quick',
       helpText:
-        'Having trouble with KYC? Type or say what went wrong and we\'ll help you through it.',
+        "Having trouble with KYC? Type or say what went wrong and we'll help you through it.",
       voiceHint: 'Tap mic to speak naturally',
     },
     aadhaar_number: {
@@ -102,7 +102,7 @@ export function getStepConfig(stepId, form = {}) {
       inputType: 'aadhaar',
       inputLabel: 'AADHAAR NUMBER',
       helpText:
-        'Having trouble with KYC? Type or say what went wrong and we\'ll help you through it.',
+        "Having trouble with KYC? Type or say what went wrong and we'll help you through it.",
       voiceHint: 'Use the fields above for this step — or tap mic to speak',
       links: [
         { label: 'Forgot your Aadhaar Number?', action: 'forgot_aadhaar' },
@@ -117,16 +117,15 @@ export function getStepConfig(stepId, form = {}) {
       inputType: 'otp6',
       inputLabel: 'AADHAAR OTP',
       helpText:
-        'Having trouble with KYC? Type or say what went wrong and we\'ll help you through it.',
+        "Having trouble with KYC? Type or say what went wrong and we'll help you through it.",
       voiceHint: 'Use the fields above for this step — or tap mic to speak',
     },
     email: {
       id: 'email',
-      messages: ['What is your email address? I\'ll send an OTP to verify it.'],
+      messages: ["What is your email address? I'll send an OTP to verify it."],
       inputType: 'email',
       inputLabel: 'EMAIL ADDRESS',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Fill in above, or tap mic to speak',
     },
     email_otp: {
@@ -136,8 +135,7 @@ export function getStepConfig(stepId, form = {}) {
       ],
       inputType: 'otp6',
       inputLabel: 'EMAIL OTP',
-      helpText:
-        'Not sure which option fits? Tell us in your own words – type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words – type or use the mic.',
       voiceHint: 'Fill in above, or tap mic to speak',
     },
     marital_status: {
@@ -151,8 +149,7 @@ export function getStepConfig(stepId, form = {}) {
         { label: 'Divorced', value: 'divorced' },
       ],
       inputType: 'quick',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Tap mic to speak naturally',
     },
     education: {
@@ -160,8 +157,7 @@ export function getStepConfig(stepId, form = {}) {
       messages: ['What is your highest educational qualification?'],
       listOptions: EDUCATION_OPTIONS.map((label) => ({ label, value: label.toLowerCase() })),
       inputType: 'list',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Tap mic to speak naturally',
     },
     differently_abled: {
@@ -172,8 +168,7 @@ export function getStepConfig(stepId, form = {}) {
         { label: 'No', value: 'no' },
       ],
       inputType: 'quick',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Tap mic to speak naturally',
     },
     address_same: {
@@ -184,8 +179,7 @@ export function getStepConfig(stepId, form = {}) {
         { label: 'No, Different', value: 'no' },
       ],
       inputType: 'quick',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Tap mic to speak naturally',
     },
     residence_type: {
@@ -193,15 +187,12 @@ export function getStepConfig(stepId, form = {}) {
       messages: ['What type of residence do you live in?'],
       quickOptions: RESIDENCE_OPTIONS.map((r) => ({ label: r, value: r })),
       inputType: 'quick',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Tap mic to speak naturally',
     },
     income_verify: {
       id: 'income_verify',
-      messages: [
-        'Would you like to verify your income? This can increase your loan offer amount.',
-      ],
+      messages: ['Would you like to verify your income? This can increase your loan offer amount.'],
       quickOptions: [
         { label: 'Verify Now', value: 'verify' },
         { label: 'Skip for Now', value: 'skip' },
@@ -221,8 +212,7 @@ export function getStepConfig(stepId, form = {}) {
         { label: 'Mother', value: 'mother' },
       ],
       inputType: 'quick',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Tap mic to speak naturally',
       allowSkip: true,
     },
@@ -231,19 +221,15 @@ export function getStepConfig(stepId, form = {}) {
       messages: ['Please tell me their mobile number.'],
       inputType: 'phone10',
       inputLabel: 'FAMILY REFERENCE MOBILE NUMBER',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Use the fields above for this step — or tap mic to speak',
     },
     friend_details: {
       id: 'friend_details',
-      messages: [
-        'Please tell me their full name. A colleague or neighbour works too.',
-      ],
+      messages: ['Please tell me their full name. A colleague or neighbour works too.'],
       inputType: 'friend_form',
       inputLabel: 'FRIEND REFERENCE DETAILS',
-      helpText:
-        'Not sure which option fits? Tell us in your own words — type or use the mic.',
+      helpText: 'Not sure which option fits? Tell us in your own words — type or use the mic.',
       voiceHint: 'Use the fields above for this step — or tap mic to speak',
     },
     success: {
@@ -263,14 +249,18 @@ export function getStepConfig(stepId, form = {}) {
  * @param {Record<string, string>} form
  */
 export function getNextStep(currentStep, field, value, form) {
-  const v = String(value || '').trim().toLowerCase();
+  const v = String(value || '')
+    .trim()
+    .toLowerCase();
 
   if (currentStep === 'terms') {
-    if (v === 'no') return { next: 'terms', error: 'You need to agree to continue with your application.' };
+    if (v === 'no')
+      return { next: 'terms', error: 'You need to agree to continue with your application.' };
     return { next: 'aadhaar_consent' };
   }
   if (currentStep === 'aadhaar_consent') {
-    if (v === 'no') return { next: 'aadhaar_consent', error: 'Aadhaar KYC is required to proceed.' };
+    if (v === 'no')
+      return { next: 'aadhaar_consent', error: 'Aadhaar KYC is required to proceed.' };
     return { next: 'aadhaar_mobile_link' };
   }
   if (currentStep === 'aadhaar_mobile_link') return { next: 'aadhaar_number' };
@@ -319,7 +309,8 @@ export function fieldForStep(stepId) {
 export function displayUserAnswer(stepId, value, form) {
   if (stepId === 'email' && value.includes('@')) {
     const [local, domain] = value.split('@');
-    const masked = local.length <= 2 ? '***' : `${'*'.repeat(Math.max(1, local.length - 1))}${local.slice(-1)}`;
+    const masked =
+      local.length <= 2 ? '***' : `${'*'.repeat(Math.max(1, local.length - 1))}${local.slice(-1)}`;
     return `${masked}@${domain}`;
   }
   if (stepId === 'friend_details') {

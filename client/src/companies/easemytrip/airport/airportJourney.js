@@ -33,24 +33,150 @@ export const DUTY_FREE_CATEGORIES = [
 ];
 
 export const FRAGRANCE_PRODUCTS = [
-  { id: 'ck-eternity-amber', name: 'Calvin Klein Eternity Amber Essence Parfum Intense, 30ml', price: 2828, original: 4190, discount: 10, brand: 'Calvin Klein', color: '#2C1810' },
-  { id: 'polo-blue', name: 'Polo Blue Eau De Toilette 75ml', price: 4504, original: 7150, discount: 10, brand: 'Ralph Lauren', color: '#1A3A5C' },
-  { id: 'hugo-scent', name: 'Hugo Boss The Scent Eau de Toilette, 50ML', price: 4286, original: 6350, discount: 10, brand: 'Hugo Boss', color: '#8B4513' },
-  { id: 'kenzo-homme-60', name: 'Kenzo Homme EDT Relift, 60ML', price: 4826, original: 7150, discount: 10, brand: 'Kenzo', color: '#2E8B57' },
-  { id: 'hugo-bottled', name: 'Hugo Boss Bottled Elixir Parfum Intense For Him 50ml', price: 5055, original: 7490, discount: 10, brand: 'Hugo Boss', color: '#DAA520' },
-  { id: 'davidoff-cool', name: 'Davidoff Coolwater for Women 50ml EDT Sp', price: 3890, original: 5800, discount: 10, brand: 'Davidoff', color: '#4682B4' },
-  { id: 'ck-everyone', name: 'Calvin Klein Everyone EDP 50ml', price: 3650, original: 5400, discount: 10, brand: 'Calvin Klein', color: '#708090' },
-  { id: 'flowerbomb', name: 'Viktor & Rolf Flowerbomb EDP 100ml', price: 8284, original: 13150, discount: 10, brand: 'Viktor & Rolf', color: '#FF69B4' },
-  { id: 'kenzo-homme-100', name: 'Kenzo Eau Kenzo Homme Relift, 100ML', price: 6513, original: 9650, discount: 10, brand: 'Kenzo', color: '#228B22' },
-  { id: 'kenzo-amour', name: 'Kenzo Amour Fuchsia Edition EDP, 100ML', price: 7526, original: 11150, discount: 10, brand: 'Kenzo', color: '#FF1493' },
-  { id: 'burberry', name: 'Burberry Signatures Hawthorn Bloom Eau De Parfum', price: 15248, original: 22590, discount: 10, brand: 'Burberry', color: '#98D8C8' },
-  { id: 'armani-acqua', name: 'Armani Acqua di Gioia EDP 100 ml', price: 7452, original: 11040, discount: 10, brand: 'Armani', color: '#90EE90' },
-  { id: 'valentino', name: 'Valentino Born in Roma Donna Yellow Dream EDP', price: 9756, original: 14450, discount: 10, brand: 'Valentino', color: '#FFD700' },
-  { id: 'estee-lauder', name: 'Estée Lauder Revitalizing Supreme+ Youth Power Eye Balm', price: 5231, original: 7750, discount: 10, brand: 'Estée Lauder', color: '#F5DEB3' },
-  { id: 'flower-ikebana', name: 'Flower Ikebana By Kenzo, 40ML', price: 5771, original: 8550, discount: 10, brand: 'Kenzo', color: '#DDA0DD' },
+  {
+    id: 'ck-eternity-amber',
+    name: 'Calvin Klein Eternity Amber Essence Parfum Intense, 30ml',
+    price: 2828,
+    original: 4190,
+    discount: 10,
+    brand: 'Calvin Klein',
+    color: '#2C1810',
+  },
+  {
+    id: 'polo-blue',
+    name: 'Polo Blue Eau De Toilette 75ml',
+    price: 4504,
+    original: 7150,
+    discount: 10,
+    brand: 'Ralph Lauren',
+    color: '#1A3A5C',
+  },
+  {
+    id: 'hugo-scent',
+    name: 'Hugo Boss The Scent Eau de Toilette, 50ML',
+    price: 4286,
+    original: 6350,
+    discount: 10,
+    brand: 'Hugo Boss',
+    color: '#8B4513',
+  },
+  {
+    id: 'kenzo-homme-60',
+    name: 'Kenzo Homme EDT Relift, 60ML',
+    price: 4826,
+    original: 7150,
+    discount: 10,
+    brand: 'Kenzo',
+    color: '#2E8B57',
+  },
+  {
+    id: 'hugo-bottled',
+    name: 'Hugo Boss Bottled Elixir Parfum Intense For Him 50ml',
+    price: 5055,
+    original: 7490,
+    discount: 10,
+    brand: 'Hugo Boss',
+    color: '#DAA520',
+  },
+  {
+    id: 'davidoff-cool',
+    name: 'Davidoff Coolwater for Women 50ml EDT Sp',
+    price: 3890,
+    original: 5800,
+    discount: 10,
+    brand: 'Davidoff',
+    color: '#4682B4',
+  },
+  {
+    id: 'ck-everyone',
+    name: 'Calvin Klein Everyone EDP 50ml',
+    price: 3650,
+    original: 5400,
+    discount: 10,
+    brand: 'Calvin Klein',
+    color: '#708090',
+  },
+  {
+    id: 'flowerbomb',
+    name: 'Viktor & Rolf Flowerbomb EDP 100ml',
+    price: 8284,
+    original: 13150,
+    discount: 10,
+    brand: 'Viktor & Rolf',
+    color: '#FF69B4',
+  },
+  {
+    id: 'kenzo-homme-100',
+    name: 'Kenzo Eau Kenzo Homme Relift, 100ML',
+    price: 6513,
+    original: 9650,
+    discount: 10,
+    brand: 'Kenzo',
+    color: '#228B22',
+  },
+  {
+    id: 'kenzo-amour',
+    name: 'Kenzo Amour Fuchsia Edition EDP, 100ML',
+    price: 7526,
+    original: 11150,
+    discount: 10,
+    brand: 'Kenzo',
+    color: '#FF1493',
+  },
+  {
+    id: 'burberry',
+    name: 'Burberry Signatures Hawthorn Bloom Eau De Parfum',
+    price: 15248,
+    original: 22590,
+    discount: 10,
+    brand: 'Burberry',
+    color: '#98D8C8',
+  },
+  {
+    id: 'armani-acqua',
+    name: 'Armani Acqua di Gioia EDP 100 ml',
+    price: 7452,
+    original: 11040,
+    discount: 10,
+    brand: 'Armani',
+    color: '#90EE90',
+  },
+  {
+    id: 'valentino',
+    name: 'Valentino Born in Roma Donna Yellow Dream EDP',
+    price: 9756,
+    original: 14450,
+    discount: 10,
+    brand: 'Valentino',
+    color: '#FFD700',
+  },
+  {
+    id: 'estee-lauder',
+    name: 'Estée Lauder Revitalizing Supreme+ Youth Power Eye Balm',
+    price: 5231,
+    original: 7750,
+    discount: 10,
+    brand: 'Estée Lauder',
+    color: '#F5DEB3',
+  },
+  {
+    id: 'flower-ikebana',
+    name: 'Flower Ikebana By Kenzo, 40ML',
+    price: 5771,
+    original: 8550,
+    discount: 10,
+    brand: 'Kenzo',
+    color: '#DDA0DD',
+  },
 ];
 
-export const PRODUCT_FILTERS = ['Sort', 'Skin Care', 'Travel Accessories', 'Exclusive', 'Toiletries'];
+export const PRODUCT_FILTERS = [
+  'Sort',
+  'Skin Care',
+  'Travel Accessories',
+  'Exclusive',
+  'Toiletries',
+];
 
 export const INITIAL_AIRPORT_FORM = {
   phase: 'home',
@@ -147,7 +273,10 @@ export function airportAgentStateToFormPatch(patch) {
     const key = map[k] || k;
     if (key === 'priceFilterMax') out[key] = v === '' || v == null ? null : parseInt(v, 10);
     else if (key === 'cartCount') out[key] = parseInt(v, 10) || 0;
-    else if (key === 'cartItems') out[key] = String(v || '').split(',').filter(Boolean);
+    else if (key === 'cartItems')
+      out[key] = String(v || '')
+        .split(',')
+        .filter(Boolean);
     else out[key] = v;
   }
   return out;

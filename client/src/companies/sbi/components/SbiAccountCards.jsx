@@ -27,7 +27,9 @@ export function SbiAccountCards() {
     <section className="pb-2">
       <div className="no-scrollbar flex w-full snap-x snap-mandatory overflow-x-auto scroll-smooth">
         <AccountSlide gradient={SBI.cardGrad}>
-          <p className="text-[10px] font-semibold tracking-wide text-white/90">TRANSACTION ACCOUNTS (XX)</p>
+          <p className="text-[10px] font-semibold tracking-wide text-white/90">
+            TRANSACTION ACCOUNTS (XX)
+          </p>
           <p className="mt-2 text-[10px] text-white/75">Combined Balance</p>
           <div className="mt-0.5 flex items-center gap-2.5">
             <p className="text-[24px] font-bold leading-none tracking-tight">
@@ -39,7 +41,13 @@ export function SbiAccountCards() {
               className="press rounded-full p-1 text-white/85 hover:bg-white/10"
               aria-label="Toggle balance"
             >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 {balanceVisible ? (
                   <>
                     <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
@@ -54,18 +62,34 @@ export function SbiAccountCards() {
                 )}
               </svg>
             </button>
-            <button type="button" className="press rounded-full p-1 text-white/85 hover:bg-white/10" aria-label="Refresh">
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+            <button
+              type="button"
+              className="press rounded-full p-1 text-white/85 hover:bg-white/10"
+              aria-label="Refresh"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M23 4v6h-6M1 20v-6h6" />
                 <path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.36 4.36A9 9 0 0020.49 15" />
               </svg>
             </button>
           </div>
           <div className="mt-4 flex justify-between border-t border-white/20 px-1 pt-3">
-            <button type="button" className="press text-[11px] font-semibold underline underline-offset-2">
+            <button
+              type="button"
+              className="press text-[11px] font-semibold underline underline-offset-2"
+            >
               View Accounts
             </button>
-            <button type="button" className="press text-[11px] font-semibold underline underline-offset-2">
+            <button
+              type="button"
+              className="press text-[11px] font-semibold underline underline-offset-2"
+            >
               Transactions
             </button>
           </div>
@@ -77,7 +101,10 @@ export function SbiAccountCards() {
             Ready to start investing?
           </p>
           <div className="mt-4 flex justify-center">
-            <button type="button" className="press text-[11px] font-semibold underline underline-offset-2">
+            <button
+              type="button"
+              className="press text-[11px] font-semibold underline underline-offset-2"
+            >
               Invest Now
             </button>
           </div>

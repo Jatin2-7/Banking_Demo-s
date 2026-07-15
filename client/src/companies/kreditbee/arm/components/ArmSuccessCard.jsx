@@ -3,13 +3,23 @@ import { KB } from '../../theme.js';
 
 export default function ArmSuccessCard() {
   return (
-    <div className="mx-3 mb-4 overflow-hidden rounded-2xl border-2 bg-kb-yellowPale p-5" style={{ borderColor: KB.yellow }}>
+    <div
+      className="mx-3 mb-4 overflow-hidden rounded-2xl border-2 bg-kb-yellowPale p-5"
+      style={{ borderColor: KB.yellow }}
+    >
       <div className="flex flex-col items-center text-center">
         <div
           className="mb-4 flex h-14 w-14 items-center justify-center rounded-full"
           style={{ backgroundColor: KB.yellow }}
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2.5">
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#1A1A1A"
+            strokeWidth="2.5"
+          >
             <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>

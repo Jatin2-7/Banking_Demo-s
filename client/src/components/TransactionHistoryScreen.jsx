@@ -148,12 +148,18 @@ export default function TransactionHistoryScreen({
       <div className="relative flex-1 overflow-y-auto no-scrollbar pb-20">
         {/* Account carousel card */}
         <div className="mx-3 mt-3 flex items-center gap-1 rounded-xl bg-[#EEF1F6] px-2 py-4">
-          <button type="button" className="px-1 text-[#1565C0] text-lg" aria-label="Previous account">
+          <button
+            type="button"
+            className="px-1 text-[#1565C0] text-lg"
+            aria-label="Previous account"
+          >
             ‹
           </button>
           <div className="min-w-0 flex-1 text-center">
             <p className="text-[12px] font-semibold text-[#1565C0]">{acctLabel}</p>
-            <p className="mt-1 text-[22px] font-bold tracking-tight text-[#1A237E]">{formatInr(balance)}</p>
+            <p className="mt-1 text-[22px] font-bold tracking-tight text-[#1A237E]">
+              {formatInr(balance)}
+            </p>
             <div className="mt-2 flex justify-center">
               <span className="h-1.5 w-1.5 rounded-full bg-[#1565C0]" />
             </div>
@@ -174,7 +180,14 @@ export default function TransactionHistoryScreen({
                 onChange={(e) => setDateFrom(e.target.value)}
                 className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-[#1A237E] outline-none"
               />
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#1565C0"
+                strokeWidth="2"
+              >
                 <rect x="4" y="5" width="16" height="15" rx="2" />
                 <path d="M8 3v4M16 3v4M4 11h16" strokeLinecap="round" />
               </svg>
@@ -189,14 +202,25 @@ export default function TransactionHistoryScreen({
                 onChange={(e) => setDateTo(e.target.value)}
                 className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-[#1A237E] outline-none"
               />
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#1565C0"
+                strokeWidth="2"
+              >
                 <rect x="4" y="5" width="16" height="15" rx="2" />
                 <path d="M8 3v4M16 3v4M4 11h16" strokeLinecap="round" />
               </svg>
             </label>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <button type="button" onClick={clearFilter} className="text-[11px] font-semibold text-[#1565C0]">
+            <button
+              type="button"
+              onClick={clearFilter}
+              className="text-[11px] font-semibold text-[#1565C0]"
+            >
               Clear
             </button>
             <button
@@ -215,7 +239,9 @@ export default function TransactionHistoryScreen({
             <p className="py-8 text-center text-[13px] text-slate-500">Loading transactions…</p>
           )}
           {!loading && displayTxns.length === 0 && (
-            <p className="py-8 text-center text-[13px] text-slate-500">No transactions in this period.</p>
+            <p className="py-8 text-center text-[13px] text-slate-500">
+              No transactions in this period.
+            </p>
           )}
           {!loading &&
             displayTxns.map((txn) => {

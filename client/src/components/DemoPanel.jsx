@@ -3,7 +3,7 @@ import { VOICE_COMMAND_EXAMPLES } from '../lib/voiceCommandRouter.js';
 
 // Special tab keys for the two voice demo modes.
 const VOICE_TO_COMMAND = 'Voice-to-Command';
-const VOICE_ASSIST     = 'Voice Assist';
+const VOICE_ASSIST = 'Voice Assist';
 
 // Categorised, scripted utterances designed to showcase every flow + edge case.
 // Clicking a script "speaks" it into the engine. Lets you demo without typing.
@@ -192,7 +192,11 @@ export default function DemoPanel({
                     : 'bg-white border border-divider text-muted'
             }`}
           >
-            {k === VOICE_TO_COMMAND ? '🎙 Voice-to-Command' : k === VOICE_ASSIST ? '🤖 Voice Assist' : k}
+            {k === VOICE_TO_COMMAND
+              ? '🎙 Voice-to-Command'
+              : k === VOICE_ASSIST
+                ? '🤖 Voice Assist'
+                : k}
           </button>
         ))}
       </div>
@@ -270,8 +274,8 @@ function VoiceCommandPanel({
       <div className="px-1">
         <div className="text-[11px] font-bold text-ink">Voice navigation</div>
         <div className="text-[9px] text-muted leading-snug mt-0.5">
-          Open the bot (🧑‍💼) or rage-tap for help — speak once and keep giving commands
-          without tapping the mic again. The mic detects when you start and stop speaking.
+          Open the bot (🧑‍💼) or rage-tap for help — speak once and keep giving commands without
+          tapping the mic again. The mic detects when you start and stop speaking.
         </div>
       </div>
 
@@ -321,7 +325,9 @@ function VoiceCommandPanel({
         >
           <div className="font-mono truncate">Heard: "{feedback.text}"</div>
           <div className="font-semibold mt-0.5">
-            {feedback.match ? `→ Opening ${feedback.match.label}` : 'No matching screen — try another phrase'}
+            {feedback.match
+              ? `→ Opening ${feedback.match.label}`
+              : 'No matching screen — try another phrase'}
           </div>
         </div>
       )}
@@ -374,8 +380,8 @@ function VoiceAssistPanel({ modeActive }) {
       <div className="px-1">
         <div className="text-[11px] font-bold text-ink">Voice Assistance mode</div>
         <div className="text-[9px] text-muted leading-snug mt-0.5">
-          Full hands-free conversation on Home, Loan Application, and Fixed Deposit.
-          The assistant guides you step-by-step using voice — no typing needed.
+          Full hands-free conversation on Home, Loan Application, and Fixed Deposit. The assistant
+          guides you step-by-step using voice — no typing needed.
         </div>
       </div>
 
@@ -389,8 +395,8 @@ function VoiceAssistPanel({ modeActive }) {
       </div>
 
       <div className="rounded-lg border border-violet-200 bg-violet-50 px-2 py-2 text-[9px] text-violet-800 leading-snug">
-        <span className="font-bold">How to use:</span> Switch to this tab → tap the bot on Home
-        (or open Loan / Term Deposit) → the assistant speaks, then the mic listens for your reply.
+        <span className="font-bold">How to use:</span> Switch to this tab → tap the bot on Home (or
+        open Loan / Term Deposit) → the assistant speaks, then the mic listens for your reply.
       </div>
 
       <div className="border-t border-divider pt-1.5 text-[9px] text-muted text-center">

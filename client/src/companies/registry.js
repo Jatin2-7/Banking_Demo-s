@@ -8,7 +8,16 @@ import { incredConfig } from './incred/config.js';
 import { easemytripConfig } from './easemytrip/config.js';
 
 /** All registered company demos — add a config + import here for each new client. */
-export const COMPANIES = [abcdConfig, optimoCapitalConfig, dcbConfig, indianBankConfig, kreditbeeConfig, sbiConfig, incredConfig, easemytripConfig];
+export const COMPANIES = [
+  abcdConfig,
+  optimoCapitalConfig,
+  dcbConfig,
+  indianBankConfig,
+  kreditbeeConfig,
+  sbiConfig,
+  incredConfig,
+  easemytripConfig,
+];
 
 /** @param {string} slug */
 export function getCompanyBySlug(slug) {

@@ -15,7 +15,9 @@ export function inferKreditbeeDestination(userText = '', assistantText = '') {
   if (/two[\s-]?wheeler|2[\s-]?wheeler/.test(t)) return 'two_wheeler_loan';
   if (/loan against property|\blap\b|property loan/.test(t)) return 'lap';
   if (
-    /continue.*(application|kyc)|resume.*(application|kyc)|complete.*kyc|relationship manager|arm_onboarding/.test(t)
+    /continue.*(application|kyc)|resume.*(application|kyc)|complete.*kyc|relationship manager|arm_onboarding/.test(
+      t,
+    )
   ) {
     return 'arm_onboarding';
   }

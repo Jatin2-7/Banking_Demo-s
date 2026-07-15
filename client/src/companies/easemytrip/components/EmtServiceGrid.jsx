@@ -18,7 +18,17 @@ const PRIMARY_SERVICES = [
     badge: 'Up to 60% Off*',
     icon: (
       <svg viewBox="0 0 48 48" className="h-10 w-10" fill="none">
-        <rect x="8" y="16" width="32" height="28" rx="2" fill={EMT.blue} opacity="0.15" stroke={EMT.blue} strokeWidth="1.5" />
+        <rect
+          x="8"
+          y="16"
+          width="32"
+          height="28"
+          rx="2"
+          fill={EMT.blue}
+          opacity="0.15"
+          stroke={EMT.blue}
+          strokeWidth="1.5"
+        />
         <rect x="14" y="22" width="6" height="6" fill={EMT.blue} opacity="0.4" />
         <rect x="22" y="22" width="6" height="6" fill={EMT.blue} opacity="0.4" />
         <rect x="30" y="22" width="6" height="6" fill={EMT.blue} opacity="0.4" />
@@ -31,7 +41,17 @@ const PRIMARY_SERVICES = [
     label: 'Trains',
     icon: (
       <svg viewBox="0 0 56 40" className="h-10 w-14" fill="none">
-        <rect x="4" y="8" width="48" height="24" rx="6" fill={EMT.blue} opacity="0.15" stroke={EMT.blue} strokeWidth="1.5" />
+        <rect
+          x="4"
+          y="8"
+          width="48"
+          height="24"
+          rx="6"
+          fill={EMT.blue}
+          opacity="0.15"
+          stroke={EMT.blue}
+          strokeWidth="1.5"
+        />
         <rect x="10" y="14" width="12" height="10" rx="2" fill={EMT.blue} opacity="0.5" />
         <rect x="34" y="14" width="12" height="10" rx="2" fill={EMT.blue} opacity="0.5" />
         <circle cx="14" cy="34" r="4" fill={EMT.blue} />
@@ -107,12 +127,21 @@ export default function EmtServiceGrid({ onServiceTap }) {
               >
                 <ServiceIcon item={svc} />
               </div>
-              <span className="text-center text-[9px] font-medium leading-tight text-emt-ink">{svc.label}</span>
+              <span className="text-center text-[9px] font-medium leading-tight text-emt-ink">
+                {svc.label}
+              </span>
             </button>
           ))}
         </div>
         <div className="mt-3 flex justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={EMT.muted} strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={EMT.muted}
+            strokeWidth="2"
+          >
             <path d="M6 9l6 6 6-6" strokeLinecap="round" />
           </svg>
         </div>

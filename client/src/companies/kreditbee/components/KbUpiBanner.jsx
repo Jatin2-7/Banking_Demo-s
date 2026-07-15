@@ -11,10 +11,15 @@ export default function KbUpiBanner({ onClick }) {
         background: 'linear-gradient(135deg, #FFF0F0 0%, #FFF5F5 50%, #FFF8F0 100%)',
       }}
     >
-      <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80"
-      >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E85D3B" strokeWidth="1.8">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#E85D3B"
+          strokeWidth="1.8"
+        >
           <rect x="2" y="6" width="20" height="14" rx="2" />
           <path d="M2 10h20" />
           <circle cx="17" cy="15" r="1.5" fill="#E85D3B" />
@@ -33,7 +38,14 @@ export default function KbUpiBanner({ onClick }) {
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
         style={{ backgroundColor: KB.yellow }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2.5">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#1A1A1A"
+          strokeWidth="2.5"
+        >
           <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>

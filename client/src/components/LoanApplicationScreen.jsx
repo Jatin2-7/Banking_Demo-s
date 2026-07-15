@@ -19,7 +19,8 @@ function getLoanBranding(homeVariant) {
       brandLabel: 'DCB BANK',
       highlightRing: 'ring-[#B3D4FC]/90',
       fieldFocus: 'focus:border-[#1A237E] focus:ring-1 focus:ring-[#1A237E]/30',
-      focusWithin: 'focus-within:border-[#1A237E] focus-within:ring-1 focus-within:ring-[#1A237E]/30',
+      focusWithin:
+        'focus-within:border-[#1A237E] focus-within:ring-1 focus-within:ring-[#1A237E]/30',
       fabBorder: '#B3D4FC',
       fabBg: '#0D1642',
       fabText: '#B3D4FC',
@@ -219,7 +220,9 @@ function GuidelinesModal({ open, onClose, title, rows, okLabel, primary }) {
                   <div className="flex items-center justify-center border-r border-dashed border-slate-800 bg-sky-100 px-1.5 py-2 text-center text-[10px] font-bold leading-tight text-slate-900">
                     {row.label}
                   </div>
-                  <div className="whitespace-pre-line bg-white px-2 py-2 text-[10px] leading-snug text-slate-900">{row.body}</div>
+                  <div className="whitespace-pre-line bg-white px-2 py-2 text-[10px] leading-snug text-slate-900">
+                    {row.body}
+                  </div>
                 </div>
               ))}
             </div>
@@ -253,15 +256,26 @@ const MODAL_FIELD = {
   proposal: 'proposal',
 };
 
-export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrimerProp, voiceAssist = false }) {
+export default function LoanApplicationScreen({
+  onClose,
+  lang,
+  aiPrimer: aiPrimerProp,
+  voiceAssist = false,
+}) {
   const company = useCompany();
   const loanAgentId = useCompanyAgent('loanLos');
   const branding = useMemo(() => getLoanBranding(company?.homeVariant), [company?.homeVariant]);
   const L = STRINGS[lang] || STRINGS.en;
   const J = STRINGS.en.loanLos;
 
-  const occupationOpts = useMemo(() => selectOptions(J, ['optSalaried', 'optSelfEmployed', 'optProfessional']), [J]);
-  const subProductOpts = useMemo(() => selectOptions(J, ['optCleanLoan', 'optPersonal', 'optOverdraft']), [J]);
+  const occupationOpts = useMemo(
+    () => selectOptions(J, ['optSalaried', 'optSelfEmployed', 'optProfessional']),
+    [J],
+  );
+  const subProductOpts = useMemo(
+    () => selectOptions(J, ['optCleanLoan', 'optPersonal', 'optOverdraft']),
+    [J],
+  );
   const purposeLoanOpts = useMemo(
     () => [
       { id: 'lp1', label: J.purposeLoanOpt1 },
@@ -292,8 +306,14 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
   const [highlightField, setHighlightField] = useState(null);
   const [rmPromptOpen, setRmPromptOpen] = useState(false);
 
-  const { containerProps: rageProps, markInvalidField, dismiss: dismissRage } = useRageDetect({
-    onFrustrated: () => { if (!aiOpen) setRmPromptOpen(true); },
+  const {
+    containerProps: rageProps,
+    markInvalidField,
+    dismiss: dismissRage,
+  } = useRageDetect({
+    onFrustrated: () => {
+      if (!aiOpen) setRmPromptOpen(true);
+    },
   });
 
   const loanRootRef = useRef(null);
@@ -485,7 +505,14 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
             className="press-bright flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white"
             aria-label={step === 0 ? L.cancel : J.loanBack}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -531,75 +558,129 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
           <>
             <p className="px-1 py-1 text-[9px] text-slate-500">{J.portalLabel}</p>
             <div className="rounded border border-slate-300 bg-white px-1">
-              <FormRow label={J.occupationType} required highlightRing={branding.highlightRing} highlight={highlightField === 'occupation'}>
+              <FormRow
+                label={J.occupationType}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'occupation'}
+              >
                 <button
                   type="button"
                   onClick={() => openModal('occupation')}
                   className={`flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-[11px] press ${
-                    fv.occupation ? 'border-slate-400 bg-white text-slate-900' : 'border-slate-400 bg-white text-slate-500'
+                    fv.occupation
+                      ? 'border-slate-400 bg-white text-slate-900'
+                      : 'border-slate-400 bg-white text-slate-500'
                   }`}
                 >
-                  <span className="line-clamp-2">{labelFor(fv.occupation, occupationOpts) || J.selectPlaceholder}</span>
+                  <span className="line-clamp-2">
+                    {labelFor(fv.occupation, occupationOpts) || J.selectPlaceholder}
+                  </span>
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.subProduct} required highlightRing={branding.highlightRing} highlight={highlightField === 'subProduct'}>
+              <FormRow
+                label={J.subProduct}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'subProduct'}
+              >
                 <button
                   type="button"
                   onClick={() => openModal('subProduct')}
                   className={`flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-[11px] press ${
-                    fv.subProduct ? 'border-slate-400 bg-white text-slate-900' : 'border-slate-400 bg-white text-slate-500'
+                    fv.subProduct
+                      ? 'border-slate-400 bg-white text-slate-900'
+                      : 'border-slate-400 bg-white text-slate-500'
                   }`}
                 >
-                  <span className="line-clamp-2">{labelFor(fv.subProduct, subProductOpts) || J.selectPlaceholder}</span>
+                  <span className="line-clamp-2">
+                    {labelFor(fv.subProduct, subProductOpts) || J.selectPlaceholder}
+                  </span>
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.purposeOfLoan} required highlightRing={branding.highlightRing} highlight={highlightField === 'purposeLoan'}>
+              <FormRow
+                label={J.purposeOfLoan}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'purposeLoan'}
+              >
                 <button
                   type="button"
                   onClick={() => openModal('purposeLoan')}
                   className={`flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-[11px] press ${
-                    fv.purposeLoan ? 'border-slate-400 bg-white text-slate-900' : 'border-slate-400 bg-white text-slate-500'
+                    fv.purposeLoan
+                      ? 'border-slate-400 bg-white text-slate-900'
+                      : 'border-slate-400 bg-white text-slate-500'
                   }`}
                 >
-                  <span className="line-clamp-2">{labelFor(fv.purposeLoan, purposeLoanOpts) || J.selectPlaceholder}</span>
+                  <span className="line-clamp-2">
+                    {labelFor(fv.purposeLoan, purposeLoanOpts) || J.selectPlaceholder}
+                  </span>
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.variant} required highlightRing={branding.highlightRing} highlight={highlightField === 'variant'}>
+              <FormRow
+                label={J.variant}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'variant'}
+              >
                 <button
                   type="button"
                   onClick={() => openModal('variant')}
                   className={`flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-[11px] press ${
-                    fv.variant ? 'border-slate-400 bg-white text-slate-900' : 'border-slate-400 bg-white text-slate-500'
+                    fv.variant
+                      ? 'border-slate-400 bg-white text-slate-900'
+                      : 'border-slate-400 bg-white text-slate-500'
                   }`}
                 >
-                  <span className="line-clamp-2">{labelFor(fv.variant, variantOpts) || J.selectPlaceholder}</span>
+                  <span className="line-clamp-2">
+                    {labelFor(fv.variant, variantOpts) || J.selectPlaceholder}
+                  </span>
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.facilityType} required highlightRing={branding.highlightRing} highlight={highlightField === 'facility'}>
+              <FormRow
+                label={J.facilityType}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'facility'}
+              >
                 <button
                   type="button"
                   onClick={() => openModal('facility')}
                   className={`flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-[11px] press ${
-                    fv.facility ? 'border-slate-400 bg-white text-slate-900' : 'border-slate-400 bg-white text-slate-500'
+                    fv.facility
+                      ? 'border-slate-400 bg-white text-slate-900'
+                      : 'border-slate-400 bg-white text-slate-500'
                   }`}
                 >
-                  <span className="line-clamp-2">{labelFor(fv.facility, facilityOpts) || J.selectPlaceholder}</span>
+                  <span className="line-clamp-2">
+                    {labelFor(fv.facility, facilityOpts) || J.selectPlaceholder}
+                  </span>
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
-              <FormRow label={J.proposalType} required highlightRing={branding.highlightRing} highlight={highlightField === 'proposal'}>
+              <FormRow
+                label={J.proposalType}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'proposal'}
+              >
                 <button
                   type="button"
                   onClick={() => openModal('proposal')}
                   className={`flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-[11px] press ${
-                    fv.proposal ? 'border-slate-400 bg-white text-slate-900' : 'border-slate-400 bg-white text-slate-500'
+                    fv.proposal
+                      ? 'border-slate-400 bg-white text-slate-900'
+                      : 'border-slate-400 bg-white text-slate-500'
                   }`}
                 >
-                  <span className="line-clamp-2">{labelFor(fv.proposal, proposalOpts) || J.selectPlaceholder}</span>
+                  <span className="line-clamp-2">
+                    {labelFor(fv.proposal, proposalOpts) || J.selectPlaceholder}
+                  </span>
                   <span className="text-slate-500">▾</span>
                 </button>
               </FormRow>
@@ -608,37 +689,72 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   <option value="floating">{J.interestFloating}</option>
                 </select>
               </FormRow>
-              <FormRow label={J.requestedAmount} required highlightRing={branding.highlightRing} highlight={highlightField === 'loanAmount'}>
-                <div className={`flex items-center gap-1 rounded border border-slate-400 bg-white px-2 py-1.5 ${branding.focusWithin}`}>
+              <FormRow
+                label={J.requestedAmount}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'loanAmount'}
+              >
+                <div
+                  className={`flex items-center gap-1 rounded border border-slate-400 bg-white px-2 py-1.5 ${branding.focusWithin}`}
+                >
                   <span className="text-[11px] font-semibold text-slate-600">₹</span>
                   <input
                     className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[11px] outline-none"
                     inputMode="decimal"
                     value={fv.loanAmount}
-                    onChange={(e) => setFv((p) => ({ ...p, loanAmount: e.target.value.replace(/[^\d.]/g, '') }))}
-                    onBlur={(e) => { if (!e.target.value || Number(e.target.value) <= 0) markInvalidField('loanAmount'); }}
+                    onChange={(e) =>
+                      setFv((p) => ({ ...p, loanAmount: e.target.value.replace(/[^\d.]/g, '') }))
+                    }
+                    onBlur={(e) => {
+                      if (!e.target.value || Number(e.target.value) <= 0)
+                        markInvalidField('loanAmount');
+                    }}
                     placeholder="0.00"
                   />
                 </div>
               </FormRow>
-              <FormRow label={J.requestedTenure} required highlightRing={branding.highlightRing} highlight={highlightField === 'tenureMonths'}>
+              <FormRow
+                label={J.requestedTenure}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'tenureMonths'}
+              >
                 <input
                   className={fieldClass(false, branding.fieldFocus)}
                   inputMode="numeric"
                   value={fv.tenureMonths}
                   onChange={(e) =>
-                    setFv((p) => ({ ...p, tenureMonths: e.target.value.replace(/\D/g, '').slice(0, 3) }))
+                    setFv((p) => ({
+                      ...p,
+                      tenureMonths: e.target.value.replace(/\D/g, '').slice(0, 3),
+                    }))
                   }
-                  onBlur={(e) => { const n = Number(e.target.value); if (!n || n < 1 || n > 360) markInvalidField('tenureMonths'); }}
+                  onBlur={(e) => {
+                    const n = Number(e.target.value);
+                    if (!n || n < 1 || n > 360) markInvalidField('tenureMonths');
+                  }}
                   placeholder={J.phTenure}
                 />
               </FormRow>
-              <FormRow label={J.processingBranch} required highlightRing={branding.highlightRing} highlight={highlightField === 'branchPin'}>
+              <FormRow
+                label={J.processingBranch}
+                required
+                highlightRing={branding.highlightRing}
+                highlight={highlightField === 'branchPin'}
+              >
                 <input
                   className={fieldClass(false, branding.fieldFocus)}
                   value={fv.branchPin}
-                  onChange={(e) => setFv((p) => ({ ...p, branchPin: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
-                  onBlur={(e) => { if (!/^\d{6}$/.test(e.target.value)) markInvalidField('branchPin'); }}
+                  onChange={(e) =>
+                    setFv((p) => ({
+                      ...p,
+                      branchPin: e.target.value.replace(/\D/g, '').slice(0, 6),
+                    }))
+                  }
+                  onBlur={(e) => {
+                    if (!/^\d{6}$/.test(e.target.value)) markInvalidField('branchPin');
+                  }}
                   placeholder={J.phPincode}
                 />
               </FormRow>
@@ -678,7 +794,9 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
                   className="grid border-b border-dashed border-slate-600 last:border-0"
                   style={{ gridTemplateColumns: 'minmax(0,42%) 1fr' }}
                 >
-                  <div className="bg-sky-100 px-2 py-2 text-[10px] font-bold text-slate-900">{k}</div>
+                  <div className="bg-sky-100 px-2 py-2 text-[10px] font-bold text-slate-900">
+                    {k}
+                  </div>
                   <div className="bg-white px-2 py-2 text-[10px] text-slate-800">{v}</div>
                 </div>
               ))}
@@ -689,7 +807,9 @@ export default function LoanApplicationScreen({ onClose, lang, aiPrimer: aiPrime
 
         {step === 2 && (
           <div className="flex flex-col items-center px-3 pt-6 text-center">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl">✓</div>
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl">
+              ✓
+            </div>
             <p className="text-[14px] font-bold text-slate-900">{J.successTitle}</p>
             <p className="mt-1 font-mono text-[12px] text-slate-700">{appRef}</p>
             <p className="mt-2 text-[11px] leading-snug text-slate-600">{J.successBody}</p>

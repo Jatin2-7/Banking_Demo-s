@@ -41,7 +41,9 @@ function HeroBanner() {
     >
       <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
       <div className="relative px-4 py-5">
-        <p className="text-[16px] font-bold leading-snug text-white">Swap your anxiety with Excitement</p>
+        <p className="text-[16px] font-bold leading-snug text-white">
+          Swap your anxiety with Excitement
+        </p>
         <p className="mt-1 text-[12px] text-white/90">Money that travels with you...</p>
         <div className="mt-3 flex gap-3">
           {['Forex Card', 'Currency Notes', 'Send Money'].map((label) => (
@@ -74,7 +76,9 @@ export default function ForexCashScreen({
   ];
 
   const isCard = form.activeTab === 'forex_card';
-  const rate = isCard ? 96.4144 : { USD: 97.02, EUR: 89.5, GBP: 103.2, AED: 26.45, SGD: 75.36 }[form.foreignCurrency] || 97.02;
+  const rate = isCard
+    ? 96.4144
+    : { USD: 97.02, EUR: 89.5, GBP: 103.2, AED: 26.45, SGD: 75.36 }[form.foreignCurrency] || 97.02;
 
   const toolHandler = React.useCallback(
     (name, args) => {
@@ -155,7 +159,8 @@ export default function ForexCashScreen({
               className="flex-1 py-3 text-center text-[12px] font-semibold press"
               style={{
                 color: form.activeTab === tab.id ? EMT.ink : EMT.muted,
-                borderBottom: form.activeTab === tab.id ? `2px solid ${EMT.black}` : '2px solid transparent',
+                borderBottom:
+                  form.activeTab === tab.id ? `2px solid ${EMT.black}` : '2px solid transparent',
               }}
             >
               {tab.label}
@@ -295,7 +300,10 @@ export default function ForexCashScreen({
                   className="flex-1 px-3 py-2.5 text-[14px] outline-none"
                 />
               </div>
-              <p className="mb-4 flex items-center justify-end gap-1 text-[10px]" style={{ color: EMT.blue }}>
+              <p
+                className="mb-4 flex items-center justify-end gap-1 text-[10px]"
+                style={{ color: EMT.blue }}
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-emt-red" />
                 Live Exchange Rates
               </p>

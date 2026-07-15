@@ -121,7 +121,12 @@ export function AbcdInvestTab({ onOpenDeposit }) {
   return (
     <div className="px-3 pb-4 pt-1">
       <div className="grid grid-cols-2 gap-3">
-        <InvestCard title="Gold" emoji="🟨" desc="Buy 24K pure digital gold" onClick={onOpenDeposit} />
+        <InvestCard
+          title="Gold"
+          emoji="🟨"
+          desc="Buy 24K pure digital gold"
+          onClick={onOpenDeposit}
+        />
         <InvestCard
           title="Silver"
           emoji="⬜"
@@ -146,7 +151,12 @@ export function AbcdInvestTab({ onOpenDeposit }) {
           desc="Explore curated Investpacks"
           onClick={onOpenDeposit}
         />
-        <InvestCard title="NPS" emoji="🪑" desc="Plan for your retirement" onClick={onOpenDeposit} />
+        <InvestCard
+          title="NPS"
+          emoji="🪑"
+          desc="Plan for your retirement"
+          onClick={onOpenDeposit}
+        />
       </div>
     </div>
   );

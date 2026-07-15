@@ -114,7 +114,14 @@ export default function HotelBookingScreen({ onClose }) {
               className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/10"
               aria-label="Menu"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
               </svg>
             </button>
@@ -181,14 +188,23 @@ export default function HotelBookingScreen({ onClose }) {
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white hover:bg-white/10"
             aria-label="Back"
           >
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <svg
+              width="21"
+              height="21"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+            >
               <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
           <div className="min-w-0 flex-1">
             <h1 className="text-base font-bold leading-tight">Hotel Booking</h1>
-            <p className="text-[10px] font-semibold leading-tight text-white/85">Find your perfect stay</p>
+            <p className="text-[10px] font-semibold leading-tight text-white/85">
+              Find your perfect stay
+            </p>
           </div>
 
           <HomeIconButton onClick={onClose} tone="solid" />
@@ -198,7 +214,14 @@ export default function HotelBookingScreen({ onClose }) {
             className="flex h-8 items-center gap-1 rounded-full bg-white px-2.5 text-xs font-bold text-[#1452a5] shadow-sm"
             aria-label="Wallet balance"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <rect x="3" y="6" width="18" height="12" rx="2" />
               <path d="M16 12h4" strokeLinecap="round" />
             </svg>
@@ -206,7 +229,14 @@ export default function HotelBookingScreen({ onClose }) {
           </button>
 
           <HeaderIcon label="Settings">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1-2 2-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V20h-3v-.2a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1-2-2 .1-.1A1.7 1.7 0 005 15a1.7 1.7 0 00-1.6-1H3v-3h.4A1.7 1.7 0 005 9a1.7 1.7 0 00-.3-1.9l-.1-.1 2-2 .1.1A1.7 1.7 0 008.6 5a1.7 1.7 0 001-1.6V3h3v.4a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1 2 2-.1.1A1.7 1.7 0 0019 9a1.7 1.7 0 001.6 1h.4v3h-.4A1.7 1.7 0 0019.4 15z" />
             </svg>
@@ -266,7 +296,9 @@ export default function HotelBookingScreen({ onClose }) {
               >
                 +
               </button>
-              <span className="rounded bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">{nights}N</span>
+              <span className="rounded bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">
+                {nights}N
+              </span>
               <button
                 type="button"
                 onClick={() => setNights((n) => Math.max(1, n - 1))}
@@ -309,7 +341,14 @@ export default function HotelBookingScreen({ onClose }) {
           className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#1452a5] text-base font-bold text-white shadow-sm"
         >
           Search Hotels
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <svg
+            width="21"
+            height="21"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
             <path d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16" />
             <path d="M16 9h2a2 2 0 012 2v10" />
             <path d="M8 7h1M12 7h1M8 11h1M12 11h1M8 15h1M12 15h1M3 21h18" strokeLinecap="round" />
@@ -327,13 +366,27 @@ export default function HotelBookingScreen({ onClose }) {
           className="mt-5 flex w-full items-center gap-3 rounded-xl bg-white px-4 py-4 text-left text-sm font-bold text-slate-800 shadow-sm"
         >
           <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#1452a5]/30 text-[#1452a5]">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="12" cy="12" r="9" />
               <path d="M12 7v5l3 2" strokeLinecap="round" />
             </svg>
           </span>
           <span className="flex-1">Find rooms near me for tonight</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>

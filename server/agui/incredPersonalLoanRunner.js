@@ -53,9 +53,20 @@ const LOAN_TOOLS = [
           field: {
             type: 'string',
             enum: [
-              'pan', 'full_name', 'dob_day', 'dob_month', 'dob_year', 'gender', 'pincode',
-              'employment_type', 'net_monthly_income', 'company_name',
-              'marital_status', 'residence_type', 'email', 'purpose',
+              'pan',
+              'full_name',
+              'dob_day',
+              'dob_month',
+              'dob_year',
+              'gender',
+              'pincode',
+              'employment_type',
+              'net_monthly_income',
+              'company_name',
+              'marital_status',
+              'residence_type',
+              'email',
+              'purpose',
             ],
           },
           value: { type: 'string' },
@@ -87,7 +98,10 @@ const LOAN_TOOLS = [
       parameters: {
         type: 'object',
         properties: {
-          button: { type: 'string', enum: ['proceed', 'confirm_yes', 'edit_details', 'back_to_home'] },
+          button: {
+            type: 'string',
+            enum: ['proceed', 'confirm_yes', 'edit_details', 'back_to_home'],
+          },
         },
         required: ['button'],
       },
@@ -101,7 +115,10 @@ const LOAN_TOOLS = [
       parameters: {
         type: 'object',
         properties: {
-          phase: { type: 'string', enum: ['login_info', 'basic_details', 'employment', 'eligibility', 'success'] },
+          phase: {
+            type: 'string',
+            enum: ['login_info', 'basic_details', 'employment', 'eligibility', 'success'],
+          },
         },
         required: ['phase'],
       },
@@ -110,9 +127,18 @@ const LOAN_TOOLS = [
 ];
 
 const WORD_TO_DIGIT = {
-  zero: '0', oh: '0', o: '0',
-  one: '1', two: '2', three: '3', four: '4', five: '5',
-  six: '6', seven: '7', eight: '8', nine: '9',
+  zero: '0',
+  oh: '0',
+  o: '0',
+  one: '1',
+  two: '2',
+  three: '3',
+  four: '4',
+  five: '5',
+  six: '6',
+  seven: '7',
+  eight: '8',
+  nine: '9',
 };
 
 function normalizeSpokenPan(value) {
@@ -143,7 +169,10 @@ function validateField(field, value) {
     return { ok: false, error: `purpose must be: ${INCRED_PURPOSE_OPTIONS.join(', ')}` };
   }
   if (field === 'company_name' && !INCRED_COMPANY_OPTIONS.includes(v)) {
-    return { ok: false, error: `company_name must be one of: ${INCRED_COMPANY_OPTIONS.join(', ')}` };
+    return {
+      ok: false,
+      error: `company_name must be one of: ${INCRED_COMPANY_OPTIONS.join(', ')}`,
+    };
   }
   return { ok: true, value: v };
 }
@@ -153,7 +182,8 @@ function executeIncredLoanTool(name, args, state) {
     const field = args.field;
     let value = args.value;
     if (field === 'pan') value = normalizeSpokenPan(value);
-    if (field === 'dob_day' || field === 'dob_month') value = String(value).replace(/\D/g, '').slice(0, 2);
+    if (field === 'dob_day' || field === 'dob_month')
+      value = String(value).replace(/\D/g, '').slice(0, 2);
     if (field === 'dob_year') value = String(value).replace(/\D/g, '').slice(0, 4);
     if (field === 'pincode') value = String(value).replace(/\D/g, '').slice(0, 6);
     if (field === 'net_monthly_income') value = String(value).replace(/[^0-9]/g, '');
@@ -207,7 +237,9 @@ export async function streamIncredPersonalLoanRun(res, agentId, inputData, { sig
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -239,13 +271,23 @@ export async function streamIncredPersonalLoanRun(res, agentId, inputData, { sig
       if (m.role === 'system') systemNotes.push(m.content);
       else history.push(m);
     }
-    const systemTail = systemNotes.length ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
-    const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+    const systemTail = systemNotes.length
+      ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+      : '';
+    const messages = [
+      { role: 'system', content: buildSystemPrompt(state) + systemTail },
+      ...history,
+    ];
 
     for (let step = 0; step < 14; step++) {
       if (signal?.aborted) break;
 
-      const stream = await client.chat.completions.create({ model, messages, tools: LOAN_TOOLS, stream: true });
+      const stream = await client.chat.completions.create({
+        model,
+        messages,
+        tools: LOAN_TOOLS,
+        stream: true,
+      });
       const messageId = randomUUID();
       let assistantText = '';
       const toolCallBuf = new Map();
@@ -257,7 +299,12 @@ export async function streamIncredPersonalLoanRun(res, agentId, inputData, { sig
         if (!delta) continue;
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
         if (delta.tool_calls) {
           for (const tc of delta.tool_calls) {
@@ -269,10 +316,19 @@ export async function streamIncredPersonalLoanRun(res, agentId, inputData, { sig
             if (tc.function?.arguments) slot.args += tc.function.arguments;
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -292,7 +348,11 @@ export async function streamIncredPersonalLoanRun(res, agentId, inputData, { sig
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
@@ -314,7 +374,11 @@ export async function streamIncredPersonalLoanRun(res, agentId, inputData, { sig
           content: JSON.stringify(exec.result),
           role: 'tool',
         });
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+        });
       }
 
       messages[0] = { role: 'system', content: buildSystemPrompt(state) + systemTail };

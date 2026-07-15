@@ -96,7 +96,8 @@ export const STRINGS = {
       guideRow1Body:
         '• IMPS outward limit as per your channel registration.\n• Demo: no real funds are moved.',
       guideRow2Label: 'Timings',
-      guideRow2Body: '• IMPS is available 24×7 including holidays (typical).\n• This screen is a UI demo only.',
+      guideRow2Body:
+        '• IMPS is available 24×7 including holidays (typical).\n• This screen is a UI demo only.',
       guideRow3Label: 'Charges',
       guideRow3Body: '• As per bank’s SOFA / circular.\n• Demo charges: ₹0.',
       selectPurposeTitle: 'Select',

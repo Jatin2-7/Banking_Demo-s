@@ -190,7 +190,11 @@ export default function DcbGoldLoanScreen({
       {phase === 'intro' ? (
         <CompanyAppHeader title="Gold Loan" onBack={onClose} onHome={onClose} />
       ) : phase === 'success' ? null : mpinOpen ? (
-        <CompanyAppHeader title="Confirm with MPIN" onBack={() => setMpinOpen(false)} onHome={onClose} />
+        <CompanyAppHeader
+          title="Confirm with MPIN"
+          onBack={() => setMpinOpen(false)}
+          onHome={onClose}
+        />
       ) : (
         <CompanyAppHeader title="Apply Gold Loan" onBack={handleBack} onHome={onClose} />
       )}
@@ -254,7 +258,9 @@ export default function DcbGoldLoanScreen({
                 <p className="text-[18px] font-bold text-[#1A237E]">{formatInrFull(BALANCE)}</p>
               </div>
 
-              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">Gold weight (grams)*</label>
+              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">
+                Gold weight (grams)*
+              </label>
               <input
                 type="number"
                 min={1}
@@ -263,29 +269,39 @@ export default function DcbGoldLoanScreen({
                 className={`${pinkField} mb-3`}
               />
 
-              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">Loan amount (₹)*</label>
+              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">
+                Loan amount (₹)*
+              </label>
               <input
                 type="number"
                 min={10000}
                 value={loanAmount}
-                onChange={(e) => setLoanAmount(Math.max(10000, parseFloat(e.target.value) || 10000))}
+                onChange={(e) =>
+                  setLoanAmount(Math.max(10000, parseFloat(e.target.value) || 10000))
+                }
                 className={`${pinkField} mb-1`}
               />
               <p className="mb-3 text-[10px] text-slate-500">
                 Max eligible up to {formatInr(maxEligible)} (75% of gold value)
               </p>
 
-              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">Tenure (months)*</label>
+              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">
+                Tenure (months)*
+              </label>
               <input
                 type="number"
                 min={3}
                 max={36}
                 value={tenureMonths}
-                onChange={(e) => setTenureMonths(Math.min(36, Math.max(3, parseInt(e.target.value, 10) || 12)))}
+                onChange={(e) =>
+                  setTenureMonths(Math.min(36, Math.max(3, parseInt(e.target.value, 10) || 12)))
+                }
                 className={`${pinkField} mb-3`}
               />
 
-              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">Purpose of loan*</label>
+              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">
+                Purpose of loan*
+              </label>
               <select
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
@@ -299,7 +315,9 @@ export default function DcbGoldLoanScreen({
                 ))}
               </select>
 
-              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">Employment type*</label>
+              <label className="mb-1 block text-[11px] font-semibold text-[#1A237E]">
+                Employment type*
+              </label>
               <select
                 value={employment}
                 onChange={(e) => setEmployment(e.target.value)}
@@ -330,7 +348,9 @@ export default function DcbGoldLoanScreen({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Purpose</span>
-                    <span className="font-bold text-[#1A237E]">{labelFor(purpose, PURPOSE_OPTIONS) || '—'}</span>
+                    <span className="font-bold text-[#1A237E]">
+                      {labelFor(purpose, PURPOSE_OPTIONS) || '—'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -354,14 +374,21 @@ export default function DcbGoldLoanScreen({
               className="flex flex-col items-center px-6 pt-16 text-center"
             >
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#28A745] text-white shadow-lg">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
                   <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <h2 className="mt-5 text-[22px] font-bold text-[#1A237E]">Congratulations!</h2>
               <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
-                Your gold loan request has been submitted successfully. You will receive a confirmation shortly. Thank
-                you for banking with DCB Bank.
+                Your gold loan request has been submitted successfully. You will receive a
+                confirmation shortly. Thank you for banking with DCB Bank.
               </p>
               <button
                 type="button"
@@ -457,7 +484,9 @@ export default function DcbGoldLoanScreen({
               : 'I will help you complete your gold loan application. How many grams of gold would you like to pledge?'
           }
           assistTitle={voiceAssist ? 'AI Assistant · Voice Assist' : 'AI Assistant'}
-          assistHint={voiceAssist ? 'Hands-free — speak after I finish.' : 'Voice or text — your choice'}
+          assistHint={
+            voiceAssist ? 'Hands-free — speak after I finish.' : 'Voice or text — your choice'
+          }
           primer={aiPrimer}
           formValues={formStateRef.current}
           onToolCall={handleToolCall}

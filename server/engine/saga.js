@@ -220,7 +220,12 @@ export async function runSaga(session, manifest, { speak, applyForceFail }) {
             if (typeof a === 'string' && a.startsWith('$')) return lookupPath(a.slice(1), ctx);
             return render(a, ctx);
           });
-          const msg = speakKey(session, manifest, step.empty_prompt_key || 'didnt_catch', emptyArgs);
+          const msg = speakKey(
+            session,
+            manifest,
+            step.empty_prompt_key || 'didnt_catch',
+            emptyArgs,
+          );
           if (step.on_empty_goto) {
             speak(session, msg);
             const idx = findStepIndex(manifest, step.on_empty_goto);

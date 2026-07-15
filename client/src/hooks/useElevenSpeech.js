@@ -28,14 +28,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { resolveApiBase } from '../lib/aguiClient.js';
 
-const SILENCE_MS = 2200;       // pause length that ends an utterance
-const MIN_SPEECH_MS = 400;     // ignore very short blips before arming silence
-const MIN_RECORDING_MS = 900;  // never stop before this — avoids corrupt tiny clips
-const MIN_AUDIO_BYTES = 3500;  // reject clips too small for ElevenLabs
+const SILENCE_MS = 2200; // pause length that ends an utterance
+const MIN_SPEECH_MS = 400; // ignore very short blips before arming silence
+const MIN_RECORDING_MS = 900; // never stop before this — avoids corrupt tiny clips
+const MIN_AUDIO_BYTES = 3500; // reject clips too small for ElevenLabs
 const MAX_DURATION_MS = 15000; // hard cap so a stuck recorder can't run forever
 const SILENCE_THRESHOLD = 0.02; // RMS — tuned for typical laptop mics in demo rooms
-const VAD_STARTUP_MS = 250;    // ignore the first N ms after mic start (mic settle + echo tail)
-const SPEECH_ONSET_MS = 150;   // require this many ms of continuous loud audio to confirm speech
+const VAD_STARTUP_MS = 250; // ignore the first N ms after mic start (mic settle + echo tail)
+const SPEECH_ONSET_MS = 150; // require this many ms of continuous loud audio to confirm speech
 
 function pickMime() {
   if (typeof MediaRecorder === 'undefined') return null;
@@ -70,7 +70,7 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
   const silenceTimerRef = useRef(null);
   const hardTimerRef = useRef(null);
   const speechStartedAtRef = useRef(0);
-  const loudSinceRef = useRef(0);   // timestamp when current loud streak began (0 = quiet)
+  const loudSinceRef = useRef(0); // timestamp when current loud streak began (0 = quiet)
   const vadStartTimeRef = useRef(0); // timestamp when the current VAD session started
   const onFinalRef = useRef(null);
   const abortedRef = useRef(false);
@@ -220,23 +220,29 @@ export function useElevenSpeech({ lang = 'en-IN' } = {}) {
           .toLowerCase();
 
         try {
-          const r = await fetch(`${resolveApiBase()}/api/stt?lang=${encodeURIComponent(langCode)}`, {
-            method: 'POST',
-            headers: { 'Content-Type': effectiveMime },
-            body: blob,
-          });
+          const r = await fetch(
+            `${resolveApiBase()}/api/stt?lang=${encodeURIComponent(langCode)}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': effectiveMime },
+              body: blob,
+            },
+          );
           const data = await r.json().catch(() => ({}));
           if (!r.ok) {
             const detail = String(data?.detail || data?.message || '');
             if (
-              detail.includes('invalid_audio')
-              || detail.includes('invalid_content')
-              || detail.includes('corrupted')
+              detail.includes('invalid_audio') ||
+              detail.includes('invalid_content') ||
+              detail.includes('corrupted')
             ) {
               setError('empty_audio');
             } else if (r.status === 503) {
               setError('stt_not_configured');
-            } else if (data?.error === 'stt_payment_required' || /payment_issue|payment_required/i.test(detail)) {
+            } else if (
+              data?.error === 'stt_payment_required' ||
+              /payment_issue|payment_required/i.test(detail)
+            ) {
               setError('stt_payment_required');
             } else {
               setError(data?.error || `stt_${r.status}`);

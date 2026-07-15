@@ -1,10 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import AbcdLoanSlider, { AbcdDonutChart } from './AbcdLoanSlider.jsx';
-import {
-  calcEmi,
-  calcTotalPayable,
-  formatInrFull,
-} from './loanCalc.js';
+import { calcEmi, calcTotalPayable, formatInrFull } from './loanCalc.js';
 
 const TENURE_MARKS = [
   { value: 12, label: '12mos' },
@@ -41,15 +37,31 @@ export default function AbcdEmiCalculatorScreen({ onBack }) {
   return (
     <div className="flex h-full flex-col bg-white">
       <header className="flex shrink-0 items-center gap-2 border-b border-[#EEEEEE] px-3 py-2.5">
-        <button type="button" onClick={onBack} className="flex h-9 w-9 items-center justify-center press" aria-label="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2.2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex h-9 w-9 items-center justify-center press"
+          aria-label="Back"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#1A1A1A"
+            strokeWidth="2.2"
+          >
             <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
         <h1 className="min-w-0 flex-1 text-center text-[15px] font-bold text-[#1A1A1A]">
           Personal loan EMI calculator
         </h1>
-        <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C41E24] text-[13px] font-bold text-white press" aria-label="Help">
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C41E24] text-[13px] font-bold text-white press"
+          aria-label="Help"
+        >
           ?
         </button>
       </header>
@@ -67,10 +79,16 @@ export default function AbcdEmiCalculatorScreen({ onBack }) {
         {showResult && (
           <div className="mb-4 rounded-2xl bg-[#FFF8E1] px-4 py-4">
             <p className="text-center text-[12px] text-[#6B7280]">Total payable amount</p>
-            <p className="text-center text-[22px] font-bold text-[#5D4037]">{formatInrFull(total)}</p>
+            <p className="text-center text-[22px] font-bold text-[#5D4037]">
+              {formatInrFull(total)}
+            </p>
             <div className="mt-2 flex justify-center gap-4 text-[10px]">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#FFC107]" /> Principal Amount</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#4CAF50]" /> Interest Amount</span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-[#FFC107]" /> Principal Amount
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-[#4CAF50]" /> Interest Amount
+              </span>
             </div>
             <AbcdDonutChart principal={amount} interest={interest} />
             <div className="-mt-2 rounded-xl bg-white px-4 py-3 text-center shadow-sm">
@@ -85,8 +103,17 @@ export default function AbcdEmiCalculatorScreen({ onBack }) {
             <span>Tenure</span>
             <span>in months</span>
           </div>
-          <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">{tenure}</div>
-          <AbcdLoanSlider min={12} max={60} step={12} value={tenure} onChange={setTenure} marks={TENURE_MARKS} />
+          <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">
+            {tenure}
+          </div>
+          <AbcdLoanSlider
+            min={12}
+            max={60}
+            step={12}
+            value={tenure}
+            onChange={setTenure}
+            marks={TENURE_MARKS}
+          />
         </div>
 
         <div className="mb-4">
@@ -106,7 +133,9 @@ export default function AbcdEmiCalculatorScreen({ onBack }) {
 
         <div className="mb-2">
           <p className="mb-1 text-[11px] text-[#9CA3AF]">Rate of Interest</p>
-          <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">{rate}%</div>
+          <div className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-[20px] font-bold text-[#1A1A1A]">
+            {rate}%
+          </div>
         </div>
 
         <p className="mt-4 text-center text-[10px] text-[#9CA3AF]">

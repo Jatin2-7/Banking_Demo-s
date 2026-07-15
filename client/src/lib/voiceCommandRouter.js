@@ -10,10 +10,7 @@
 // Destinations mirror the `navigate_to` targets already handled by
 // App.jsx#handleNavigate, plus a "home" target to return to the dashboard.
 
-import {
-  formatPeriodLabel,
-  parseDateRangeFromUtterance,
-} from './transactionDateFilter.js';
+import { formatPeriodLabel, parseDateRangeFromUtterance } from './transactionDateFilter.js';
 
 /**
  * @typedef {'transaction_history'|'fund_transfer'|'loan_application'|'create_deposit'|'upi_payment'|'hotel_booking'|'flight_booking'|'debit_card'|'credit_card'|'home'} Destination
@@ -200,17 +197,22 @@ const COMMANDS = [
  * e.g. "transition history" / "my translations" → transaction history.
  */
 function correctSttTypos(q) {
-  return q
-    // transaction ← transition / translation / translations / transcations / etc.
-    .replace(/\b(transition|transitions|translation|translations|transcation|transcations|transaktion|transaktions)\b/g, 'transaction')
-    // statement ← statements / state ment
-    .replace(/\bstate\s*ment(s)?\b/g, 'statement')
-    // history ← hystory / histery
-    .replace(/\b(hystory|histery|histroy)\b/g, 'history')
-    // deposit ← deposite / diposit
-    .replace(/\b(deposite|diposit|deposits)\b/g, 'deposit')
-    // transfer ← trasfer / tranfer
-    .replace(/\b(trasfer|tranfer|transfers)\b/g, 'transfer');
+  return (
+    q
+      // transaction ← transition / translation / translations / transcations / etc.
+      .replace(
+        /\b(transition|transitions|translation|translations|transcation|transcations|transaktion|transaktions)\b/g,
+        'transaction',
+      )
+      // statement ← statements / state ment
+      .replace(/\bstate\s*ment(s)?\b/g, 'statement')
+      // history ← hystory / histery
+      .replace(/\b(hystory|histery|histroy)\b/g, 'history')
+      // deposit ← deposite / diposit
+      .replace(/\b(deposite|diposit|deposits)\b/g, 'deposit')
+      // transfer ← trasfer / tranfer
+      .replace(/\b(trasfer|tranfer|transfers)\b/g, 'transfer')
+  );
 }
 
 /** Normalise an utterance for matching: lowercase + collapse whitespace + STT fixes. */
@@ -274,7 +276,10 @@ export const VOICE_COMMAND_EXAMPLES = [
   { label: 'Make a UPI payment', text: 'make a upi payment' },
   { label: 'Book a hotel', text: 'I want to book a hotel' },
   { label: 'Book a flight', text: 'I want to book a flight' },
-  { label: 'Disable international transactions', text: 'disable international transactions on my debit card' },
+  {
+    label: 'Disable international transactions',
+    text: 'disable international transactions on my debit card',
+  },
   { label: 'Reset debit card PIN', text: 'reset my debit card pin' },
   { label: 'Open debit card dashboard', text: 'open my debit card dashboard' },
   { label: 'Change credit card PIN', text: 'change my credit card pin' },

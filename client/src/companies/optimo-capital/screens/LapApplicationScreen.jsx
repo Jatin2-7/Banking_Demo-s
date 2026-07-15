@@ -102,7 +102,10 @@ export default function LapApplicationScreen({
         </div>
       </div>
 
-      <main className="relative mx-auto px-6 pb-12 pt-8 sm:pt-10" style={{ maxWidth: CONTENT_MAX_W }}>
+      <main
+        className="relative mx-auto px-6 pb-12 pt-8 sm:pt-10"
+        style={{ maxWidth: CONTENT_MAX_W }}
+      >
         <LocationBadge />
 
         {showIntroHero && (
@@ -112,8 +115,13 @@ export default function LapApplicationScreen({
         )}
 
         {!showIntroHero && (
-          <p className="mb-7 text-center sm:mb-9" style={{ fontFamily: FONTS.body, fontSize: 18, fontWeight: 500, color: OPTIMO.navy }}>
-            Takes just <span style={{ fontSize: 26, fontWeight: 700, color: OPTIMO.orange }}>2 mins</span> to fill
+          <p
+            className="mb-7 text-center sm:mb-9"
+            style={{ fontFamily: FONTS.body, fontSize: 18, fontWeight: 500, color: OPTIMO.navy }}
+          >
+            Takes just{' '}
+            <span style={{ fontSize: 26, fontWeight: 700, color: OPTIMO.orange }}>2 mins</span> to
+            fill
           </p>
         )}
 

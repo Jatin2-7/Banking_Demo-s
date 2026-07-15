@@ -123,7 +123,13 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
     if (!res.writableEnded) res.write(sseEncode(obj));
   };
 
-  const onAbort = () => { try { res.end(); } catch { /* ignore */ } };
+  const onAbort = () => {
+    try {
+      res.end();
+    } catch {
+      /* ignore */
+    }
+  };
   signal?.addEventListener('abort', onAbort);
 
   write({ type: 'RUN_STARTED', thread_id: threadId, run_id: runId });
@@ -157,7 +163,12 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
 
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
 
           // Detect a complete 💭 reasoning line and emit it as a STATUS_UPDATE
           if (!statusEmitted && assistantText.includes('💭')) {
@@ -186,10 +197,19 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
 
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -205,18 +225,37 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
         // ── Fallback: model wrote navigate_to as text instead of using the tool ──
         const textLower = assistantText;
         if (/navigate_to/i.test(textLower)) {
-          const destMatch = textLower.match(/destination\s*[=:]\s*["']?(upi_payment|fund_transfer|loan_application|create_deposit|transaction_history|credit_card|debit_card|hotel_booking|flight_booking)["']?/i);
+          const destMatch = textLower.match(
+            /destination\s*[=:]\s*["']?(upi_payment|fund_transfer|loan_application|create_deposit|transaction_history|credit_card|debit_card|hotel_booking|flight_booking)["']?/i,
+          );
           const ctxMatch = textLower.match(/context\s*[=:]\s*["']([^"'\n]+)["']/i);
           if (destMatch) {
             const args = { destination: destMatch[1], context: ctxMatch?.[1] || '' };
-            write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination, assistantText, args.context) });
-            write({ type: 'STATE_DELTA', delta: [{ op: 'replace', path: '/navigate_to', value: args }] });
+            write({
+              type: 'STATUS_UPDATE',
+              status: buildRoutingStatus(args.destination, assistantText, args.context),
+            });
+            write({
+              type: 'STATE_DELTA',
+              delta: [{ op: 'replace', path: '/navigate_to', value: args }],
+            });
             // Emit synthetic tool events so the client handler fires
             const fakeId = `fallback_${Date.now()}`;
-            write({ type: 'TOOL_CALL_START', tool_call_id: fakeId, tool_call_name: 'navigate_to', parent_message_id: messageId });
+            write({
+              type: 'TOOL_CALL_START',
+              tool_call_id: fakeId,
+              tool_call_name: 'navigate_to',
+              parent_message_id: messageId,
+            });
             write({ type: 'TOOL_CALL_ARGS', tool_call_id: fakeId, delta: JSON.stringify(args) });
             write({ type: 'TOOL_CALL_END', tool_call_id: fakeId });
-            write({ type: 'TOOL_CALL_RESULT', message_id: randomUUID(), tool_call_id: fakeId, content: JSON.stringify({ ok: true, destination: args.destination }), role: 'tool' });
+            write({
+              type: 'TOOL_CALL_RESULT',
+              message_id: randomUUID(),
+              tool_call_id: fakeId,
+              content: JSON.stringify({ ok: true, destination: args.destination }),
+              role: 'tool',
+            });
           }
         }
 
@@ -228,15 +267,26 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
         if (!slot.id) continue;
         let args = {};
-        try { args = slot.args ? JSON.parse(slot.args) : {}; } catch { args = {}; }
+        try {
+          args = slot.args ? JSON.parse(slot.args) : {};
+        } catch {
+          args = {};
+        }
 
-        write({ type: 'STATUS_UPDATE', status: buildRoutingStatus(args.destination, assistantText, args.context) });
+        write({
+          type: 'STATUS_UPDATE',
+          status: buildRoutingStatus(args.destination, assistantText, args.context),
+        });
 
         // Emit STATE_DELTA so the client can read navigate_to args
         write({
@@ -260,9 +310,16 @@ export async function streamHomeAguiRun(res, agentId, inputData, { signal } = {}
     write({ type: 'RUN_FINISHED', thread_id: threadId, run_id: runId });
   } catch (err) {
     log.error({ err: err?.message || String(err) }, 'home agui stream error');
-    write({ type: 'RUN_ERROR', message: `${err?.name || 'Error'}: ${err?.message || String(err)}` });
+    write({
+      type: 'RUN_ERROR',
+      message: `${err?.name || 'Error'}: ${err?.message || String(err)}`,
+    });
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try { res.end(); } catch { /* ignore */ }
+    try {
+      res.end();
+    } catch {
+      /* ignore */
+    }
   }
 }

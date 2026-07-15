@@ -92,11 +92,18 @@ function validateEnum(field, value, allowed) {
 }
 
 function coerceLoanPurposeCategory(raw) {
-  const v = String(raw || '').toLowerCase().trim();
+  const v = String(raw || '')
+    .toLowerCase()
+    .trim();
   if (!v) return null;
   if (v.includes('flight') || v.includes('flat') || v.includes('apartment')) return 'New/Old Flat';
   if (v.includes('plot') || v.includes('land')) return 'Realty Loan for purchase of Plot';
-  if (v.includes('villa') || v.includes('bungalow') || v.includes('row house') || v.includes('independent')) {
+  if (
+    v.includes('villa') ||
+    v.includes('bungalow') ||
+    v.includes('row house') ||
+    v.includes('independent')
+  ) {
     return 'New/Old Independent House/Villa/Bungalow/Row House';
   }
   const exact = SBI_LOAN_PURPOSE_CATEGORIES.find((c) => c.toLowerCase() === v);
@@ -104,13 +111,16 @@ function coerceLoanPurposeCategory(raw) {
 }
 
 function coercePurposeOfLoan(raw) {
-  const v = String(raw || '').toLowerCase().trim();
+  const v = String(raw || '')
+    .toLowerCase()
+    .trim();
   if (!v) return null;
   if (v.includes('construction')) return 'Construction Of New House / Flat';
   if (v.includes('extension')) return 'Extension Of Existing Old House / Flat';
   if (v.includes('plot')) return 'Purchase Of A Plot For Construction Of A House';
   if (v.includes('old')) return 'Purchase Of Old House / Flat';
-  if (v.includes('new') || v.includes('purchase') || v.includes('buy')) return 'Purchase Of New House / Flat';
+  if (v.includes('new') || v.includes('purchase') || v.includes('buy'))
+    return 'Purchase Of New House / Flat';
   const exact = SBI_PURPOSE_OPTIONS.find((c) => c.toLowerCase() === v);
   return exact || null;
 }
@@ -213,7 +223,9 @@ export async function streamSbiHomeLoanRun(res, agentId, inputData, { signal } =
 
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -246,8 +258,13 @@ export async function streamSbiHomeLoanRun(res, agentId, inputData, { signal } =
       else history.push(m);
     }
     const systemTail =
-      systemNotes.length > 0 ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
-    const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+      systemNotes.length > 0
+        ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+        : '';
+    const messages = [
+      { role: 'system', content: buildSystemPrompt(state) + systemTail },
+      ...history,
+    ];
 
     for (let step = 0; step < 14; step++) {
       if (signal?.aborted) break;
@@ -272,7 +289,12 @@ export async function streamSbiHomeLoanRun(res, agentId, inputData, { signal } =
 
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
 
         if (delta.tool_calls) {
@@ -293,7 +315,11 @@ export async function streamSbiHomeLoanRun(res, agentId, inputData, { signal } =
               });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -313,7 +339,11 @@ export async function streamSbiHomeLoanRun(res, agentId, inputData, { signal } =
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
@@ -337,7 +367,11 @@ export async function streamSbiHomeLoanRun(res, agentId, inputData, { signal } =
           role: 'tool',
         });
 
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+        });
       }
 
       messages[0] = { role: 'system', content: buildSystemPrompt(state) + systemTail };

@@ -10,7 +10,9 @@ function AaravAvatar({ size = 32, pulse = false }) {
       className={`flex shrink-0 select-none items-center justify-center rounded-full bg-gradient-to-br from-bank-gold to-amber-500 font-bold shadow-md ring-2 ring-bank-gold/50 ${pulse ? 'animate-pulse ring-4 ring-bank-gold/40' : ''}`}
       style={{ width: size, height: size }}
     >
-      <span className="text-bank-purpleDeep" style={{ fontSize: Math.round(size * 0.38) }}>A</span>
+      <span className="text-bank-purpleDeep" style={{ fontSize: Math.round(size * 0.38) }}>
+        A
+      </span>
     </div>
   );
 }
@@ -22,7 +24,14 @@ function TransferIcon({ size = 20 }) {
       style={{ width: size, height: size }}
       aria-hidden
     >
-      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+      <svg
+        width={size * 0.55}
+        height={size * 0.55}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+      >
         <path d="M7 7h11M7 7l3-3M7 7l3 3" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M17 17H6M17 17l-3 3M17 17l-3-3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -32,7 +41,11 @@ function TransferIcon({ size = 20 }) {
 
 function TransferSummaryCard({ fv, phase }) {
   const transferLabel =
-    fv.transferType === 'other' ? 'Other bank (IMPS)' : fv.transferType === 'within' ? 'Within Indian Bank' : null;
+    fv.transferType === 'other'
+      ? 'Other bank (IMPS)'
+      : fv.transferType === 'within'
+        ? 'Within Indian Bank'
+        : null;
 
   const payeeLine =
     fv.transferType === 'within'
@@ -55,7 +68,9 @@ function TransferSummaryCard({ fv, phase }) {
         className="mx-4 my-2 rounded-2xl bg-white overflow-hidden shadow-lg"
       >
         <div className="bg-gradient-to-r from-[#003D7C]/10 to-[#5B3D8A]/10 px-4 py-2">
-          <p className="text-[10px] uppercase tracking-widest font-bold text-[#003D7C]">Confirm transfer</p>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-[#003D7C]">
+            Confirm transfer
+          </p>
         </div>
         <div className="text-center py-3">
           <p className="text-3xl font-black text-slate-800 tracking-tight">
@@ -87,7 +102,9 @@ function TransferSummaryCard({ fv, phase }) {
             : 'Tell me if the payee is within Indian Bank or another bank'}
         </p>
         {fv.amount && (
-          <p className="mt-0.5 text-[11px] font-semibold text-bank-gold">₹{Number(fv.amount).toLocaleString('en-IN')}</p>
+          <p className="mt-0.5 text-[11px] font-semibold text-bank-gold">
+            ₹{Number(fv.amount).toLocaleString('en-IN')}
+          </p>
         )}
       </div>
     </div>
@@ -122,19 +139,28 @@ function ReviewCard({ fv, onConfirm, onEdit }) {
     >
       <div className="space-y-0 px-4 py-2">
         {rows.map(([k, v]) => (
-          <div key={k} className="flex items-center justify-between border-b border-slate-100 py-2.5 last:border-0 text-xs">
+          <div
+            key={k}
+            className="flex items-center justify-between border-b border-slate-100 py-2.5 last:border-0 text-xs"
+          >
             <span className="text-slate-500">{k}</span>
-            <span className="font-semibold text-slate-800 truncate max-w-[58%] text-right">{v}</span>
+            <span className="font-semibold text-slate-800 truncate max-w-[58%] text-right">
+              {v}
+            </span>
           </div>
         ))}
         <div className="flex items-center justify-between py-2.5 text-xs">
           <span className="text-slate-500">Amount</span>
-          <span className="font-bold text-slate-900">₹ {Number(fv.amount || 0).toLocaleString('en-IN')}</span>
+          <span className="font-bold text-slate-900">
+            ₹ {Number(fv.amount || 0).toLocaleString('en-IN')}
+          </span>
         </div>
         {fv.remarks ? (
           <div className="flex items-center justify-between border-t border-slate-100 py-2.5 text-xs">
             <span className="text-slate-500">Remarks</span>
-            <span className="font-medium text-slate-800 truncate max-w-[58%] text-right">{fv.remarks}</span>
+            <span className="font-medium text-slate-800 truncate max-w-[58%] text-right">
+              {fv.remarks}
+            </span>
           </div>
         ) : null}
       </div>
@@ -198,7 +224,9 @@ function ProcessingOverlay({ amount, rrn, onDone }) {
       exit={{ opacity: 0 }}
       className="absolute inset-0 z-[90] flex flex-col items-center justify-center bg-[#0a1f3d]"
     >
-      <p className="text-[13px] font-semibold uppercase tracking-widest text-white/60">Transferring</p>
+      <p className="text-[13px] font-semibold uppercase tracking-widest text-white/60">
+        Transferring
+      </p>
       <p className="mt-1 text-[42px] font-bold leading-none text-white">
         ₹{Number(amount || 0).toLocaleString('en-IN')}
       </p>
@@ -256,7 +284,17 @@ export default function FundTransferVoiceScreen({ onClose, lang, aiPrimer }) {
       amount,
       remarks,
     }),
-    [transferType, payeeType, payeeName, payeeAccountNo, ifsc, payeeBank, mobileNo, amount, remarks],
+    [
+      transferType,
+      payeeType,
+      payeeName,
+      payeeAccountNo,
+      ifsc,
+      payeeBank,
+      mobileNo,
+      amount,
+      remarks,
+    ],
   );
 
   const setFvFromAgent = useCallback((next) => {
@@ -267,10 +305,16 @@ export default function FundTransferVoiceScreen({ onClose, lang, aiPrimer }) {
       setPayeeAccountNo(String(next.payeeAccountNo).replace(/\D/g, '').slice(0, 18));
     }
     if (next.ifsc !== undefined) {
-      setIfsc(String(next.ifsc).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11));
+      setIfsc(
+        String(next.ifsc)
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, '')
+          .slice(0, 11),
+      );
     }
     if (next.payeeBank !== undefined) setPayeeBank(String(next.payeeBank));
-    if (next.mobileNo !== undefined) setMobileNo(String(next.mobileNo).replace(/\D/g, '').slice(0, 10));
+    if (next.mobileNo !== undefined)
+      setMobileNo(String(next.mobileNo).replace(/\D/g, '').slice(0, 10));
     if (next.amount !== undefined) setAmount(String(next.amount).replace(/[^\d.]/g, ''));
     if (next.remarks !== undefined) setRemarks(String(next.remarks).slice(0, 50));
   }, []);
@@ -336,17 +380,24 @@ export default function FundTransferVoiceScreen({ onClose, lang, aiPrimer }) {
 
         {phase === 'review' && (
           <div className="absolute inset-0 flex flex-col justify-end pb-2">
-            <ReviewCard fv={fv} onConfirm={() => setShowMpin(true)} onEdit={() => setPhase('chat')} />
+            <ReviewCard
+              fv={fv}
+              onConfirm={() => setShowMpin(true)}
+              onEdit={() => setPhase('chat')}
+            />
           </div>
         )}
       </div>
 
-      <MpinSheet open={showMpin} lang={lang || 'en'} onCancel={() => setShowMpin(false)} onSuccess={handleMpinSuccess} />
+      <MpinSheet
+        open={showMpin}
+        lang={lang || 'en'}
+        onCancel={() => setShowMpin(false)}
+        onSuccess={handleMpinSuccess}
+      />
 
       <AnimatePresence>
-        {showProcessing && (
-          <ProcessingOverlay amount={amount} rrn={rrn} onDone={onClose} />
-        )}
+        {showProcessing && <ProcessingOverlay amount={amount} rrn={rrn} onDone={onClose} />}
       </AnimatePresence>
     </motion.div>
   );

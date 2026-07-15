@@ -237,7 +237,10 @@ export default function OptimoHomeScreen() {
 
   if (view === 'success') {
     return (
-      <div className="optimo-app min-h-screen" style={{ backgroundColor: OPTIMO.bg, fontFamily: FONTS.body }}>
+      <div
+        className="optimo-app min-h-screen"
+        style={{ backgroundColor: OPTIMO.bg, fontFamily: FONTS.body }}
+      >
         <SuccessScreen />
         {voiceFab}
         {aiPanel}
@@ -246,7 +249,10 @@ export default function OptimoHomeScreen() {
   }
 
   return (
-    <div className="optimo-app min-h-screen" style={{ backgroundColor: OPTIMO.bg, fontFamily: FONTS.body }}>
+    <div
+      className="optimo-app min-h-screen"
+      style={{ backgroundColor: OPTIMO.bg, fontFamily: FONTS.body }}
+    >
       {view === 'dashboard' ? (
         <DashboardScreen
           emiValues={emiValues}
@@ -262,7 +268,9 @@ export default function OptimoHomeScreen() {
           onConsentChange={setConsent}
           product={lapProduct}
           onBack={goToDashboard}
-          onRegisterApply={(fn) => { applyRef.current = fn; }}
+          onRegisterApply={(fn) => {
+            applyRef.current = fn;
+          }}
           onApply={() => {
             setView('success');
             setAiOpen(false);

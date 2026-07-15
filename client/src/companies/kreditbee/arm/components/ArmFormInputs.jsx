@@ -45,7 +45,9 @@ export default function ArmDigitInput({
   const renderBox = (idx) => (
     <input
       key={idx}
-      ref={(el) => { refs.current[idx] = el; }}
+      ref={(el) => {
+        refs.current[idx] = el;
+      }}
       type="tel"
       inputMode="numeric"
       maxLength={1}
@@ -158,7 +160,9 @@ export function ArmFriendForm({
       {label && (
         <p className="mb-3 text-[10px] font-semibold tracking-wider text-kb-muted">{label}</p>
       )}
-      <p className="mb-1.5 text-[10px] font-semibold tracking-wider text-kb-muted">FRIEND&apos;S FULL NAME</p>
+      <p className="mb-1.5 text-[10px] font-semibold tracking-wider text-kb-muted">
+        FRIEND&apos;S FULL NAME
+      </p>
       <input
         type="text"
         value={name}
@@ -166,7 +170,9 @@ export function ArmFriendForm({
         placeholder="e.g. Rahul Sharma"
         className="mb-4 w-full rounded-xl border border-kb-border px-3 py-3.5 text-[14px] outline-none focus:border-kb-yellow"
       />
-      <p className="mb-1.5 text-[10px] font-semibold tracking-wider text-kb-muted">FRIEND&apos;S MOBILE NUMBER</p>
+      <p className="mb-1.5 text-[10px] font-semibold tracking-wider text-kb-muted">
+        FRIEND&apos;S MOBILE NUMBER
+      </p>
       <ArmDigitInput
         length={10}
         value={mobile}

@@ -4,9 +4,17 @@ import RMHelpPrompt from '../../components/RMHelpPrompt.jsx';
 import { useRageDetect } from '../../hooks/useRageDetect.js';
 import { routeVoiceCommand, normalizeVoiceCommandText } from '../../lib/voiceCommandRouter.js';
 import { useCompanyAgents } from '../../shared/lib/companyAgents.js';
-import { handleSbiHomeUserMessage, inferSbiHomeDestination, matchesApplyHomeLoanIntent, matchesPinChangeIntent } from './lib/homeIntent.js';
+import {
+  handleSbiHomeUserMessage,
+  inferSbiHomeDestination,
+  matchesApplyHomeLoanIntent,
+  matchesPinChangeIntent,
+} from './lib/homeIntent.js';
 import { applySbiNativeNavigation, resolveSbiNativeDestination } from './lib/navigation.js';
-import { registerSbiNavHandler, unregisterSbiNavHandler } from '../../shared/lib/companyNavBridge.js';
+import {
+  registerSbiNavHandler,
+  unregisterSbiNavHandler,
+} from '../../shared/lib/companyNavBridge.js';
 import { SbiHeader } from './components/SbiHeader.jsx';
 import { SbiStoryRow } from './components/SbiStoryRow.jsx';
 import { SbiBottomNav } from './components/SbiBottomNav.jsx';
@@ -115,7 +123,9 @@ export default function SbiHomeScreen({
   }, [navMode, voiceAssistMode]);
 
   const { containerProps: homeRageProps, dismiss: dismissHomeRage } = useRageDetect({
-    onFrustrated: () => { if (!homeAiOpen) setRmHomePromptOpen(true); },
+    onFrustrated: () => {
+      if (!homeAiOpen) setRmHomePromptOpen(true);
+    },
   });
 
   const openAi = () => {
@@ -128,11 +138,14 @@ export default function SbiHomeScreen({
     if (navMode) onStopVoiceCommandSession?.();
   }, [navMode, onStopVoiceCommandSession]);
 
-  const sbiNavActions = useCallback(() => ({
-    setOverlay,
-    setBottomTab,
-    closeAi,
-  }), [closeAi]);
+  const sbiNavActions = useCallback(
+    () => ({
+      setOverlay,
+      setBottomTab,
+      closeAi,
+    }),
+    [closeAi],
+  );
 
   const openSbiCreditCardPin = useCallback(() => {
     closeAi();
@@ -145,47 +158,73 @@ export default function SbiHomeScreen({
     return () => unregisterSbiNavHandler();
   }, [openSbiCreditCardPin]);
 
-  const handleSbiNavigate = useCallback((destination, context, routingStatus) => {
-    closeAi();
-    if (destination === 'loan_application') {
+  const handleSbiNavigate = useCallback(
+    (destination, context, routingStatus) => {
+      closeAi();
+      if (destination === 'loan_application') {
+        onNavigate?.(
+          destination,
+          context ||
+            'Customer wants to apply for an SBI YONO home loan. Guide them through the application form step by step and use set_field to fill each answer on screen.',
+          routingStatus || 'Opening your SBI home loan application.',
+          { silent: true },
+        );
+        return;
+      }
+      const native = resolveSbiNativeDestination(destination);
+      if (applySbiNativeNavigation(native, sbiNavActions())) return;
+      onNavigate?.(destination, context, routingStatus, { silent: true });
+    },
+    [closeAi, onNavigate, sbiNavActions],
+  );
+
+  const openHomeLoanApplication = useCallback(
+    (context = '') => {
+      closeAi();
       onNavigate?.(
-        destination,
-        context || 'Customer wants to apply for an SBI YONO home loan. Guide them through the application form step by step and use set_field to fill each answer on screen.',
-        routingStatus || 'Opening your SBI home loan application.',
+        'loan_application',
+        context ||
+          'Customer wants to apply for an SBI YONO home loan. Guide them through the application form step by step and use set_field to fill each answer on screen.',
+        'Opening your SBI home loan application.',
         { silent: true },
       );
-      return;
-    }
-    const native = resolveSbiNativeDestination(destination);
-    if (applySbiNativeNavigation(native, sbiNavActions())) return;
-    onNavigate?.(destination, context, routingStatus, { silent: true });
-  }, [closeAi, onNavigate, sbiNavActions]);
+    },
+    [closeAi, onNavigate],
+  );
 
-  const openHomeLoanApplication = useCallback((context = '') => {
-    closeAi();
-    onNavigate?.(
-      'loan_application',
-      context || 'Customer wants to apply for an SBI YONO home loan. Guide them through the application form step by step and use set_field to fill each answer on screen.',
-      'Opening your SBI home loan application.',
-      { silent: true },
-    );
-  }, [closeAi, onNavigate]);
+  const handleSbiVoiceCommand = useCallback(
+    async (text) => {
+      const match = routeVoiceCommand(text);
+      const t = normalizeVoiceCommandText(text);
 
-  const handleSbiVoiceCommand = useCallback(async (text) => {
-    const match = routeVoiceCommand(text);
-    const t = normalizeVoiceCommandText(text);
-
-    if (matchesPinChangeIntent(t) || (match?.destination === 'credit_card' && match?.subFlow === 'change_pin')) {
-      closeAi();
-      openSbiCreditCardPin();
-      return { text, match: match || { destination: 'credit_card', routingStatus: 'Opening SBI credit card PIN change.' } };
-    }
-    if (match?.destination === 'loan_application' || matchesHomeLoanIntent(t, text)) {
-      openHomeLoanApplication(text);
-      return { text, match: match || { destination: 'loan_application', routingStatus: 'Opening SBI home loan application.' } };
-    }
-    return onVoiceCommand?.(text);
-  }, [closeAi, openSbiCreditCardPin, openHomeLoanApplication, onVoiceCommand]);
+      if (
+        matchesPinChangeIntent(t) ||
+        (match?.destination === 'credit_card' && match?.subFlow === 'change_pin')
+      ) {
+        closeAi();
+        openSbiCreditCardPin();
+        return {
+          text,
+          match: match || {
+            destination: 'credit_card',
+            routingStatus: 'Opening SBI credit card PIN change.',
+          },
+        };
+      }
+      if (match?.destination === 'loan_application' || matchesHomeLoanIntent(t, text)) {
+        openHomeLoanApplication(text);
+        return {
+          text,
+          match: match || {
+            destination: 'loan_application',
+            routingStatus: 'Opening SBI home loan application.',
+          },
+        };
+      }
+      return onVoiceCommand?.(text);
+    },
+    [closeAi, openSbiCreditCardPin, openHomeLoanApplication, onVoiceCommand],
+  );
 
   const handleLoanSelect = (loanId) => {
     if (loanId === 'home') {
@@ -217,10 +256,18 @@ export default function SbiHomeScreen({
     }
   };
 
-  const assistTitle = navMode ? 'Voice Navigation' : voiceAssistMode ? 'YONO Assistant · Voice' : 'YONO Assistant';
+  const assistTitle = navMode
+    ? 'Voice Navigation'
+    : voiceAssistMode
+      ? 'YONO Assistant · Voice'
+      : 'YONO Assistant';
   const assistHint = navMode
-    ? voiceCommandSessionActive ? 'Listening — speak a command.' : 'Say "apply for home loan" or "change credit card PIN".'
-    : voiceAssistMode ? 'Hands-free — I will speak and listen.' : 'Voice or text — your choice.';
+    ? voiceCommandSessionActive
+      ? 'Listening — speak a command.'
+      : 'Say "apply for home loan" or "change credit card PIN".'
+    : voiceAssistMode
+      ? 'Hands-free — I will speak and listen.'
+      : 'Voice or text — your choice.';
   const greeting = navMode
     ? 'Tell me what you need — home loan or credit card PIN change.'
     : "Namaste! I'm your SBI YONO assistant powered by Silversuits.ai. I can help you apply for a home loan or change your credit card PIN. How may I help you?";
@@ -232,7 +279,10 @@ export default function SbiHomeScreen({
       key={`sbi-home-ai-${panelKey}-${navMode ? 'nav' : voiceAssistMode ? 'assist' : 'chat'}`}
       agentId={agents.home}
       open={homeAiOpen}
-      onClose={() => { setHomeAiOpen(false); if (navMode) onStopVoiceCommandSession?.(); }}
+      onClose={() => {
+        setHomeAiOpen(false);
+        if (navMode) onStopVoiceCommandSession?.();
+      }}
       onAutoHide={() => setHomeAiOpen(false)}
       formValues={{}}
       onFormChange={() => {}}
@@ -266,10 +316,7 @@ export default function SbiHomeScreen({
   );
 
   const aiFab = !homeAiOpen ? (
-    <SbiAiFab
-      onClick={openAi}
-      className="absolute bottom-[6.5rem] right-4"
-    />
+    <SbiAiFab onClick={openAi} className="absolute bottom-[6.5rem] right-4" />
   ) : null;
 
   if (overlay === 'credit_card_pin') {
@@ -313,16 +360,8 @@ export default function SbiHomeScreen({
               onViewAll={() => {}}
               onItemClick={(item) => handleGridItem(item, 'upi')}
             />
-            <SbiSectionGrid
-              title="Investments"
-              items={INVEST_ITEMS}
-              onViewAll={() => {}}
-            />
-            <SbiGradientBanner
-              title="Personal Finance Manager"
-              variant="pfm"
-              onClick={() => {}}
-            />
+            <SbiSectionGrid title="Investments" items={INVEST_ITEMS} onViewAll={() => {}} />
+            <SbiGradientBanner title="Personal Finance Manager" variant="pfm" onClick={() => {}} />
             <SbiSectionGrid
               title="Loans"
               items={LOAN_ITEMS}
@@ -347,11 +386,7 @@ export default function SbiHomeScreen({
               variant="savings"
               onClick={() => {}}
             />
-            <SbiSectionGrid
-              title="Insurance"
-              items={INSURANCE_ITEMS}
-              onViewAll={() => {}}
-            />
+            <SbiSectionGrid title="Insurance" items={INSURANCE_ITEMS} onViewAll={() => {}} />
             <SbiGradientBanner
               title="Your Exclusive Gateway to Upcoming IPOs"
               subtitle="Be ready for tomorrow's big opportunities"
@@ -394,8 +429,15 @@ export default function SbiHomeScreen({
 
       <RMHelpPrompt
         open={rmHomePromptOpen}
-        onHelp={() => { setRmHomePromptOpen(false); dismissHomeRage(); openAi(); }}
-        onDismiss={() => { setRmHomePromptOpen(false); dismissHomeRage(); }}
+        onHelp={() => {
+          setRmHomePromptOpen(false);
+          dismissHomeRage();
+          openAi();
+        }}
+        onDismiss={() => {
+          setRmHomePromptOpen(false);
+          dismissHomeRage();
+        }}
       />
 
       {aguiPanel}

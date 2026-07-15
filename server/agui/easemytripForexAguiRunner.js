@@ -53,9 +53,18 @@ const FOREX_TOOLS = [
           field: {
             type: 'string',
             enum: [
-              'city', 'foreign_currency', 'foreign_amount', 'inr_amount',
-              'transaction_type', 'card_action', 'active_tab', 'card_type',
-              'mobile', 'email', 'otp', 'consent_given',
+              'city',
+              'foreign_currency',
+              'foreign_amount',
+              'inr_amount',
+              'transaction_type',
+              'card_action',
+              'active_tab',
+              'card_type',
+              'mobile',
+              'email',
+              'otp',
+              'consent_given',
             ],
           },
           value: { type: 'string' },
@@ -87,7 +96,10 @@ const FOREX_TOOLS = [
       parameters: {
         type: 'object',
         properties: {
-          button: { type: 'string', enum: ['order_now', 'proceed', 'confirm_order', 'back_to_home'] },
+          button: {
+            type: 'string',
+            enum: ['order_now', 'proceed', 'confirm_order', 'back_to_home'],
+          },
         },
         required: ['button'],
       },
@@ -195,7 +207,9 @@ export async function streamEasemytripForexAguiRun(res, agentId, inputData, { si
   const client = getOpenAIClient();
   const threadId = String(inputData.thread_id || randomUUID());
   const runId = String(inputData.run_id || randomUUID());
-  const state = { ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}) };
+  const state = {
+    ...(inputData.state && typeof inputData.state === 'object' ? inputData.state : {}),
+  };
 
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -227,13 +241,23 @@ export async function streamEasemytripForexAguiRun(res, agentId, inputData, { si
       if (m.role === 'system') systemNotes.push(m.content);
       else history.push(m);
     }
-    const systemTail = systemNotes.length ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}` : '';
-    const messages = [{ role: 'system', content: buildSystemPrompt(state) + systemTail }, ...history];
+    const systemTail = systemNotes.length
+      ? `\n\n## Notes from the mobile UI\n${systemNotes.join('\n---\n')}`
+      : '';
+    const messages = [
+      { role: 'system', content: buildSystemPrompt(state) + systemTail },
+      ...history,
+    ];
 
     for (let step = 0; step < 14; step++) {
       if (signal?.aborted) break;
 
-      const stream = await client.chat.completions.create({ model, messages, tools: FOREX_TOOLS, stream: true });
+      const stream = await client.chat.completions.create({
+        model,
+        messages,
+        tools: FOREX_TOOLS,
+        stream: true,
+      });
       const messageId = randomUUID();
       let assistantText = '';
       const toolCallBuf = new Map();
@@ -245,7 +269,12 @@ export async function streamEasemytripForexAguiRun(res, agentId, inputData, { si
         if (!delta) continue;
         if (delta.content) {
           assistantText += delta.content;
-          write({ type: 'TEXT_MESSAGE_CHUNK', message_id: messageId, role: 'assistant', delta: delta.content });
+          write({
+            type: 'TEXT_MESSAGE_CHUNK',
+            message_id: messageId,
+            role: 'assistant',
+            delta: delta.content,
+          });
         }
         if (delta.tool_calls) {
           for (const tc of delta.tool_calls) {
@@ -257,10 +286,19 @@ export async function streamEasemytripForexAguiRun(res, agentId, inputData, { si
             if (tc.function?.arguments) slot.args += tc.function.arguments;
             if (slot.id && slot.name && !openedStart.has(idx)) {
               openedStart.add(idx);
-              write({ type: 'TOOL_CALL_START', tool_call_id: slot.id, tool_call_name: slot.name, parent_message_id: messageId });
+              write({
+                type: 'TOOL_CALL_START',
+                tool_call_id: slot.id,
+                tool_call_name: slot.name,
+                parent_message_id: messageId,
+              });
             }
             if (tc.function?.arguments && slot.id) {
-              write({ type: 'TOOL_CALL_ARGS', tool_call_id: slot.id, delta: tc.function.arguments });
+              write({
+                type: 'TOOL_CALL_ARGS',
+                tool_call_id: slot.id,
+                delta: tc.function.arguments,
+              });
             }
           }
         }
@@ -280,7 +318,11 @@ export async function streamEasemytripForexAguiRun(res, agentId, inputData, { si
         content: assistantText || '',
         tool_calls: Array.from(toolCallBuf.values())
           .filter((s) => s.id)
-          .map((s) => ({ id: s.id, type: 'function', function: { name: s.name, arguments: s.args || '{}' } })),
+          .map((s) => ({
+            id: s.id,
+            type: 'function',
+            function: { name: s.name, arguments: s.args || '{}' },
+          })),
       });
 
       for (const slot of toolCallBuf.values()) {
@@ -302,7 +344,11 @@ export async function streamEasemytripForexAguiRun(res, agentId, inputData, { si
           content: JSON.stringify(exec.result),
           role: 'tool',
         });
-        messages.push({ role: 'tool', tool_call_id: slot.id, content: JSON.stringify(exec.result) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: slot.id,
+          content: JSON.stringify(exec.result),
+        });
       }
 
       messages[0] = { role: 'system', content: buildSystemPrompt(state) + systemTail };

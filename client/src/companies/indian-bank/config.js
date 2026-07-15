@@ -7,7 +7,8 @@ export const indianBankConfig = {
   shortName: 'Indian Bank',
   platform: 'mobile',
   status: 'active',
-  description: 'Indian Bank voice demo — purple/gold home, UPI, IMPS, deposits, and transaction history.',
+  description:
+    'Indian Bank voice demo — purple/gold home, UPI, IMPS, deposits, and transaction history.',
   theme: {
     primary: '#003366',
     primaryDark: '#002244',
